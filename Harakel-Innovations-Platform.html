@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harakel Innovations — AI Automation Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --surface2:#18181f; --surface3:#1e1e28;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#f0f0f5; --text2:#9090a8; --text3:#5a5a72;
+  --accent:#6c63ff; --accent2:#8b84ff; --accent-glow:rgba(108,99,255,0.18);
+  --green:#00d9a3; --green-dim:rgba(0,217,163,0.12);
+  --amber:#ffb547; --amber-dim:rgba(255,181,71,0.12);
+  --pink:#ff6b9d;  --pink-dim:rgba(255,107,157,0.12);
+  --blue:#4da6ff;  --blue-dim:rgba(77,166,255,0.12);
+  --radius:14px; --radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.app{display:flex;min-height:100vh;}
+
+/* SIDEBAR */
+.sidebar{width:240px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
+.logo{padding:24px 24px 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:0.5px;text-transform:uppercase;}
+.nav{padding:12px;flex:1;}
+.nav-section-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:10px 12px 5px;font-weight:500;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;margin-bottom:1px;border:1px solid transparent;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-glow);color:var(--accent2);border-color:rgba(108,99,255,0.2);}
+.nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--accent);color:white;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center;}
+.sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;}
+.client-badge{display:flex;align-items:center;gap:10px;}
+.client-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--pink));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white;font-family:'Syne',sans-serif;flex-shrink:0;}
+.client-name{font-size:13px;font-weight:500;} .client-role{font-size:10px;color:var(--text3);}
+
+/* MAIN */
+.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.topbar{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:50;flex-shrink:0;}
+.page-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.content{padding:28px;flex:1;}
+
+/* PANELS */
+.panel{display:none;} .panel.active{display:block;}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-primary{background:var(--accent);color:white;}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);}
+.btn-success{background:var(--green);color:#000;}
+.btn-sm{padding:6px 12px;font-size:12px;} .btn-xs{padding:4px 9px;font-size:11px;}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+.card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.card-link{font-size:12px;color:var(--accent2);cursor:pointer;}
+
+/* STATS */
+.stats-grid{display:grid;gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;transition:border-color 0.2s;}
+.stat-card:hover{border-color:var(--border2);}
+.stat-card::before{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:50%;opacity:0.07;transform:translate(20px,-20px);}
+.stat-card.purple::before{background:var(--accent);} .stat-card.green::before{background:var(--green);}
+.stat-card.amber::before{background:var(--amber);} .stat-card.pink::before{background:var(--pink);} .stat-card.blue::before{background:var(--blue);}
+.stat-icon{font-size:18px;margin-bottom:10px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1px;margin-bottom:3px;}
+.stat-label{font-size:11px;color:var(--text2);}
+.stat-change{margin-top:6px;font-size:11px;} .stat-change.up{color:var(--green);} .stat-change.down{color:var(--pink);}
+
+/* FORMS */
+.form-group{margin-bottom:13px;}
+.form-label{font-size:11px;color:var(--text2);margin-bottom:5px;display:block;}
+.form-input{width:100%;padding:9px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;transition:border-color 0.15s;}
+.form-input:focus{outline:none;border-color:var(--accent);}
+textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
+
+/* TOGGLES */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:13px;} .toggle-desc{font-size:10px;color:var(--text3);margin-top:1px;}
+.toggle{width:38px;height:20px;background:var(--surface3);border-radius:10px;position:relative;cursor:pointer;border:1px solid var(--border2);transition:background 0.2s;flex-shrink:0;}
+.toggle.on{background:var(--accent);border-color:var(--accent);}
+.toggle::after{content:'';width:14px;height:14px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform 0.2s;}
+.toggle.on::after{transform:translateX(18px);}
+
+/* STATUS */
+.lead-status{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap;}
+.status-new{background:var(--blue-dim);color:var(--blue);} .status-warm{background:var(--amber-dim);color:var(--amber);}
+.status-hot{background:var(--pink-dim);color:var(--pink);} .status-booked{background:var(--green-dim);color:var(--green);}
+.status-active{background:var(--green-dim);color:var(--green);} .status-trial{background:var(--amber-dim);color:var(--amber);}
+
+/* CONFIG */
+.config-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.config-section-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:7px;}
+
+/* CHIPS */
+.chip{padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;font-size:11px;color:var(--text2);cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all 0.15s;margin:3px;}
+.chip:hover{background:var(--surface3);color:var(--text);}
+.chip-add{background:var(--accent-glow);border-color:rgba(108,99,255,0.3);color:var(--accent2);}
+
+/* PROGRESS */
+.progress-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width 0.4s;}
+
+/* SOURCE BADGES */
+.source-badge{font-size:11px;padding:3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;}
+.source-chatbot{background:var(--accent-glow);color:var(--accent2);} .source-form{background:var(--green-dim);color:var(--green);}
+.source-email{background:var(--amber-dim);color:var(--amber);} .source-phone{background:var(--pink-dim);color:var(--pink);}
+
+/* SCORE */
+.score-bar{display:flex;gap:3px;}
+.score-dot{width:6px;height:6px;border-radius:50%;background:var(--surface3);}
+.score-dot.filled{background:var(--green);}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 18px;font-size:13px;display:none;align-items:center;gap:10px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:slideIn 0.3s ease;}
+.toast.show{display:flex;}
+.toast-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+@keyframes slideIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px;}
+
+/* LAYOUT HELPERS */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.flex-col{display:flex;flex-direction:column;gap:16px;}
+.section-heading{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:6px;}
+.section-sub{color:var(--text2);font-size:14px;margin-bottom:24px;}
+
+/* LEAD / APPT ITEMS */
+.lead-item{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--border);}
+.lead-item:last-child{border-bottom:none;}
+.lead-avatar{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;font-family:'Syne',sans-serif;flex-shrink:0;}
+.appt-item{display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+.appt-item:last-child{border-bottom:none;}
+.appt-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+
+/* TIMELINE */
+.timeline-item{display:flex;gap:10px;padding-bottom:14px;position:relative;}
+.timeline-item::before{content:'';position:absolute;left:6px;top:18px;bottom:0;width:1px;background:var(--border);}
+.timeline-item:last-child::before{display:none;}
+.timeline-dot{width:14px;height:14px;border-radius:50%;flex-shrink:0;margin-top:2px;border:2px solid var(--surface);}
+
+/* PIPELINE */
+.pipeline-board{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px;}
+.pipeline-col{min-width:155px;flex:1;display:flex;flex-direction:column;gap:7px;}
+.pipeline-col-header{display:flex;align-items:center;justify-content:space-between;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:2px;}
+.pipeline-count{background:var(--surface3);color:var(--text3);font-size:10px;padding:1px 6px;border-radius:10px;}
+.pipeline-card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 11px;cursor:pointer;transition:all 0.15s;}
+.pipeline-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.pipeline-card-warm{border-left:3px solid var(--amber);} .pipeline-card-hot{border-left:3px solid var(--pink);} .pipeline-card-won{border-left:3px solid var(--green);}
+.pipeline-card-name{font-size:12px;font-weight:500;margin-bottom:2px;}
+.pipeline-card-detail{font-size:10px;color:var(--text3);margin-bottom:3px;}
+.pipeline-card-value{font-size:11px;color:var(--accent2);font-weight:500;}
+.pipeline-add-btn{width:100%;padding:6px;border:1px dashed var(--border2);border-radius:var(--radius-sm);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.pipeline-add-btn:hover{background:var(--surface2);color:var(--text2);}
+
+/* BAR CHART */
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:110px;}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.bar{width:100%;border-radius:4px 4px 0 0;cursor:pointer;transition:opacity 0.2s;}
+.bar:hover{opacity:0.75;}
+.bar-label{font-size:9px;color:var(--text3);}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.cal-day-name{text-align:center;font-size:10px;color:var(--text3);padding:4px;font-weight:500;text-transform:uppercase;}
+.cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:7px;font-size:12px;cursor:pointer;transition:all 0.15s;position:relative;}
+.cal-day:hover{background:var(--surface2);}
+.cal-day.other-month{color:var(--text3);}
+.cal-day.today{background:var(--accent);color:white;font-weight:600;}
+.cal-day.selected{background:var(--accent-glow);border:1px solid rgba(108,99,255,0.4);}
+.cal-day.has-appt::after{content:'';position:absolute;bottom:2px;width:4px;height:4px;border-radius:50%;background:var(--green);}
+
+/* CHAT */
+.chat-preview{display:flex;flex-direction:column;height:520px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.chat-preview-header{padding:14px 18px;background:var(--accent);display:flex;align-items:center;gap:10px;}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:var(--surface2);}
+.chat-msg{display:flex;gap:8px;}
+.chat-msg.user{flex-direction:row-reverse;}
+.msg-bubble{max-width:78%;padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.5;}
+.chat-msg.bot .msg-bubble{background:var(--surface3);border-radius:4px 14px 14px 14px;color:var(--text);}
+.chat-msg.user .msg-bubble{background:var(--accent);border-radius:14px 4px 14px 14px;color:white;}
+.chat-input-area{padding:10px 14px;display:flex;gap:8px;border-top:1px solid var(--border);background:var(--surface);}
+.chat-input{flex:1;padding:8px 11px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:13px;font-family:'DM Sans',sans-serif;}
+.chat-input:focus{outline:none;border-color:var(--accent);}
+.chat-send{padding:8px 14px;background:var(--accent);border:none;border-radius:7px;color:white;font-size:14px;cursor:pointer;}
+
+/* VOICE */
+.phone-screen{background:var(--surface2);border-radius:var(--radius);padding:18px;margin-bottom:10px;}
+.phone-btns{display:flex;justify-content:center;gap:28px;padding:14px;}
+.phone-btn{width:52px;height:52px;border-radius:50%;border:none;font-size:20px;cursor:pointer;transition:transform 0.15s;}
+.phone-btn:hover{transform:scale(1.1);}
+.phone-btn.answer{background:var(--green);} .phone-btn.decline{background:var(--pink);}
+.transcript-line{font-size:12px;line-height:1.6;margin-bottom:5px;padding:4px 8px;border-radius:6px;}
+.transcript-line.nova{color:var(--accent2);background:rgba(108,99,255,0.06);}
+.transcript-line.caller{color:var(--text);}
+
+/* EMAIL */
+.email-item{display:flex;align-items:flex-start;gap:9px;padding:9px 8px;border-radius:var(--radius-sm);cursor:pointer;margin-bottom:2px;border:1px solid transparent;transition:all 0.15s;}
+.email-item:hover{background:var(--surface2);}
+.email-item.active{background:var(--accent-glow);border-color:rgba(108,99,255,0.2);}
+.email-sender-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.email-from{font-size:12px;font-weight:500;margin-bottom:1px;}
+.email-subject{font-size:11px;color:var(--text2);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.email-preview{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tone-btn{padding:4px 10px;border-radius:20px;font-size:11px;cursor:pointer;background:var(--surface2);border:1px solid var(--border2);color:var(--text3);transition:all 0.15s;}
+.tone-btn.active{background:var(--accent-glow);color:var(--accent2);border-color:rgba(108,99,255,0.3);}
+
+/* ONBOARDING WIZARD */
+.step-circle{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:2px solid var(--border2);background:var(--surface2);color:var(--text3);transition:all 0.3s;}
+.step-circle.done{background:var(--green);border-color:var(--green);color:#000;}
+.step-circle.active{background:var(--accent);border-color:var(--accent);color:white;}
+.step-line{flex:1;height:2px;background:var(--border2);margin:0 6px;transition:background 0.3s;}
+.step-line.done{background:var(--green);}
+.niche-btn{padding:13px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;text-align:center;transition:all 0.15s;}
+.niche-btn:hover{border-color:var(--border2);}
+.niche-btn.selected{border-color:var(--accent);background:var(--accent-glow);color:var(--accent2);}
+.module-btn{padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;display:flex;align-items:center;gap:11px;transition:all 0.15s;}
+.module-btn:hover{border-color:var(--border2);}
+.module-btn.selected{border-color:var(--accent);background:var(--accent-glow);}
+
+/* ANALYTICS DONUT */
+.legend-item{display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:7px;}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+
+/* CLIENT CARDS */
+.client-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all 0.15s;margin-bottom:10px;}
+.client-card:hover{border-color:var(--border2);}
+.client-card.selected{border-color:var(--accent);}
+.client-logo{border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;color:white;flex-shrink:0;}
+
+/* BUILDER */
+.web-block{background:white;border-radius:8px;margin-bottom:6px;cursor:pointer;border:2px solid transparent;transition:border-color 0.15s;position:relative;overflow:visible;}
+.web-block:hover{border-color:#6c63ff44;}
+.web-block.selected{border-color:#6c63ff;}
+.block-actions{display:none;position:absolute;top:6px;right:6px;gap:4px;z-index:10;}
+.web-block:hover .block-actions,.web-block.selected .block-actions{display:flex;}
+.block-action-btn{background:#6c63ff;color:white;border:none;border-radius:4px;padding:3px 7px;font-size:10px;cursor:pointer;}
+.hero-block{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:44px 28px;text-align:center;color:white;}
+.hero-block h2{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;margin-bottom:10px;}
+.hero-block p{font-size:14px;opacity:0.7;margin-bottom:18px;}
+.hero-cta{display:inline-block;padding:10px 22px;background:#6c63ff;color:white;border-radius:8px;font-size:13px;font-weight:600;}
+.services-block{padding:28px;background:white;}
+.services-block h3{font-family:'Syne',sans-serif;font-size:18px;color:#111;margin-bottom:14px;}
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.service-card{background:#f8f8fc;border-radius:9px;padding:14px;}
+.service-card h4{font-size:12px;font-weight:600;color:#222;margin-bottom:3px;}
+.service-card p{font-size:11px;color:#777;}
+.contact-block{padding:28px;background:#fafafa;}
+.contact-block h3{font-family:'Syne',sans-serif;font-size:16px;color:#111;margin-bottom:14px;}
+.contact-form{display:grid;gap:9px;}
+.contact-form input,.contact-form textarea{padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:12px;font-family:'DM Sans',sans-serif;background:white;color:#333;}
+.contact-form textarea{height:70px;resize:none;}
+.contact-form button{padding:10px;background:#6c63ff;color:white;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+
+/* SMS */
+.sms-bubble{background:#3a3a4a;border-radius:16px 16px 16px 4px;padding:9px 13px;font-size:12px;line-height:1.5;margin-bottom:7px;color:var(--text);}
+.sms-bubble.sent{background:var(--accent);border-radius:16px 16px 4px 16px;margin-left:auto;max-width:80%;}
+.star-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+
+/* BILLING */
+.invoice-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;align-items:center;padding:11px 15px;border-bottom:1px solid var(--border);font-size:12px;transition:background 0.15s;cursor:pointer;}
+.invoice-row:hover{background:var(--surface2);}
+.invoice-header{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;padding:9px 15px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);}
+.inv-paid{background:var(--green-dim);color:var(--green);padding:2px 7px;border-radius:20px;font-size:10px;}
+.inv-pending{background:var(--amber-dim);color:var(--amber);padding:2px 7px;border-radius:20px;font-size:10px;}
+
+/* QUICK ACTIONS */
+.quick-action-btn{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:all 0.15s;text-align:left;}
+.quick-action-btn:hover{border-color:var(--border2);background:var(--surface2);}
+
+/* ACTIVITY */
+.activity-item{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--border);}
+.activity-item:last-child{border-bottom:none;}
+.activity-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+
+/* SEQ ITEMS */
+.seq-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:11px;}
+.seq-num{width:24px;height:24px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(108,99,255,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent2);flex-shrink:0;}
+
+/* PLAN CARD */
+.plan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.plan-price{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;letter-spacing:-1px;margin:6px 0 3px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-text">Harakel</div>
+    <div class="logo-sub">Harakel Innovations</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item active" onclick="nav('dashboard',this)"><span class="icon">◈</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="nav('analytics',this)"><span class="icon">◎</span><span>Analytics</span></div>
+    <div class="nav-section-label">Clients</div>
+    <div class="nav-item" onclick="nav('clients',this)"><span class="icon">◉</span><span>Client Portal</span><span class="nav-badge">3</span></div>
+    <div class="nav-item" onclick="nav('onboarding',this)"><span class="icon">⬡</span><span>Onboarding</span></div>
+    <div class="nav-section-label">Tools</div>
+    <div class="nav-item" onclick="nav('builder',this)"><span class="icon">⊞</span><span>Website Builder</span></div>
+    <div class="nav-item" onclick="nav('chatbot',this)"><span class="icon">◌</span><span>AI Chatbot</span><span class="nav-badge" style="background:var(--green);color:#000">Live</span></div>
+    <div class="nav-item" onclick="nav('appointments',this)"><span class="icon">◷</span><span>Appointments</span><span class="nav-badge">4</span></div>
+    <div class="nav-item" onclick="nav('leads',this)"><span class="icon">◉</span><span>Leads</span><span class="nav-badge">12</span></div>
+    <div class="nav-section-label">Automation</div>
+    <div class="nav-item" onclick="nav('voice',this)"><span class="icon">☏</span><span>Voice AI</span></div>
+    <div class="nav-item" onclick="nav('email',this)"><span class="icon">◫</span><span>Email AI</span><span class="nav-badge">5</span></div>
+    <div class="nav-item" onclick="nav('crm',this)"><span class="icon">◧</span><span>CRM</span></div>
+    <div class="nav-item" onclick="nav('sms',this)"><span class="icon">✉</span><span>SMS & Reviews</span></div>
+    <div class="nav-section-label">Business</div>
+    <div class="nav-item" onclick="nav('billing',this)"><span class="icon">💳</span><span>Billing</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="client-badge">
+      <div class="client-avatar">Y</div>
+      <div><div class="client-name">Harakel Innovations</div><div class="client-role">Admin</div></div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main">
+  <header class="topbar">
+    <div class="page-title" id="page-title">Dashboard</div>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost" onclick="toast('Help docs coming soon!')">Help</button>
+      <button class="btn btn-primary" id="top-cta" onclick="handleCTA()">+ New Client</button>
+    </div>
+  </header>
+  <div class="content">
+
+<!-- ═══════ DASHBOARD ═══════ -->
+<div class="panel active" id="panel-dashboard">
+  <div style="margin-bottom:20px;"><div class="section-heading">Good morning ☀️</div><div class="section-sub">Here's what's happening across your clients today.</div></div>
+  <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">12</div><div class="stat-label">New leads</div><div class="stat-change up">↑ 3 since yesterday</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value">4</div><div class="stat-label">Appointments today</div><div class="stat-change up">↑ 1 new booking</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">94%</div><div class="stat-label">Chatbot uptime</div><div class="stat-change up">All bots running</div></div>
+    <div class="stat-card pink"><div class="stat-icon">◧</div><div class="stat-value">$24.5K</div><div class="stat-label">Pipeline value</div><div class="stat-change up">↑ $3.2K this week</div></div>
+    <div class="stat-card blue"><div class="stat-icon">⬡</div><div class="stat-value">3</div><div class="stat-label">Active clients</div><div class="stat-change up">1 onboarding</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:18px;">
+    <div class="quick-action-btn" onclick="nav('onboarding',null)"><div style="font-size:20px;margin-bottom:5px;">⬡</div><div style="font-size:13px;font-weight:500;">Onboard new client</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Set up website, chatbot & automations</div></div>
+    <div class="quick-action-btn" onclick="nav('leads',null)"><div style="font-size:20px;margin-bottom:5px;">◉</div><div style="font-size:13px;font-weight:500;">View all leads</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">12 new leads need attention</div></div>
+    <div class="quick-action-btn" onclick="nav('appointments',null)"><div style="font-size:20px;margin-bottom:5px;">◷</div><div style="font-size:13px;font-weight:500;">Today's appointments</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">4 bookings scheduled</div></div>
+    <div class="quick-action-btn" onclick="nav('analytics',null)"><div style="font-size:20px;margin-bottom:5px;">◎</div><div style="font-size:13px;font-weight:500;">View analytics</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">See performance across all clients</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
+    <div class="flex-col">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Recent leads</div><span class="card-link" onclick="nav('leads',null)">View all →</span></div>
+        <div class="lead-item"><div class="lead-avatar" style="background:var(--pink-dim);color:var(--pink)">MR</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 2 min ago</div></div><span class="lead-status status-hot">Hot</span></div>
+        <div class="lead-item"><div class="lead-avatar" style="background:var(--green-dim);color:var(--green)">JK</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Via website form · 18 min ago</div></div><span class="lead-status status-warm">Warm</span></div>
+        <div class="lead-item"><div class="lead-avatar" style="background:var(--accent-glow);color:var(--accent2)">ST</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Sarah Thompson</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 1 hr ago</div></div><span class="lead-status status-booked">Booked</span></div>
+        <div class="lead-item"><div class="lead-avatar" style="background:var(--amber-dim);color:var(--amber)">DL</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">David Lee</div><div style="font-size:11px;color:var(--text3)">Via email · 3 hr ago</div></div><span class="lead-status status-new">New</span></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Live activity feed</div><span class="lead-status status-active">● Live</span></div>
+        <div class="activity-item"><div class="activity-icon" style="background:var(--green-dim);color:var(--green)">◎</div><div style="flex:1;font-size:12px;">Chatbot captured lead <strong>Maria Rodriguez</strong> on Bloom Beauty Co. website</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">2m</div></div>
+        <div class="activity-item"><div class="activity-icon" style="background:var(--accent-glow);color:var(--accent2)">◷</div><div style="flex:1;font-size:12px;">Appointment auto-booked for <strong>James Kim</strong> — Thu 2:30 PM</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">18m</div></div>
+        <div class="activity-item"><div class="activity-icon" style="background:var(--amber-dim);color:var(--amber)">◫</div><div style="flex:1;font-size:12px;">AI email reply sent to <strong>TechPro Solutions</strong> inquiry</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">44m</div></div>
+        <div class="activity-item"><div class="activity-icon" style="background:var(--pink-dim);color:var(--pink)">☏</div><div style="flex:1;font-size:12px;">Voice AI answered call — appointment booked</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">1h</div></div>
+        <div class="activity-item"><div class="activity-icon" style="background:var(--blue-dim);color:var(--blue)">⭐</div><div style="flex:1;font-size:12px;">Review request sent to <strong>Sarah Thompson</strong> after appointment</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">2h</div></div>
+      </div>
+    </div>
+    <div class="flex-col">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Today's appointments</div><span class="card-link" onclick="nav('appointments',null)">View all →</span></div>
+        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">9:00 AM</div><div class="appt-dot" style="background:var(--green)"></div><div><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Discovery call · 30 min</div></div></div>
+        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">11:00 AM</div><div class="appt-dot" style="background:var(--accent)"></div><div><div style="font-size:13px;font-weight:500;">TechPro Solutions</div><div style="font-size:11px;color:var(--text3)">Onboarding · 1 hr</div></div></div>
+        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">2:30 PM</div><div class="appt-dot" style="background:var(--amber)"></div><div><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Strategy · 45 min</div></div></div>
+        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">4:00 PM</div><div class="appt-dot" style="background:var(--pink)"></div><div><div style="font-size:13px;font-weight:500;">Bloom Beauty Co.</div><div style="font-size:11px;color:var(--text3)">Demo · 30 min</div></div></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Monthly revenue</div></div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;">$4,200</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">March 2026 · 3 active subscriptions</div>
+        <div class="progress-bar" style="margin-bottom:6px;"><div class="progress-fill" style="width:70%;background:var(--accent);"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">70% to $6,000 monthly goal</div>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="nav('onboarding',null)">+ Onboard next client</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ANALYTICS ═══════ -->
+<div class="panel" id="panel-analytics">
+  <div class="section-heading">Analytics</div>
+  <div class="section-sub">Track ROI and results across all your clients.</div>
+  <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">147</div><div class="stat-label">Leads captured</div><div class="stat-change up">↑ 23% vs last month</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value">89</div><div class="stat-label">Appointments booked</div><div class="stat-change up">↑ 18% vs last month</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">2,341</div><div class="stat-label">Chatbot conversations</div><div class="stat-change up">↑ 31% vs last month</div></div>
+    <div class="stat-card pink"><div class="stat-icon">☏</div><div class="stat-value">412</div><div class="stat-label">Calls handled</div><div class="stat-change up">↑ 12% vs last month</div></div>
+    <div class="stat-card blue"><div class="stat-icon">◫</div><div class="stat-value">68%</div><div class="stat-label">Email open rate</div><div class="stat-change up">↑ 8pts vs last month</div></div>
+  </div>
+  <div class="grid-2" style="margin-bottom:18px;">
+    <div class="card"><div class="card-title" style="margin-bottom:4px;">Leads captured</div><div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Daily leads · last 20 days</div><div class="bar-chart" id="leads-chart"></div></div>
+    <div class="card"><div class="card-title" style="margin-bottom:4px;">Monthly revenue</div><div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Agency MRR · last 6 months</div><div class="bar-chart" id="rev-chart"></div></div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;">Lead sources</div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <svg width="90" height="90" viewBox="0 0 36 36" style="flex-shrink:0;">
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--surface3)" stroke-width="4"/>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="45 55" stroke-dashoffset="25" transform="rotate(-90 18 18)"/>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--green)" stroke-width="4" stroke-dasharray="28 72" stroke-dashoffset="-20" transform="rotate(-90 18 18)"/>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--amber)" stroke-width="4" stroke-dasharray="15 85" stroke-dashoffset="-48" transform="rotate(-90 18 18)"/>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--pink)" stroke-width="4" stroke-dasharray="12 88" stroke-dashoffset="-63" transform="rotate(-90 18 18)"/>
+        </svg>
+        <div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Chatbot<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">45%</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Website form<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">28%</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Email<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">15%</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>Voice AI<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">12%</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" style="margin-bottom:14px;">Chatbot & email performance</div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Conversations this month</span><span style="font-weight:600;">2,341</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Lead capture rate</span><span style="font-weight:600;color:var(--green);">34%</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Email open rate</span><span style="font-weight:600;color:var(--green);">68%</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Reviews generated</span><span style="font-weight:600;color:var(--amber);">47 ⭐</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;font-size:13px;"><span>Avg Google rating</span><span style="font-weight:600;color:var(--amber);">4.8 / 5</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CLIENT PORTAL ═══════ -->
+<div class="panel" id="panel-clients">
+  <div class="section-heading">Client Portal</div>
+  <div class="section-sub">Manage each client's modules, settings, and billing.</div>
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
+    <div>
+      <div class="client-card selected" onclick="selectClient(this,'bloom')" id="cc-bloom">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff6b9d,#ffb547);">BB</div>
+          <div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">Bloom Beauty Co.</div><span class="lead-status" style="background:var(--accent-glow);color:var(--accent2);">Pro</span></div><div style="font-size:11px;color:var(--text3);">bloombeautyco.com · Active since Jan 2026</div></div>
+          <span class="lead-status status-active">● Active</span>
+        </div>
+        <div class="grid-3"><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">68</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">42</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">$1,800</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div></div>
+      </div>
+      <div class="client-card" onclick="selectClient(this,'techpro')" id="cc-techpro">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#4da6ff);">TP</div>
+          <div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">TechPro Solutions</div><span class="lead-status" style="background:var(--blue-dim);color:var(--blue);">Starter</span></div><div style="font-size:11px;color:var(--text3);">techprosolutions.com · Active since Feb 2026</div></div>
+          <span class="lead-status status-active">● Active</span>
+        </div>
+        <div class="grid-3"><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">52</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">31</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">$1,400</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div></div>
+      </div>
+      <div class="client-card" onclick="selectClient(this,'lee')" id="cc-lee">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          <div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#00d9a3,#4da6ff);">LC</div>
+          <div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">Lee's Chiropractic</div><span class="lead-status" style="background:var(--accent-glow);color:var(--accent2);">Pro</span></div><div style="font-size:11px;color:var(--text3);">leeschiro.com · Trial ends Apr 5</div></div>
+          <span class="lead-status status-trial">● Trial</span>
+        </div>
+        <div class="grid-3"><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">27</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">16</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">$1,000</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div></div>
+      </div>
+    </div>
+    <div class="card" style="position:sticky;top:90px;align-self:start;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="client-logo" id="d-logo" style="width:38px;height:38px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#ff6b9d,#ffb547);">BB</div>
+        <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="d-name">Bloom Beauty Co.</div><div style="font-size:11px;color:var(--text3);" id="d-url">bloombeautyco.com</div></div>
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:16px;">
+        <button class="btn btn-primary btn-sm" onclick="toast('Opening client dashboard!')">Dashboard</button>
+        <button class="btn btn-ghost btn-sm" onclick="toast('Login link sent!')">Send link</button>
+      </div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Active modules</div>
+      <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">AI Chatbot</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Appointments</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Voice AI</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Email AI</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">SMS & Reviews</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">CRM</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">White-label branding</div>
+        <div class="form-group"><label class="form-label">Brand name shown to customers</label><input class="form-input" style="font-size:12px;" value="Bloom Beauty AI Assistant"></div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="toast('Branding saved!')">Save branding</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ ONBOARDING ═══════ -->
+<div class="panel" id="panel-onboarding">
+  <div style="max-width:680px;margin:0 auto;">
+    <div class="section-heading">Onboard a new client</div>
+    <div class="section-sub">Set up a new business in minutes with our step-by-step wizard.</div>
+    <div style="display:flex;align-items:center;margin-bottom:28px;" id="step-bar">
+      <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle active" id="sc1">1</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Business</div></div><div class="step-line" id="sl1"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc2">2</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Industry</div></div><div class="step-line" id="sl2"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc3">3</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Modules</div></div><div class="step-line" id="sl3"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc4">4</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Branding</div></div><div class="step-line" id="sl4"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc5">5</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Plan</div></div>
+    </div>
+    <div class="card">
+      <!-- Step 1 -->
+      <div class="panel active" id="ws1">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Tell us about the business</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">This info will configure all AI tools automatically.</div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Business name *</label><input class="form-input" id="biz-name" placeholder="e.g. Bloom Beauty Co."></div><div class="form-group"><label class="form-label">Owner name *</label><input class="form-input" placeholder="e.g. Sarah Thompson"></div></div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Phone *</label><input class="form-input" placeholder="(555) 000-0000"></div><div class="form-group"><label class="form-label">Email *</label><input class="form-input" placeholder="owner@business.com"></div></div>
+        <div class="form-group"><label class="form-label">Business address</label><input class="form-input" placeholder="123 Main St, City, State"></div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Website (if existing)</label><input class="form-input" placeholder="www.yourbusiness.com"></div><div class="form-group"><label class="form-label">Business hours</label><input class="form-input" placeholder="Mon–Fri 9am–6pm"></div></div>
+        <div class="form-group"><label class="form-label">What does this business do?</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. We're a beauty salon specializing in hair and skincare..."></textarea></div>
+      </div>
+      <!-- Step 2 -->
+      <div class="panel" id="ws2">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">What industry are they in?</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">We'll pre-configure the AI for their industry automatically.</div>
+        <div class="grid-3" style="margin-bottom:8px;">
+          <div class="niche-btn selected" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">💅</div><div style="font-size:12px;font-weight:500;">Beauty & Wellness</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🏥</div><div style="font-size:12px;font-weight:500;">Medical / Healthcare</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">⚖️</div><div style="font-size:12px;font-weight:500;">Legal Services</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🏠</div><div style="font-size:12px;font-weight:500;">Real Estate</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🍕</div><div style="font-size:12px;font-weight:500;">Restaurant / Food</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🔧</div><div style="font-size:12px;font-weight:500;">Home Services</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">💼</div><div style="font-size:12px;font-weight:500;">Consulting / B2B</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🚗</div><div style="font-size:12px;font-weight:500;">Auto Services</div></div>
+          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🎓</div><div style="font-size:12px;font-weight:500;">Education</div></div>
+        </div>
+      </div>
+      <!-- Step 3 -->
+      <div class="panel" id="ws3">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Which tools do they need?</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Select modules to activate. You can change this anytime.</div>
+        <div class="grid-2">
+          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⬡</div><div><div style="font-size:13px;font-weight:500;">Website Builder</div><div style="font-size:11px;color:var(--text3);">Professional website</div></div></div>
+          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◎</div><div><div style="font-size:13px;font-weight:500;">AI Chatbot</div><div style="font-size:11px;color:var(--text3);">24/7 on their website</div></div></div>
+          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◷</div><div><div style="font-size:13px;font-weight:500;">Appointments</div><div style="font-size:11px;color:var(--text3);">AI booking system</div></div></div>
+          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◉</div><div><div style="font-size:13px;font-weight:500;">Lead Capture</div><div style="font-size:11px;color:var(--text3);">Auto-capture & qualify</div></div></div>
+          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">☏</div><div><div style="font-size:13px;font-weight:500;">Voice AI</div><div style="font-size:11px;color:var(--text3);">AI phone receptionist</div></div></div>
+          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◫</div><div><div style="font-size:13px;font-weight:500;">Email AI</div><div style="font-size:11px;color:var(--text3);">Auto-replies & sequences</div></div></div>
+          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◧</div><div><div style="font-size:13px;font-weight:500;">CRM</div><div style="font-size:11px;color:var(--text3);">Pipeline management</div></div></div>
+          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⭐</div><div><div style="font-size:13px;font-weight:500;">SMS & Reviews</div><div style="font-size:11px;color:var(--text3);">Texts + review generation</div></div></div>
+        </div>
+      </div>
+      <!-- Step 4 -->
+      <div class="panel" id="ws4">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Set up their branding</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Applied across their website, chatbot, and all client-facing tools.</div>
+        <div class="form-group"><label class="form-label">Brand display name</label><input class="form-input" placeholder="e.g. Bloom Beauty Assistant"></div>
+        <div class="form-group"><label class="form-label">AI assistant name</label><input class="form-input" placeholder="e.g. Aria, Nova, Luna..."></div>
+        <div class="form-group"><label class="form-label">Brand color</label><div style="display:flex;gap:8px;margin-top:6px;">
+          <div style="width:30px;height:30px;border-radius:7px;background:#6c63ff;cursor:pointer;border:2px solid white;" onclick="toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#ff6b9d;cursor:pointer;" onclick="toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#00d9a3;cursor:pointer;" onclick="toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#ffb547;cursor:pointer;" onclick="toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#4da6ff;cursor:pointer;" onclick="toast('Color selected!')"></div>
+          <input type="color" style="width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);cursor:pointer;padding:2px;background:var(--surface2);">
+        </div></div>
+        <div class="form-group"><label class="form-label">Chatbot greeting message</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. Hi! I'm Aria from Bloom Beauty. How can I help you today?"></textarea></div>
+      </div>
+      <!-- Step 5 -->
+      <div class="panel" id="ws5">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Choose their plan</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Set the monthly fee. These are suggested tiers — you decide.</div>
+        <div class="grid-3" style="margin-bottom:18px;">
+          <div class="niche-btn" onclick="pickPlan(this,'500')" style="padding:18px 12px;"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;">$500<span style="font-size:12px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:13px;font-weight:600;margin-bottom:4px;">Starter</div><div style="font-size:10px;color:var(--text3);text-align:left;">Website + Chatbot + Leads</div></div>
+          <div class="niche-btn selected" onclick="pickPlan(this,'1000')" style="padding:18px 12px;"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;">$1,000<span style="font-size:12px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:13px;font-weight:600;margin-bottom:4px;">Pro</div><div style="font-size:10px;color:var(--text3);text-align:left;">Everything + Voice + Email + CRM</div></div>
+          <div class="niche-btn" onclick="pickPlan(this,'1500')" style="padding:18px 12px;"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;">$1,500<span style="font-size:12px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:13px;font-weight:600;margin-bottom:4px;">Enterprise</div><div style="font-size:10px;color:var(--text3);text-align:left;">All modules + priority support</div></div>
+        </div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Custom fee (override)</label><input class="form-input" id="custom-fee" placeholder="e.g. $1,200"></div><div class="form-group"><label class="form-label">Billing start date</label><input class="form-input" type="date" value="2026-04-01"></div></div>
+        <div class="form-group"><label class="form-label">Internal notes</label><textarea class="form-input" style="min-height:50px;" placeholder="Notes about this client (not shown to them)..."></textarea></div>
+      </div>
+      <!-- Step 6 complete -->
+      <div class="panel" id="ws6" style="text-align:center;padding:20px 0;">
+        <div style="font-size:52px;margin-bottom:14px;">🎉</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:8px;">Client is live!</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:22px;">All tools have been configured. Your client is ready to start capturing leads.</div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button class="btn btn-primary" onclick="nav('clients',null)">View in client portal</button>
+          <button class="btn btn-ghost" onclick="toast('Login link sent to client!')">Send login link</button>
+          <button class="btn btn-ghost" onclick="resetWizard()">Onboard another</button>
+        </div>
+      </div>
+      <!-- Footer -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:24px;padding-top:18px;border-top:1px solid var(--border);" id="wiz-footer">
+        <button class="btn btn-ghost" id="wiz-back" onclick="wPrev()" style="visibility:hidden;">← Back</button>
+        <div style="font-size:12px;color:var(--text3);" id="wiz-indicator">Step 1 of 5</div>
+        <button class="btn btn-primary" id="wiz-next" onclick="wNext()">Continue →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ WEBSITE BUILDER ═══════ -->
+<div class="panel" id="panel-builder">
+  <div style="display:grid;grid-template-columns:180px 1fr 200px;height:calc(100vh - 120px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    <div style="border-right:1px solid var(--border);padding:14px;overflow-y:auto;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;">Blocks</div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="addBlock('hero')">◈ Hero section</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="addBlock('services')">⊞ Services grid</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="addBlock('contact')">◎ Contact form</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="addBlock('testimonial')">❝ Testimonials</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="addBlock('cta')">⚡ Call to action</button>
+      <div style="margin-top:18px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;">Templates</div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">💅 Beauty & Spa</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">🏥 Medical</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">🏠 Real Estate</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">🍕 Restaurant</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">⚖️ Law Firm</button>
+    </div>
+    <div style="background:#f5f5f7;overflow-y:auto;display:flex;flex-direction:column;">
+      <div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-ghost btn-xs active" style="background:var(--surface3);">Desktop</button>
+        <button class="btn btn-ghost btn-xs">Tablet</button>
+        <button class="btn btn-ghost btn-xs">Mobile</button>
+        <div style="margin-left:auto;display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-xs" onclick="toast('Preview opened!')">Preview</button>
+          <button class="btn btn-primary btn-xs" onclick="toast('🎉 Site published!')">Publish</button>
+        </div>
+      </div>
+      <div style="padding:16px;" id="canvas">
+        <div class="web-block selected" onclick="selBlock(this)">
+          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
+          <div class="hero-block"><h2 id="hero-h">Your Business, Elevated</h2><p id="hero-p">We help local businesses grow with professional services you can trust.</p><span class="hero-cta" id="hero-cta">Get Started Today</span></div>
+        </div>
+        <div class="web-block" onclick="selBlock(this)">
+          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
+          <div class="services-block"><h3>Our Services</h3><div class="services-grid"><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">🔧</div><h4>Consulting</h4><p>Expert advice tailored to your needs</p></div><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">📊</div><h4>Analytics</h4><p>Data-driven insights for growth</p></div><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">🤝</div><h4>Support</h4><p>24/7 dedicated client support</p></div></div></div>
+        </div>
+        <div class="web-block" onclick="selBlock(this)">
+          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
+          <div class="contact-block"><h3>Get In Touch</h3><div class="contact-form"><input placeholder="Your name"><input placeholder="Email address"><input placeholder="Phone number"><textarea placeholder="How can we help you?"></textarea><button>Send Message</button></div></div>
+        </div>
+      </div>
+    </div>
+    <div style="border-left:1px solid var(--border);padding:14px;overflow-y:auto;background:var(--surface);">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:14px;">Properties</div>
+      <div class="form-group"><label class="form-label">Heading text</label><input class="form-input" style="font-size:12px;" value="Your Business, Elevated" oninput="document.getElementById('hero-h').textContent=this.value"></div>
+      <div class="form-group"><label class="form-label">Subtext</label><input class="form-input" style="font-size:12px;" value="We help local businesses grow..." oninput="document.getElementById('hero-p').textContent=this.value"></div>
+      <div class="form-group"><label class="form-label">Button label</label><input class="form-input" style="font-size:12px;" value="Get Started Today" oninput="document.getElementById('hero-cta').textContent=this.value"></div>
+      <div class="form-group"><label class="form-label">Theme color</label><div style="display:flex;gap:6px;margin-top:4px;">
+        <div style="width:24px;height:24px;border-radius:6px;background:#6c63ff;cursor:pointer;border:2px solid white;" onclick="setTheme('#6c63ff')"></div>
+        <div style="width:24px;height:24px;border-radius:6px;background:#ff6b9d;cursor:pointer;" onclick="setTheme('#ff6b9d')"></div>
+        <div style="width:24px;height:24px;border-radius:6px;background:#00d9a3;cursor:pointer;" onclick="setTheme('#00d9a3')"></div>
+        <div style="width:24px;height:24px;border-radius:6px;background:#ffb547;cursor:pointer;" onclick="setTheme('#ffb547')"></div>
+        <div style="width:24px;height:24px;border-radius:6px;background:#4da6ff;cursor:pointer;" onclick="setTheme('#4da6ff')"></div>
+      </div></div>
+      <div class="form-group"><label class="form-label">Business name</label><input class="form-input" style="font-size:12px;" placeholder="My Business" oninput="toast('Updated!')"></div>
+      <div class="form-group"><label class="form-label">Font style</label><select class="form-input" style="font-size:12px;" onchange="toast('Font updated!')"><option>Modern (Syne)</option><option>Classic (Serif)</option><option>Clean (Sans)</option></select></div>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px;" onclick="toast('💾 Changes saved!')">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CHATBOT ═══════ -->
+<div class="panel" id="panel-chatbot">
+  <div style="display:grid;grid-template-columns:1fr 340px;gap:18px;">
+    <div class="flex-col">
+      <div class="config-section">
+        <div class="config-section-title">🤖 Bot identity</div>
+        <div class="form-group"><label class="form-label">Bot name</label><input class="form-input" value="Aria" oninput="document.getElementById('bot-name-disp').textContent=this.value"></div>
+        <div class="form-group"><label class="form-label">Greeting message</label><textarea class="form-input" style="min-height:70px;" oninput="document.getElementById('greeting-disp').textContent=this.value">👋 Hi there! I'm Aria, your virtual assistant. How can I help you today?</textarea></div>
+        <div class="form-group"><label class="form-label">Business type</label><select class="form-input" onchange="toast('Bot trained for this industry!')"><option>General business</option><option>Medical / Healthcare</option><option>Restaurant / Food</option><option>Real Estate</option><option>Beauty & Wellness</option><option>Legal Services</option></select></div>
+      </div>
+      <div class="config-section">
+        <div class="config-section-title">🎛️ Behavior</div>
+        <div class="toggle-row"><div><div class="toggle-label">Capture lead info</div><div class="toggle-desc">Ask name, email & phone</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">Auto-book appointments</div><div class="toggle-desc">Let bot schedule bookings</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">Human handoff</div><div class="toggle-desc">Escalate complex queries</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">After-hours mode</div><div class="toggle-desc">Custom message when closed</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="toast('✅ Chatbot deployed!')">Deploy chatbot</button>
+        <button class="btn btn-ghost" onclick="toast('Embed code copied!')">Get embed code</button>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px;">Live preview</div>
+      <div class="chat-preview">
+        <div class="chat-preview-header">
+          <div style="width:34px;height:34px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">🤖</div>
+          <div style="margin-left:2px;"><div style="font-weight:600;font-size:13px;" id="bot-name-disp">Aria</div><div style="font-size:10px;opacity:0.8;">Online · Replies instantly</div></div>
+          <div style="width:8px;height:8px;background:var(--green);border-radius:50%;margin-left:auto;"></div>
+        </div>
+        <div class="chat-messages" id="chat-msgs">
+          <div class="chat-msg bot"><div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">🤖</div><div><div class="msg-bubble" id="greeting-disp">👋 Hi there! I'm Aria, your virtual assistant. How can I help you today?</div><div style="font-size:10px;color:var(--text3);margin-top:3px;">Just now</div></div></div>
+        </div>
+        <div style="padding:8px 14px;display:flex;gap:6px;overflow-x:auto;background:var(--surface2);border-top:1px solid var(--border);">
+          <div style="padding:5px 11px;background:var(--surface3);border:1px solid var(--border2);border-radius:20px;font-size:11px;color:var(--text2);white-space:nowrap;cursor:pointer;" onclick="sendChat('Book appointment')">📅 Book</div>
+          <div style="padding:5px 11px;background:var(--surface3);border:1px solid var(--border2);border-radius:20px;font-size:11px;color:var(--text2);white-space:nowrap;cursor:pointer;" onclick="sendChat('Get a quote')">💰 Quote</div>
+          <div style="padding:5px 11px;background:var(--surface3);border:1px solid var(--border2);border-radius:20px;font-size:11px;color:var(--text2);white-space:nowrap;cursor:pointer;" onclick="sendChat('Business hours?')">🕐 Hours</div>
+        </div>
+        <div class="chat-input-area">
+          <input class="chat-input" id="chat-in" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="chat-send" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ APPOINTMENTS ═══════ -->
+<div class="panel" id="panel-appointments">
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title">March 2026</div><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-xs">‹</button><button class="btn btn-ghost btn-xs">›</button></div></div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+    <div class="flex-col">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Today · Mar 26</div><span class="lead-status status-booked">4 today</span></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:7px;cursor:pointer;" onclick="toast('Maria Rodriguez — Discovery call')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">9:00 AM</span></div><div style="font-size:11px;color:var(--text3);">Discovery call · 30 min · Via chatbot</div></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:7px;cursor:pointer;" onclick="toast('TechPro Solutions — Onboarding')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">TechPro Solutions</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">11:00 AM</span></div><div style="font-size:11px;color:var(--text3);">Onboarding · 1 hr · Manual</div></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:7px;cursor:pointer;" onclick="toast('James Kim — Strategy session')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">James Kim</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">2:30 PM</span></div><div style="font-size:11px;color:var(--text3);">Strategy session · 45 min · Via chatbot</div></div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:14px;cursor:pointer;" onclick="toast('Bloom Beauty Co. — Demo')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">Bloom Beauty Co.</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">4:00 PM</span></div><div style="font-size:11px;color:var(--text3);">Demo · 30 min · Via website</div></div>
+        <div style="padding-top:14px;border-top:1px solid var(--border);">
+          <div style="font-size:13px;font-weight:500;margin-bottom:10px;">+ Book new appointment</div>
+          <div class="form-group"><label class="form-label">Client name</label><input class="form-input" id="new-appt-name" placeholder="Full name"></div>
+          <div class="grid-2"><div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" value="2026-03-26"></div><div class="form-group"><label class="form-label">Time</label><input class="form-input" type="time" value="10:00"></div></div>
+          <div class="form-group"><label class="form-label">Type</label><select class="form-input"><option>Discovery call</option><option>Onboarding</option><option>Strategy session</option><option>Demo</option><option>Follow-up</option></select></div>
+          <button class="btn btn-primary btn-sm" style="width:100%;" onclick="bookAppt()">Book appointment</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ LEADS ═══════ -->
+<div class="panel" id="panel-leads">
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">12</div><div class="stat-label">New this week</div><div class="stat-change up">↑ 3 vs last week</div></div>
+    <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value">3</div><div class="stat-label">Hot leads</div><div class="stat-change up">Need follow-up now</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value">5</div><div class="stat-label">Booked</div><div class="stat-change up">Converted to appointments</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">45%</div><div class="stat-label">Chatbot capture rate</div><div class="stat-change up">↑ 4pts this month</div></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <input class="form-input" placeholder="Search leads..." style="flex:1;">
+    <select class="form-input" style="width:130px;" onchange="toast('Filter applied!')"><option>All statuses</option><option>Hot</option><option>Warm</option><option>New</option><option>Booked</option></select>
+    <select class="form-input" style="width:130px;" onchange="toast('Filter applied!')"><option>All sources</option><option>Chatbot</option><option>Form</option><option>Email</option></select>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:10px 16px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);">
+      <div>Contact</div><div>Email</div><div>Source</div><div>Score</div><div>Status</div><div>Actions</div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="toast('Maria Rodriguez opened!')">
+      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">MR</div><div>Maria Rodriguez<div style="font-size:10px;color:var(--text3);">(555) 234-5678</div></div></div>
+      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b6db98c4d9d2c4dfd1c3d3ccf6dbd7dfda98d5d9db">[email&#160;protected]</a></div>
+      <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
+      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div></div></div>
+      <div><span class="lead-status status-hot">Hot</span></div>
+      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="event.stopPropagation();toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();toast('Notes!')">Notes</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">JK</div><div>James Kim<div style="font-size:10px;color:var(--text3);">(555) 876-5432</div></div></div>
+      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bbd1dad6dec895d0d2d6fbd9d2c195d8d4">[email&#160;protected]</a></div>
+      <div><span class="source-badge source-form">⬡ Form</span></div>
+      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div></div></div>
+      <div><span class="lead-status status-warm">Warm</span></div>
+      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast('Email drafted!')">Email</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--accent-glow);color:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">ST</div><div>Sarah Thompson<div style="font-size:10px;color:var(--text3);">(555) 111-2233</div></div></div>
+      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cbb8e5bfa3a4a6bbb8a4a58baea6aaa2a7e5a8a4a6">[email&#160;protected]</a></div>
+      <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
+      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div><div class="score-dot"></div></div></div>
+      <div><span class="lead-status status-booked">Booked</span></div>
+      <div><button class="btn btn-ghost btn-xs" onclick="toast('Appointment viewed!')">View appt.</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--amber-dim);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">DL</div><div>David Lee<div style="font-size:10px;color:var(--text3);">(555) 987-6543</div></div></div>
+      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="492d252c2c092a26243928273067263b2e">[email&#160;protected]</a></div>
+      <div><span class="source-badge source-email">◫ Email</span></div>
+      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div><div class="score-dot"></div><div class="score-dot"></div></div></div>
+      <div><span class="lead-status status-new">New</span></div>
+      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast('SMS sent!')">SMS</button></div>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;align-items:center;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--blue-dim);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">AP</div><div>Amanda Price<div style="font-size:10px;color:var(--text3);">(555) 444-7890</div></div></div>
+      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f1909c909f9590df81b1969c90989ddf929e9c">[email&#160;protected]</a></div>
+      <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
+      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div></div></div>
+      <div><span class="lead-status status-warm">Warm</span></div>
+      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast('Notes!')">Notes</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ VOICE AI ═══════ -->
+<div class="panel" id="panel-voice">
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;">
+    <div class="flex-col">
+      <div class="config-section">
+        <div class="config-section-title">📞 Phone number</div>
+        <div class="form-group"><label class="form-label">Assigned number</label><div style="display:flex;gap:8px;"><input class="form-input" value="+1 (555) 820-4400" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="toast('Number copied!')">Copy</button></div></div>
+        <div class="form-group"><label class="form-label">Forward unanswered calls to</label><input class="form-input" placeholder="Your real phone number"></div>
+      </div>
+      <div class="config-section">
+        <div class="config-section-title">🗣️ Voice & personality</div>
+        <div class="form-group"><label class="form-label">Receptionist name</label><input class="form-input" value="Nova" oninput="document.getElementById('voice-name').textContent=this.value"></div>
+        <div class="form-group"><label class="form-label">Voice style</label><select class="form-input" onchange="toast('Voice updated!')"><option>Friendly & professional (female)</option><option>Warm & calm (male)</option><option>Energetic & upbeat (female)</option><option>Authoritative (male)</option></select></div>
+        <div class="form-group"><label class="form-label">Greeting script</label><textarea class="form-input" style="min-height:70px;">Thank you for calling! You've reached [Business Name]. I'm Nova, your AI assistant. How can I help you today?</textarea></div>
+      </div>
+      <div class="config-section">
+        <div class="config-section-title">🎛️ Call handling</div>
+        <div class="toggle-row"><div><div class="toggle-label">Auto-book appointments</div><div class="toggle-desc">Let caller book via voice</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">Capture caller info</div><div class="toggle-desc">Name, number, reason for call</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">Send call summary by email</div><div class="toggle-desc">After every call</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">Spam call blocking</div><div class="toggle-desc">Filter robocalls automatically</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <button class="btn btn-primary" onclick="toast('✅ Voice receptionist is live!')">Save & activate</button>
+    </div>
+    <div class="flex-col">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Call simulator</div><span class="lead-status status-active" id="voice-badge">● Ready</span></div>
+        <div class="phone-screen">
+          <div style="text-align:center;margin-bottom:12px;"><div style="font-size:36px;margin-bottom:6px;">👤</div><div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:3px;">Incoming Call</div><div style="font-size:11px;color:var(--text3);margin-bottom:5px;">+1 (555) 391-2244</div><div style="font-size:11px;color:var(--accent2);" id="voice-status">Tap answer to simulate</div></div>
+          <div style="background:var(--surface3);border-radius:var(--radius-sm);padding:10px;min-height:80px;max-height:120px;overflow-y:auto;font-size:12px;" id="voice-transcript"><div style="color:var(--text3);font-style:italic;">Call transcript will appear here...</div></div>
+        </div>
+        <div class="phone-btns">
+          <button class="phone-btn decline" onclick="endCall()">✕</button>
+          <button class="phone-btn answer" onclick="startCall()">📞</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Recent calls</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);"><div style="width:28px;height:28px;border-radius:7px;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">↙</div><div style="flex:1;"><div style="font-size:12px;font-weight:500;">Maria Rodriguez</div><div style="font-size:10px;color:var(--text3);">Booked appointment · 2 min 14 sec</div></div><div style="font-size:10px;color:var(--text3);">9:02 AM</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);"><div style="width:28px;height:28px;border-radius:7px;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">↙</div><div style="flex:1;"><div style="font-size:12px;font-weight:500;">Unknown caller</div><div style="font-size:10px;color:var(--text3);">Asked about hours · 1 min 38 sec</div></div><div style="font-size:10px;color:var(--text3);">8:47 AM</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);"><div style="width:28px;height:28px;border-radius:7px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">↗</div><div style="flex:1;"><div style="font-size:12px;font-weight:500;">James Kim</div><div style="font-size:10px;color:var(--text3);">Missed — voicemail left</div></div><div style="font-size:10px;color:var(--text3);">8:15 AM</div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;"><div style="width:28px;height:28px;border-radius:7px;background:var(--amber-dim);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">⊗</div><div style="flex:1;"><div style="font-size:12px;font-weight:500;">Spam blocked</div><div style="font-size:10px;color:var(--text3);">Auto-filtered by AI</div></div><div style="font-size:10px;color:var(--text3);">7:58 AM</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ EMAIL AI ═══════ -->
+<div class="panel" id="panel-email">
+  <div style="display:grid;grid-template-columns:220px 1fr 220px;height:calc(100vh - 120px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+    <div style="border-right:1px solid var(--border);padding:14px;overflow-y:auto;">
+      <input class="form-input" placeholder="Search inbox..." style="font-size:12px;padding:7px 10px;margin-bottom:10px;">
+      <div id="email-list">
+        <div class="email-item active" onclick="openEmail(this,0)"><div class="email-sender-dot" style="background:var(--pink)"></div><div style="flex:1;min-width:0;"><div class="email-from">Maria Rodriguez</div><div class="email-subject">Re: Appointment confirmation</div><div class="email-preview">Thanks so much! See you Thursday...</div></div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">2m</div></div>
+        <div class="email-item" onclick="openEmail(this,1)"><div class="email-sender-dot" style="background:var(--amber)"></div><div style="flex:1;min-width:0;"><div class="email-from">TechPro Solutions</div><div class="email-subject">Inquiry about your services</div><div class="email-preview">Hello, I came across your website...</div></div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">18m</div></div>
+        <div class="email-item" onclick="openEmail(this,2)"><div class="email-sender-dot" style="background:var(--blue)"></div><div style="flex:1;min-width:0;"><div class="email-from">James Kim</div><div class="email-subject">Follow-up on our meeting</div><div class="email-preview">Quick follow up — would love to...</div></div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">1h</div></div>
+        <div class="email-item" onclick="openEmail(this,3)"><div class="email-sender-dot" style="background:var(--green)"></div><div style="flex:1;min-width:0;"><div class="email-from">Bloom Beauty Co.</div><div class="email-subject">Pricing question</div><div class="email-preview">Hi, can you send over pricing...</div></div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">3h</div></div>
+        <div class="email-item" onclick="openEmail(this,4)"><div class="email-sender-dot" style="background:var(--accent2)"></div><div style="flex:1;min-width:0;"><div class="email-from">Robert Chen</div><div class="email-subject">New lead from website</div><div class="email-preview">Auto-captured via lead form...</div></div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">5h</div></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;overflow:hidden;background:var(--surface2);">
+      <div style="padding:18px 22px 14px;border-bottom:1px solid var(--border);background:var(--surface);">
+        <div style="font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:2px;" id="ev-from">Maria Rodriguez</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:3px;" id="ev-subject">Re: Appointment confirmation</div>
+        <div style="font-size:11px;color:var(--text3);" id="ev-meta"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e78a86958e86c995a78a868e8bc984888a">[email&#160;protected]</a> · Today at 9:02 AM</div>
+      </div>
+      <div style="padding:18px 22px;font-size:13px;line-height:1.8;color:var(--text2);flex:1;overflow-y:auto;" id="ev-body"><p>Hi there,</p><p style="margin-top:10px;">Thanks so much for confirming my appointment! I'm really looking forward to our meeting on Thursday at 2:30 PM.</p><p style="margin-top:10px;">Should I bring anything, or prepare beforehand?</p><p style="margin-top:10px;">Thanks,<br>Maria</p></div>
+      <div style="border-top:1px solid var(--border);padding:14px 18px;background:var(--surface);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><span style="font-size:13px;font-weight:500;">✨ AI-generated reply</span><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-xs" onclick="toast('Reply regenerated!')">↻ Regenerate</button><button class="btn btn-primary btn-xs" onclick="toast('📧 Reply sent!')">Send reply</button></div></div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;"><span style="font-size:11px;color:var(--text3);">Tone:</span><span class="tone-btn active" onclick="setTone(this)">Professional</span><span class="tone-btn" onclick="setTone(this)">Friendly</span><span class="tone-btn" onclick="setTone(this)">Brief</span></div>
+        <textarea class="form-input" id="reply-box" style="min-height:120px;font-size:12px;line-height:1.7;">Hi Maria,
+
+Thank you for confirming! We're looking forward to seeing you Thursday at 2:30 PM.
+
+No need to bring anything — just yourself! We'll have everything ready. Feel free to reach out if anything comes up.
+
+See you Thursday!
+
+Warm regards,
+[Your Name]</textarea>
+      </div>
+    </div>
+    <div style="border-left:1px solid var(--border);padding:14px;overflow-y:auto;background:var(--surface);">
+      <div class="config-section" style="margin-bottom:12px;">
+        <div class="config-section-title" style="font-size:12px;">⚡ Auto-responders</div>
+        <div class="toggle-row"><div><div class="toggle-label" style="font-size:12px;">New lead emails</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label" style="font-size:12px;">Appointment reminders</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label" style="font-size:12px;">Follow-up sequences</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label" style="font-size:12px;">Review requests</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Templates</div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;cursor:pointer;margin-bottom:5px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'" onclick="loadTpl('welcome')"><div style="font-size:12px;font-weight:500;margin-bottom:2px;">Welcome email</div><div style="font-size:10px;color:var(--text3);">Sent to new leads</div></div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;cursor:pointer;margin-bottom:5px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'" onclick="loadTpl('booking')"><div style="font-size:12px;font-weight:500;margin-bottom:2px;">Booking confirmation</div><div style="font-size:10px;color:var(--text3);">After appointment booked</div></div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;cursor:pointer;margin-bottom:5px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'" onclick="loadTpl('followup')"><div style="font-size:12px;font-weight:500;margin-bottom:2px;">Follow-up #1</div><div style="font-size:10px;color:var(--text3);">24h after first contact</div></div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;cursor:pointer;margin-bottom:5px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'" onclick="loadTpl('reminder')"><div style="font-size:12px;font-weight:500;margin-bottom:2px;">Appointment reminder</div><div style="font-size:10px;color:var(--text3);">24h before appointment</div></div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:9px 11px;cursor:pointer;margin-bottom:10px;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--border2)'" onmouseout="this.style.borderColor='var(--border)'" onclick="loadTpl('review')"><div style="font-size:12px;font-weight:500;margin-bottom:2px;">Review request</div><div style="font-size:10px;color:var(--text3);">Post-appointment</div></div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="toast('Template editor opened!')">+ Create template</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ CRM ═══════ -->
+<div class="panel" id="panel-crm">
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">38</div><div class="stat-label">Total contacts</div><div class="stat-change up">↑ 4 this week</div></div>
+    <div class="stat-card green"><div class="stat-icon">◈</div><div class="stat-value">$24,500</div><div class="stat-label">Pipeline value</div><div class="stat-change up">↑ $3,200 this week</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◷</div><div class="stat-value">7</div><div class="stat-label">Deals in progress</div><div class="stat-change up">2 closing soon</div></div>
+    <div class="stat-card pink"><div class="stat-icon">⭐</div><div class="stat-value">82%</div><div class="stat-label">Response rate</div><div class="stat-change up">↑ 5% vs last month</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:18px;">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Sales pipeline</div></div>
+      <div class="pipeline-board">
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>New leads</span><span class="pipeline-count">3</span></div>
+          <div class="pipeline-card" onclick="openContact('Robert Chen')"><div class="pipeline-card-name">Robert Chen</div><div class="pipeline-card-detail">Via website form</div><div class="pipeline-card-value">Est. $1,200</div></div>
+          <div class="pipeline-card" onclick="openContact('David Lee')"><div class="pipeline-card-name">David Lee</div><div class="pipeline-card-detail">Via email</div><div class="pipeline-card-value">Est. $800</div></div>
+          <div class="pipeline-card" onclick="openContact('Lisa Park')"><div class="pipeline-card-name">Lisa Park</div><div class="pipeline-card-detail">Via chatbot</div><div class="pipeline-card-value">Est. $2,400</div></div>
+          <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
+        </div>
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>Contacted</span><span class="pipeline-count">2</span></div>
+          <div class="pipeline-card" onclick="openContact('Amanda Price')"><div class="pipeline-card-name">Amanda Price</div><div class="pipeline-card-detail">Email sent · 2h ago</div><div class="pipeline-card-value">Est. $3,500</div></div>
+          <div class="pipeline-card" onclick="openContact('Kevin Wu')"><div class="pipeline-card-name">Kevin Wu</div><div class="pipeline-card-detail">Call made · yesterday</div><div class="pipeline-card-value">Est. $900</div></div>
+          <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
+        </div>
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>Meeting booked</span><span class="pipeline-count">2</span></div>
+          <div class="pipeline-card pipeline-card-warm" onclick="openContact('James Kim')"><div class="pipeline-card-name">James Kim</div><div class="pipeline-card-detail">Thu 2:30 PM</div><div class="pipeline-card-value">Est. $4,800</div></div>
+          <div class="pipeline-card pipeline-card-warm" onclick="openContact('Bloom Beauty Co.')"><div class="pipeline-card-name">Bloom Beauty Co.</div><div class="pipeline-card-detail">Today 4:00 PM</div><div class="pipeline-card-value">Est. $2,100</div></div>
+          <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
+        </div>
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>Proposal sent</span><span class="pipeline-count">2</span></div>
+          <div class="pipeline-card pipeline-card-hot" onclick="openContact('TechPro Solutions')"><div class="pipeline-card-name">TechPro Solutions</div><div class="pipeline-card-detail">Awaiting response</div><div class="pipeline-card-value">$6,500</div></div>
+          <div class="pipeline-card pipeline-card-hot" onclick="openContact('Maria Rodriguez')"><div class="pipeline-card-name">Maria Rodriguez</div><div class="pipeline-card-detail">Verbal yes · follow up</div><div class="pipeline-card-value">$2,800</div></div>
+          <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
+        </div>
+        <div class="pipeline-col"><div class="pipeline-col-header" style="color:var(--green)"><span>Won ✓</span><span class="pipeline-count" style="background:var(--green-dim);color:var(--green);">2</span></div>
+          <div class="pipeline-card pipeline-card-won" onclick="openContact('Sarah Thompson')"><div class="pipeline-card-name">Sarah Thompson</div><div class="pipeline-card-detail">Closed Mar 20</div><div class="pipeline-card-value" style="color:var(--green)">$3,200 ✓</div></div>
+          <div class="pipeline-card pipeline-card-won" onclick="openContact('Acme Corp')"><div class="pipeline-card-name">Acme Corp</div><div class="pipeline-card-detail">Closed Mar 14</div><div class="pipeline-card-value" style="color:var(--green)">$5,800 ✓</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--pink),var(--accent));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:white;flex-shrink:0;" id="crm-av">MR</div>
+        <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="crm-name">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3);" id="crm-meta"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e08d81928981ce92a08d81898cce838f8d">[email&#160;protected]</a></div></div>
+      </div>
+      <div style="display:flex;gap:5px;margin-bottom:14px;"><button class="btn btn-primary btn-xs" onclick="toast('Email drafted!')">✉ Email</button><button class="btn btn-ghost btn-xs" onclick="toast('Call initiated!')">📞 Call</button><button class="btn btn-ghost btn-xs" onclick="nav('appointments',null)">📅 Book</button></div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Pipeline stage</div>
+      <select class="form-input" style="margin-bottom:12px;font-size:12px;" onchange="toast('Stage updated!')"><option>Proposal sent</option><option>New lead</option><option>Contacted</option><option>Meeting booked</option><option>Won</option></select>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Deal value</div>
+      <input class="form-input" value="$2,800" style="margin-bottom:12px;font-size:12px;">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Activity</div>
+      <div class="timeline-item"><div class="timeline-dot" style="background:var(--accent);"></div><div><div style="font-size:12px;font-weight:500;">Proposal sent via email</div><div style="font-size:10px;color:var(--text3);">Today · 8:30 AM</div></div></div>
+      <div class="timeline-item"><div class="timeline-dot" style="background:var(--green);"></div><div><div style="font-size:12px;font-weight:500;">Appointment confirmed</div><div style="font-size:10px;color:var(--text3);">Yesterday · 3:15 PM</div></div></div>
+      <div class="timeline-item"><div class="timeline-dot" style="background:var(--amber);"></div><div><div style="font-size:12px;font-weight:500;">Chatbot conversation — booked call</div><div style="font-size:10px;color:var(--text3);">Mar 24 · 11:02 AM</div></div></div>
+      <div class="timeline-item" style="padding-bottom:0;"><div class="timeline-dot" style="background:var(--text3);"></div><div><div style="font-size:12px;font-weight:500;">Lead captured via chatbot</div><div style="font-size:10px;color:var(--text3);">Mar 24 · 10:58 AM</div></div></div>
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+        <textarea class="form-input" style="min-height:60px;font-size:12px;">Verbal yes on proposal. Follow up Thursday to close.</textarea>
+        <button class="btn btn-ghost btn-xs" style="width:100%;margin-top:6px;" onclick="toast('Note saved!')">Save note</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ SMS & REVIEWS ═══════ -->
+<div class="panel" id="panel-sms">
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="stat-card amber"><div class="stat-icon">⭐</div><div class="stat-value">4.8</div><div class="stat-label">Avg Google rating</div><div class="stat-change up">Across all clients</div></div>
+    <div class="stat-card green"><div class="stat-icon">📱</div><div class="stat-value">47</div><div class="stat-label">Reviews generated</div><div class="stat-change up">↑ 38% this month</div></div>
+    <div class="stat-card blue"><div class="stat-icon">✉</div><div class="stat-value">61%</div><div class="stat-label">Review click rate</div><div class="stat-change up">↑ 9pts vs last month</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
+    <div class="flex-col">
+      <div class="config-section">
+        <div class="config-section-title">📱 SMS sequences</div>
+        <div class="seq-item"><div class="seq-num">1</div><div style="flex:1;"><div style="font-size:13px;font-weight:500;">Appointment confirmation</div><div style="font-size:11px;color:var(--text3);">Sent immediately after booking</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="seq-item"><div class="seq-num">2</div><div style="flex:1;"><div style="font-size:13px;font-weight:500;">24-hour reminder</div><div style="font-size:11px;color:var(--text3);">Sent 24 hours before appointment</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="seq-item"><div class="seq-num">3</div><div style="flex:1;"><div style="font-size:13px;font-weight:500;">1-hour reminder</div><div style="font-size:11px;color:var(--text3);">Sent 1 hour before appointment</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="seq-item"><div class="seq-num">4</div><div style="flex:1;"><div style="font-size:13px;font-weight:500;">Review request</div><div style="font-size:11px;color:var(--text3);">Sent 2 hours after appointment ends</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="seq-item"><div class="seq-num">5</div><div style="flex:1;"><div style="font-size:13px;font-weight:500;">Re-engagement</div><div style="font-size:11px;color:var(--text3);">Sent 30 days after last visit</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="config-section">
+        <div class="config-section-title">✏️ Message templates</div>
+        <div class="form-group"><label class="form-label">Confirmation message</label><textarea class="form-input" style="min-height:60px;">Hi {name}! Your appointment at {business} is confirmed for {date} at {time}. Reply STOP to opt out.</textarea></div>
+        <div class="form-group"><label class="form-label">Review request message</label><textarea class="form-input" style="min-height:60px;">Hi {name}, thanks for visiting {business}! We'd love your feedback — can you leave us a quick Google review? 🙏 {review_link}</textarea></div>
+        <div class="form-group"><label class="form-label">Google review link</label><input class="form-input" placeholder="https://g.page/r/your-business/review"></div>
+        <div class="toggle-row"><div><div class="toggle-label">Only ask happy customers</div><div class="toggle-desc">Ask rating first, send link only if 4–5 stars</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="toast('SMS automation activated!')">Save & activate</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:13px;font-weight:500;margin-bottom:12px;text-align:center;">📱 SMS preview</div>
+      <div style="background:var(--surface2);border-radius:14px;padding:14px;">
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin-bottom:10px;">Today 3:02 PM</div>
+        <div class="sms-bubble">Hi Sarah! Your appointment at Bloom Beauty Co. is confirmed for Friday Apr 4 at 2:30 PM ✨ Reply STOP to opt out.</div>
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin:10px 0;">Friday 4:45 PM</div>
+        <div class="sms-bubble">Hi Sarah, thanks for visiting! We'd love a quick Google review — it means the world 🙏 g.page/r/bloom</div>
+        <div style="font-size:10px;color:var(--text3);text-align:center;margin:10px 0;">Friday 4:47 PM</div>
+        <div class="sms-bubble sent">Of course! Left you 5 stars 😊</div>
+      </div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="font-size:12px;font-weight:500;margin-bottom:10px;">Send manual SMS</div>
+        <div class="form-group"><label class="form-label">To</label><input class="form-input" style="font-size:12px;" placeholder="(555) 000-0000"></div>
+        <div class="form-group"><label class="form-label">Message</label><textarea class="form-input" style="min-height:60px;font-size:12px;" placeholder="Type your message..."></textarea></div>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="toast('SMS sent!')">Send SMS</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ BILLING ═══════ -->
+<div class="panel" id="panel-billing">
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+    <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">$4,200</div><div class="stat-label">MRR (Mar 2026)</div><div class="stat-change up">↑ $1,000 vs Feb</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">3</div><div class="stat-label">Paying clients</div><div class="stat-change up">1 trial converting</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◷</div><div class="stat-value">Apr 1</div><div class="stat-label">Next billing date</div><div class="stat-change up">Auto-renews</div></div>
+    <div class="stat-card blue"><div class="stat-icon">📈</div><div class="stat-value">$50.4K</div><div class="stat-label">Projected annual</div><div class="stat-change up">At current MRR</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:18px;">
+    <div class="flex-col">
+      <div class="card">
+        <div class="card-header"><div class="card-title">Invoice history</div><button class="btn btn-ghost btn-xs" onclick="toast('All invoices exported!')">↓ Export</button></div>
+        <div style="border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
+          <div class="invoice-header"><div>Client</div><div>Amount</div><div>Date</div><div>Status</div><div></div></div>
+          <div class="invoice-row"><div style="font-weight:500;">Bloom Beauty Co.</div><div>$1,800</div><div>Mar 1, 2026</div><div><span class="inv-paid">Paid</span></div><div><button class="btn btn-ghost btn-xs" onclick="toast('PDF downloaded!')">↓ PDF</button></div></div>
+          <div class="invoice-row"><div style="font-weight:500;">TechPro Solutions</div><div>$1,400</div><div>Mar 1, 2026</div><div><span class="inv-paid">Paid</span></div><div><button class="btn btn-ghost btn-xs" onclick="toast('PDF downloaded!')">↓ PDF</button></div></div>
+          <div class="invoice-row"><div style="font-weight:500;">Lee's Chiropractic</div><div>$1,000</div><div>Mar 5, 2026</div><div><span class="inv-pending">Pending</span></div><div><button class="btn btn-ghost btn-xs" onclick="toast('Reminder sent!')">Remind</button></div></div>
+          <div class="invoice-row"><div style="font-weight:500;">Bloom Beauty Co.</div><div>$1,800</div><div>Feb 1, 2026</div><div><span class="inv-paid">Paid</span></div><div><button class="btn btn-ghost btn-xs" onclick="toast('PDF downloaded!')">↓ PDF</button></div></div>
+          <div class="invoice-row" style="border-bottom:none;"><div style="font-weight:500;">TechPro Solutions</div><div>$1,400</div><div>Feb 1, 2026</div><div><span class="inv-paid">Paid</span></div><div><button class="btn btn-ghost btn-xs" onclick="toast('PDF downloaded!')">↓ PDF</button></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px;">Revenue growth</div>
+        <div class="bar-chart" id="billing-chart"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:10px;color:var(--text3);"><span>Oct</span><span>Nov</span><span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span></div>
+      </div>
+    </div>
+    <div class="flex-col">
+      <div class="plan-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">Bloom Beauty Co.</div><span class="lead-status status-active">Active</span></div><div class="plan-price">$1,800<span style="font-size:13px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Pro plan · Next charge Apr 1</div><div style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="toast('Plan editor opened!')">Edit</button><button class="btn btn-ghost btn-xs" onclick="toast('Card updated!')">Update card</button></div></div>
+      <div class="plan-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">TechPro Solutions</div><span class="lead-status status-active">Active</span></div><div class="plan-price">$1,400<span style="font-size:13px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Starter plan · Next charge Apr 1</div><div style="display:flex;gap:5px;"><button class="btn btn-ghost btn-xs" onclick="toast('Plan editor opened!')">Edit</button><button class="btn btn-primary btn-xs" onclick="toast('Upgrade offer sent!')">Upsell Pro</button></div></div>
+      <div class="plan-card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">Lee's Chiropractic</div><span class="lead-status status-trial">Trial</span></div><div class="plan-price">$1,000<span style="font-size:13px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Trial ends Apr 5 · Payment pending</div><div style="display:flex;gap:5px;"><button class="btn btn-primary btn-xs" onclick="toast('Payment link sent!')">Send payment link</button><button class="btn btn-ghost btn-xs" onclick="toast('Trial extended!')">Extend</button></div></div>
+      <div class="card">
+        <div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:10px;">💡 Revenue goal</div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;color:var(--green);">$4.2K</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">of $6K monthly goal</div>
+        <div class="progress-bar" style="margin-bottom:6px;height:8px;"><div class="progress-fill" style="width:70%;background:linear-gradient(90deg,var(--accent),var(--green));"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">1 more Pro client gets you there</div>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="nav('onboarding',null)">+ Onboard next client</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<div class="toast" id="toast"><div class="toast-dot"></div><span id="toast-msg"></span></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ═══════ NAVIGATION ═══════
+const PAGE_TITLES = {dashboard:'Dashboard',analytics:'Analytics',clients:'Client Portal',onboarding:'Client Onboarding',builder:'Website Builder',chatbot:'AI Chatbot',appointments:'Appointments',leads:'Leads',voice:'Voice AI',email:'Email AI',crm:'CRM',sms:'SMS & Reviews',billing:'Billing'};
+const PAGE_CTAS   = {dashboard:'+ New Client',analytics:'Export Report',clients:'+ Onboard Client',onboarding:'Save Draft',builder:'Publish Site',chatbot:'Deploy Bot',appointments:'+ Book',leads:'+ Add Lead',voice:'Activate',email:'Send Reply',crm:'+ Add Contact',sms:'Activate',billing:'+ Invoice'};
+
+function nav(page, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.querySelector('span:last-child') && n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+page+"'")) n.classList.add('active');
+    });
+  }
+  document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
+  document.getElementById('top-cta').textContent = PAGE_CTAS[page] || 'Action';
+  window.scrollTo(0,0);
+}
+
+function handleCTA() {
+  const active = document.querySelector('.panel.active').id.replace('panel-','');
+  if (active === 'onboarding') { toast('Progress saved as draft!'); return; }
+  if (active === 'builder') { toast('🎉 Site published!'); return; }
+  if (active === 'chatbot') { toast('✅ Chatbot deployed!'); return; }
+  if (active === 'appointments') { bookAppt(); return; }
+  if (active === 'clients') { nav('onboarding',null); return; }
+  nav('onboarding', null);
+}
+
+// ═══════ TOAST ═══════
+function toast(msg, type) {
+  const t = document.getElementById('toast');
+  const dot = t.querySelector('.toast-dot');
+  dot.style.background = type === 'error' ? 'var(--pink)' : 'var(--green)';
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ═══════ ANALYTICS CHARTS ═══════
+function buildBars(id, data, color) {
+  const wrap = document.getElementById(id);
+  if (!wrap) return;
+  const max = Math.max(...data.map(d => d.v));
+  data.forEach(d => {
+    const w = document.createElement('div');
+    w.className = 'bar-wrap';
+    const pct = Math.max(8, Math.round((d.v / max) * 100));
+    w.innerHTML = `<div style="font-size:9px;color:var(--text3);margin-bottom:2px;">${d.v}</div><div class="bar" style="height:${pct}%;background:${color};"></div><div class="bar-label">${d.l}</div>`;
+    wrap.appendChild(w);
+  });
+}
+buildBars('leads-chart', [{l:'M10',v:8},{l:'T11',v:5},{l:'W12',v:9},{l:'T13',v:11},{l:'F14',v:7},{l:'M17',v:6},{l:'T18',v:10},{l:'W19',v:8},{l:'T20',v:12},{l:'F21',v:9},{l:'M24',v:11},{l:'T25',v:7},{l:'W26',v:14},{l:'T27',v:10},{l:'F28',v:8}], 'var(--accent)');
+buildBars('rev-chart', [{l:'Oct',v:800},{l:'Nov',v:1200},{l:'Dec',v:1800},{l:'Jan',v:2400},{l:'Feb',v:3200},{l:'Mar',v:4200}], 'var(--green)');
+buildBars('billing-chart', [{l:'Oct',v:800},{l:'Nov',v:1200},{l:'Dec',v:1800},{l:'Jan',v:2400},{l:'Feb',v:3200},{l:'Mar',v:4200}], 'var(--amber)');
+
+// ═══════ CLIENT PORTAL ═══════
+const clients = {
+  bloom:   {logo:'BB',name:'Bloom Beauty Co.',  url:'bloombeautyco.com',  grad:'linear-gradient(135deg,#ff6b9d,#ffb547)'},
+  techpro: {logo:'TP',name:'TechPro Solutions', url:'techprosolutions.com',grad:'linear-gradient(135deg,#6c63ff,#4da6ff)'},
+  lee:     {logo:'LC',name:"Lee's Chiropractic",url:'leeschiro.com',       grad:'linear-gradient(135deg,#00d9a3,#4da6ff)'},
+};
+function selectClient(el, id) {
+  document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  const c = clients[id];
+  document.getElementById('d-logo').textContent = c.logo;
+  document.getElementById('d-logo').style.background = c.grad;
+  document.getElementById('d-name').textContent = c.name;
+  document.getElementById('d-url').textContent = c.url;
+  toast('Viewing: ' + c.name);
+}
+
+// ═══════ ONBOARDING WIZARD ═══════
+let wStep = 1, wTotal = 5;
+function wNext() {
+  if (wStep === 1 && !document.getElementById('biz-name').value.trim()) { toast('Please enter the business name.','error'); return; }
+  if (wStep >= wTotal) {
+    document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
+    document.getElementById('ws6').classList.add('active');
+    document.getElementById('wiz-footer').style.display = 'none';
+    wMark(wStep, 'done'); return;
+  }
+  wMark(wStep, 'done'); wStep++;
+  wMark(wStep, 'active');
+  document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
+  document.getElementById('ws' + wStep).classList.add('active');
+  document.getElementById('wiz-indicator').textContent = `Step ${wStep} of ${wTotal}`;
+  document.getElementById('wiz-back').style.visibility = 'visible';
+  document.getElementById('wiz-next').textContent = wStep === wTotal ? 'Launch client →' : 'Continue →';
+  if (wStep === wTotal) document.getElementById('wiz-next').classList.add('btn-success');
+}
+function wPrev() {
+  if (wStep <= 1) return;
+  wMark(wStep, ''); wStep--;
+  wMark(wStep, 'active');
+  document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
+  document.getElementById('ws' + wStep).classList.add('active');
+  document.getElementById('wiz-indicator').textContent = `Step ${wStep} of ${wTotal}`;
+  document.getElementById('wiz-back').style.visibility = wStep === 1 ? 'hidden' : 'visible';
+  document.getElementById('wiz-next').textContent = 'Continue →';
+  document.getElementById('wiz-next').classList.remove('btn-success');
+}
+function wMark(n, state) {
+  const c = document.getElementById('sc' + n);
+  const l = document.getElementById('sl' + n);
+  if (!c) return;
+  c.className = 'step-circle' + (state ? ' ' + state : '');
+  if (state === 'done') { c.textContent = '✓'; if (l) l.classList.add('done'); }
+  else c.textContent = n;
+}
+function pickNiche(el) { document.querySelectorAll('.niche-btn').forEach(b => b.classList.remove('selected')); el.classList.add('selected'); }
+function pickPlan(el, v) { document.querySelectorAll('.niche-btn').forEach(b => b.classList.remove('selected')); el.classList.add('selected'); if(document.getElementById('custom-fee')) document.getElementById('custom-fee').value='$'+v; }
+function resetWizard() {
+  wStep=1;
+  document.querySelectorAll('[id^="ws"]').forEach(s=>s.classList.remove('active'));
+  document.getElementById('ws1').classList.add('active');
+  document.getElementById('wiz-footer').style.display='flex';
+  wMark(1,'active'); for(let i=2;i<=5;i++) wMark(i,'');
+  document.getElementById('wiz-indicator').textContent='Step 1 of 5';
+  document.getElementById('wiz-back').style.visibility='hidden';
+  document.getElementById('wiz-next').textContent='Continue →';
+  document.getElementById('wiz-next').classList.remove('btn-success');
+}
+
+// ═══════ WEBSITE BUILDER ═══════
+function selBlock(el) { document.querySelectorAll('.web-block').forEach(b=>b.classList.remove('selected')); el.classList.add('selected'); }
+function addBlock(type) {
+  const c = document.getElementById('canvas');
+  const b = document.createElement('div');
+  b.className = 'web-block';
+  b.onclick = function(){selBlock(this);};
+  const acts = `<div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e" onclick="event.stopPropagation();this.closest('.web-block').remove()">✕</button></div>`;
+  const t = {
+    hero:`${acts}<div class="hero-block"><h2>New Hero Section</h2><p>Your tagline here</p><span class="hero-cta">Call to Action</span></div>`,
+    services:`${acts}<div class="services-block"><h3>Our Services</h3><div class="services-grid"><div class="service-card"><div style="font-size:18px;margin-bottom:4px;">⭐</div><h4>Service 1</h4><p>Description here</p></div><div class="service-card"><div style="font-size:18px;margin-bottom:4px;">🚀</div><h4>Service 2</h4><p>Description here</p></div><div class="service-card"><div style="font-size:18px;margin-bottom:4px;">💡</div><h4>Service 3</h4><p>Description here</p></div></div></div>`,
+    contact:`${acts}<div class="contact-block"><h3>Contact Us</h3><div class="contact-form"><input placeholder="Name"><input placeholder="Email"><textarea placeholder="Message"></textarea><button>Send</button></div></div>`,
+    testimonial:`${acts}<div class="services-block"><h3>What Clients Say</h3><div class="services-grid"><div class="service-card"><div style="font-size:14px;margin-bottom:4px;">⭐⭐⭐⭐⭐</div><h4>"Absolutely amazing!"</h4><p>— Happy Customer</p></div><div class="service-card"><div style="font-size:14px;margin-bottom:4px;">⭐⭐⭐⭐⭐</div><h4>"Best decision ever"</h4><p>— Business Owner</p></div><div class="service-card"><div style="font-size:14px;margin-bottom:4px;">⭐⭐⭐⭐⭐</div><h4>"Highly recommend"</h4><p>— Satisfied Client</p></div></div></div>`,
+    cta:`${acts}<div class="hero-block" style="padding:30px"><h2 style="font-size:20px">Ready to get started?</h2><p>Contact us today for a free consultation.</p><span class="hero-cta">Book Now</span></div>`,
+  };
+  b.innerHTML = t[type] || t.hero;
+  c.appendChild(b); selBlock(b); toast('Block added!');
+}
+function setTheme(color) { document.querySelectorAll('.hero-cta,.contact-form button').forEach(el=>el.style.background=color); toast('Theme color updated!'); }
+
+// ═══════ CHATBOT ═══════
+const botR = ["I'd be happy to help! Could you share a bit more about what you're looking for?","Great question! Can I get your name and email first so we can follow up?","I can book that for you right away! What date and time works best?","Our team would love to help! I'm noting your inquiry now.","That's something I can definitely assist with. Would you like to schedule a consultation?"];
+let botIdx = 0;
+function sendChat(text) {
+  const inp = document.getElementById('chat-in');
+  const msg = text || inp.value.trim();
+  if (!msg) return;
+  const msgs = document.getElementById('chat-msgs');
+  const u = document.createElement('div');
+  u.className = 'chat-msg user';
+  u.innerHTML = `<div><div class="msg-bubble">${msg}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;text-align:right;">Just now</div></div><div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">👤</div>`;
+  msgs.appendChild(u);
+  inp.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    const b = document.createElement('div');
+    b.className = 'chat-msg bot';
+    b.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">🤖</div><div><div class="msg-bubble">${botR[botIdx++ % botR.length]}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;">Just now</div></div>`;
+    msgs.appendChild(b);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 800);
+}
+
+// ═══════ CALENDAR ═══════
+function buildCal() {
+  const g = document.getElementById('cal-grid');
+  if (!g) return;
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => { const el=document.createElement('div'); el.className='cal-day-name'; el.textContent=d; g.appendChild(el); });
+  const appts=[5,8,12,15,19,22,26,28];
+  for(let d=1;d<=31;d++) {
+    const el=document.createElement('div'); el.className='cal-day';
+    if(d===26) el.classList.add('today');
+    if(appts.includes(d)) el.classList.add('has-appt');
+    el.textContent=d;
+    el.onclick=()=>{ document.querySelectorAll('.cal-day').forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); };
+    g.appendChild(el);
+  }
+  for(let i=1;i<=4;i++) { const el=document.createElement('div'); el.className='cal-day other-month'; el.textContent=i; g.appendChild(el); }
+}
+buildCal();
+
+function bookAppt() {
+  const n = document.getElementById('new-appt-name');
+  if (!n || !n.value.trim()) { toast('Please enter a client name.','error'); return; }
+  toast('✅ Appointment booked for ' + n.value + '!');
+  n.value = '';
+}
+
+// ═══════ VOICE AI ═══════
+const script = [
+  {s:'nova',t:"Thank you for calling! I'm Nova, your AI assistant. How can I help you today?"},
+  {s:'caller',t:"Hi, I'd like to book an appointment for next week."},
+  {s:'nova',t:"Of course! Could I get your name please?"},
+  {s:'caller',t:"Sure, it's Alex Johnson."},
+  {s:'nova',t:"Great, Alex! What day works best — Monday, Tuesday, or Wednesday?"},
+  {s:'caller',t:"Tuesday would be perfect."},
+  {s:'nova',t:"Wonderful! I have Tuesday at 10 AM or 2 PM. Which do you prefer?"},
+  {s:'caller',t:"10 AM works great."},
+  {s:'nova',t:"Perfect! I've booked you for Tuesday at 10 AM. You'll receive a confirmation shortly!"},
+];
+let callStep=0, callInt=null, callActive=false;
+function startCall() {
+  if(callActive) return;
+  callActive=true; callStep=0;
+  document.getElementById('voice-status').textContent='🔴 Call in progress...';
+  const badge=document.getElementById('voice-badge');
+  badge.textContent='● Active call'; badge.style.background='var(--green-dim)'; badge.style.color='var(--green)';
+  document.getElementById('voice-transcript').innerHTML='';
+  callInt=setInterval(()=>{
+    if(callStep>=script.length){endCall();return;}
+    const line=script[callStep];
+    const d=document.createElement('div');
+    d.className='transcript-line '+line.s;
+    d.textContent=(line.s==='nova'?'🤖 Nova: ':'👤 Caller: ')+line.t;
+    document.getElementById('voice-transcript').appendChild(d);
+    document.getElementById('voice-transcript').scrollTop=9999;
+    callStep++;
+  },1800);
+}
+function endCall() {
+  callActive=false; clearInterval(callInt);
+  document.getElementById('voice-status').textContent='Call ended · Lead captured';
+  const badge=document.getElementById('voice-badge');
+  badge.textContent='● Ready'; badge.style.background=''; badge.style.color='';
+  if(callStep>=script.length) toast('✅ Call complete! Lead captured & appointment booked.');
+}
+
+// ═══════ EMAIL AI ═══════
+const emails=[
+  {from:'Maria Rodriguez',subj:'Re: Appointment confirmation',meta:'maria.r@mail.com · Today 9:02 AM',body:'<p>Hi there,</p><p style="margin-top:10px;">Thanks so much for confirming! Looking forward to Thursday at 2:30 PM.</p><p style="margin-top:10px;">Should I bring anything?</p><p style="margin-top:10px;">Thanks,<br>Maria</p>',reply:'Hi Maria,\n\nThank you for confirming! We\'re looking forward to seeing you Thursday at 2:30 PM.\n\nNo need to bring anything — just yourself! See you then!\n\nWarm regards,\n[Your Name]'},
+  {from:'TechPro Solutions',subj:'Inquiry about your services',meta:'info@techpro.co · Today 8:44 AM',body:'<p>Hello,</p><p style="margin-top:10px;">I came across your website and I\'m very interested in your AI automation services. Could you send over information and pricing?</p><p style="margin-top:10px;">Best,<br>TechPro Team</p>',reply:'Hi TechPro Team,\n\nThank you for reaching out! We\'d love to help automate your operations.\n\nI\'d love to schedule a quick 20-minute call. Would this week work?\n\nBest regards,\n[Your Name]'},
+  {from:'James Kim',subj:'Follow-up on our meeting',meta:'james.kim@biz.co · Today 8:10 AM',body:'<p>Hi,</p><p style="margin-top:10px;">Quick follow up — we really enjoyed our session and would love to move forward. Can you send over the proposal?</p><p style="margin-top:10px;">Thanks,<br>James</p>',reply:'Hi James,\n\nGreat to hear from you! I\'ll have the full proposal over to you by end of day today.\n\nLooking forward to moving ahead!\n\nBest,\n[Your Name]'},
+  {from:'Bloom Beauty Co.',subj:'Pricing question',meta:'hello@bloombeauty.com · Today 6:58 AM',body:'<p>Hi,</p><p style="margin-top:10px;">Can you send over your pricing for the AI chatbot and website package?</p><p style="margin-top:10px;">Thank you!</p>',reply:'Hi Bloom Beauty Co.,\n\nThank you for your interest! Our packages are fully tailored to your needs.\n\nWould you be available for a quick 15-minute call this week?\n\nWarm regards,\n[Your Name]'},
+  {from:'Robert Chen',subj:'New lead from website',meta:'auto-captured · Today 7:30 AM',body:'<p><em>Auto-captured lead via website form</em></p><p style="margin-top:10px;"><strong>Name:</strong> Robert Chen<br><strong>Email:</strong> r.chen@techfirm.io<br><strong>Phone:</strong> (555) 321-0987<br><strong>Message:</strong> Interested in AI automation for my consulting firm.</p>',reply:'Hi Robert,\n\nThank you for your interest! We work with consultants to automate client intake and follow-ups.\n\nAre you available for a quick intro call this week?\n\nBest,\n[Your Name]'},
+];
+const templates={
+  welcome:'Hi [Name],\n\nWelcome! We\'re excited to connect with you.\n\nI\'d love to learn more about your goals. Would you be open to a quick 15-minute call this week?\n\nBest,\n[Your Name]',
+  booking:'Hi [Name],\n\nYour appointment is confirmed!\n\n📅 Date: [Date]\n🕐 Time: [Time]\n\nSee you then!\n\nBest,\n[Your Name]',
+  followup:'Hi [Name],\n\nJust checking in — did you get a chance to review what we sent?\n\nHappy to jump on a quick call anytime.\n\nBest,\n[Your Name]',
+  reminder:'Hi [Name],\n\nFriendly reminder — your appointment is tomorrow at [Time]!\n\nSee you then!\n\nBest,\n[Your Name]',
+  review:'Hi [Name],\n\nIt was a pleasure working with you! If you have a moment, we\'d love a quick Google review 🙏\n\n[Review link]\n\nThank you!\n\n[Your Name]',
+};
+function openEmail(el,idx) {
+  document.querySelectorAll('.email-item').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  const d=emails[idx];
+  document.getElementById('ev-from').textContent=d.from;
+  document.getElementById('ev-subject').textContent=d.subj;
+  document.getElementById('ev-meta').textContent=d.meta;
+  document.getElementById('ev-body').innerHTML=d.body;
+  document.getElementById('reply-box').value=d.reply;
+}
+function setTone(el) { document.querySelectorAll('.tone-btn').forEach(t=>t.classList.remove('active')); el.classList.add('active'); toast('Tone set to '+el.textContent+'!'); }
+function loadTpl(key) { document.getElementById('reply-box').value=templates[key]||''; toast('Template loaded!'); }
+
+// ═══════ CRM ═══════
+const contacts={'Robert Chen':{av:'RC',meta:'r.chen@techfirm.io',note:'Needs intro call.'},'David Lee':{av:'DL',meta:'dlee@company.org',note:'Follow up by EOD.'},'Lisa Park':{av:'LP',meta:'lisa.p@email.com',note:'High interest — chatbot package.'},'Amanda Price':{av:'AP',meta:'amanda.p@gmail.com',note:'Warm — re
