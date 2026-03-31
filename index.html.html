@@ -27,10 +27,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .logo-text{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.5px;background:linear-gradient(135deg,var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
 .logo-sub{font-size:10px;color:var(--text3);margin-top:2px;letter-spacing:0.5px;text-transform:uppercase;}
 .nav{padding:12px;flex:1;}
-.nav-section-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:10px 12px 5px;font-weight:500;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;margin-bottom:1px;border:1px solid transparent;}
-.nav-item:hover{background:var(--surface2);color:var(--text);}
-.nav-item.active{background:var(--accent-glow);color:var(--accent2);border-color:rgba(108,99,255,0.2);}
+.nav-section-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);padding:10px 12px 5px;font-weight:500;-webkit-text-fill-color:var(--text3);}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--text2);transition:all 0.15s;margin-bottom:1px;border:1px solid transparent;-webkit-text-fill-color:var(--text2);}
+.nav-item:hover{background:var(--surface2);color:var(--text);-webkit-text-fill-color:var(--text);}
+.nav-item.active{background:var(--accent-glow);color:var(--accent2);border-color:rgba(108,99,255,0.2);-webkit-text-fill-color:var(--accent2);}
 .nav-item .icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
 .nav-badge{margin-left:auto;background:var(--accent);color:white;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;min-width:18px;text-align:center;}
 .sidebar-footer{padding:14px 20px;border-top:1px solid var(--border);flex-shrink:0;}
