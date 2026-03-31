@@ -1419,3 +1419,20 @@ const contacts={'Robert Chen':{av:'RC',meta:'r.chen@techfirm.io',note:'Needs int
     initNav();
   }
 })();
+
+// ═══════ GUARANTEED NAV FIX ═══════
+window.addEventListener('load', function() {
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var page = this.getAttribute('data-page');
+      document.querySelectorAll('.panel').forEach(function(p) { p.style.display='none'; p.classList.remove('active'); });
+      var panel = document.getElementById('panel-'+page);
+      if (panel) { panel.style.display='block'; panel.classList.add('active'); }
+      document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+      this.classList.add('active');
+      var t = document.getElementById('page-title');
+      if (t) t.textContent = {'dashboard':'Dashboard','analytics':'Analytics','clients':'Client Portal','onboarding':'Client Onboarding','builder':'Website Builder','chatbot':'AI Chatbot','appointments':'Appointments','leads':'Leads','voice':'Voice AI','email':'Email AI','crm':'CRM','sms':'SMS & Reviews','billing':'Billing'}[page] || page;
+      window.scrollTo(0,0);
+    });
+  });
+});
