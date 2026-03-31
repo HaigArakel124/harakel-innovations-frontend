@@ -1059,7 +1059,7 @@ Warm regards,
 const PAGE_TITLES = {dashboard:'Dashboard',analytics:'Analytics',clients:'Client Portal',onboarding:'Client Onboarding',builder:'Website Builder',chatbot:'AI Chatbot',appointments:'Appointments',leads:'Leads',voice:'Voice AI',email:'Email AI',crm:'CRM',sms:'SMS & Reviews',billing:'Billing'};
 const PAGE_CTAS   = {dashboard:'+ New Client',analytics:'Export Report',clients:'+ Onboard Client',onboarding:'Save Draft',builder:'Publish Site',chatbot:'Deploy Bot',appointments:'+ Book',leads:'+ Add Lead',voice:'Activate',email:'Send Reply',crm:'+ Add Contact',sms:'Activate',billing:'+ Invoice'};
 
-function nav(page, el) {
+window.nav = function(page, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.getElementById('panel-' + page).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
