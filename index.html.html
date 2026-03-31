@@ -331,6 +331,32 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     </div>
   </div>
 </aside>
+<script>
+// NAV — runs immediately after sidebar HTML exists
+(function attachNav() {
+  var navItems = document.querySelectorAll('.nav-item[data-page]');
+  navItems.forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var page = item.getAttribute('data-page');
+      // Hide all panels
+      document.querySelectorAll('.panel').forEach(function(p) {
+        p.style.display = 'none';
+        p.classList.remove('active');
+      });
+      // Show target panel
+      var target = document.getElementById('panel-' + page);
+      if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+      }
+      // Update nav active state
+      navItems.forEach(function(n) { n.classList.remove('active'); });
+      item.classList.add('active');
+    });
+  });
+})();
+</script>
 
 <!-- ═══════════════ MAIN ═══════════════ -->
 <div class="main">
