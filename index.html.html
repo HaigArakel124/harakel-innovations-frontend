@@ -306,23 +306,23 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
   </div>
   <nav class="nav">
     <div class="nav-section-label">Main</div>
-    <div class="nav-item active" onclick="window.nav('dashboard',this)"><span class="icon">◈</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="window.nav('analytics',this)"><span class="icon">◎</span><span>Analytics</span></div>
+    <div class="nav-item active" data-page="dashboard"><span class="icon">◈</span><span>Dashboard</span></div>
+    <div class="nav-item" data-page="analytics"><span class="icon">◎</span><span>Analytics</span></div>
     <div class="nav-section-label">Clients</div>
-    <div class="nav-item" onclick="window.nav('clients',this)"><span class="icon">◉</span><span>Client Portal</span><span class="nav-badge">3</span></div>
-    <div class="nav-item" onclick="window.nav('onboarding',this)"><span class="icon">⬡</span><span>Onboarding</span></div>
+    <div class="nav-item" data-page="clients"><span class="icon">◉</span><span>Client Portal</span><span class="nav-badge">3</span></div>
+    <div class="nav-item" data-page="onboarding"><span class="icon">⬡</span><span>Onboarding</span></div>
     <div class="nav-section-label">Tools</div>
-    <div class="nav-item" onclick="window.nav('builder',this)"><span class="icon">⊞</span><span>Website Builder</span></div>
-    <div class="nav-item" onclick="window.nav('chatbot',this)"><span class="icon">◌</span><span>AI Chatbot</span><span class="nav-badge" style="background:var(--green);color:#000">Live</span></div>
-    <div class="nav-item" onclick="window.nav('appointments',this)"><span class="icon">◷</span><span>Appointments</span><span class="nav-badge">4</span></div>
-    <div class="nav-item" onclick="window.nav('leads',this)"><span class="icon">◉</span><span>Leads</span><span class="nav-badge">12</span></div>
+    <div class="nav-item" data-page="builder"><span class="icon">⊞</span><span>Website Builder</span></div>
+    <div class="nav-item" data-page="chatbot"><span class="icon">◌</span><span>AI Chatbot</span><span class="nav-badge" style="background:var(--green);color:#000">Live</span></div>
+    <div class="nav-item" data-page="appointments"><span class="icon">◷</span><span>Appointments</span><span class="nav-badge">4</span></div>
+    <div class="nav-item" data-page="leads"><span class="icon">◉</span><span>Leads</span><span class="nav-badge">12</span></div>
     <div class="nav-section-label">Automation</div>
-    <div class="nav-item" onclick="window.nav('voice',this)"><span class="icon">☏</span><span>Voice AI</span></div>
-    <div class="nav-item" onclick="window.nav('email',this)"><span class="icon">◫</span><span>Email AI</span><span class="nav-badge">5</span></div>
-    <div class="nav-item" onclick="window.nav('crm',this)"><span class="icon">◧</span><span>CRM</span></div>
-    <div class="nav-item" onclick="window.nav('sms',this)"><span class="icon">✉</span><span>SMS & Reviews</span></div>
+    <div class="nav-item" data-page="voice"><span class="icon">☏</span><span>Voice AI</span></div>
+    <div class="nav-item" data-page="email"><span class="icon">◫</span><span>Email AI</span><span class="nav-badge">5</span></div>
+    <div class="nav-item" data-page="crm"><span class="icon">◧</span><span>CRM</span></div>
+    <div class="nav-item" data-page="sms"><span class="icon">✉</span><span>SMS & Reviews</span></div>
     <div class="nav-section-label">Business</div>
-    <div class="nav-item" onclick="window.nav('billing',this)"><span class="icon">💳</span><span>Billing</span></div>
+    <div class="nav-item" data-page="billing"><span class="icon">💳</span><span>Billing</span></div>
   </nav>
   <div class="sidebar-footer">
     <div class="client-badge">
@@ -1061,18 +1061,26 @@ const PAGE_CTAS   = {dashboard:'+ New Client',analytics:'Export Report',clients:
 
 window.nav = function(page, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-' + page).classList.add('active');
+  const panel = document.getElementById('panel-' + page);
+  if (panel) panel.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (el) el.classList.add('active');
-  else {
-    document.querySelectorAll('.nav-item').forEach(n => {
-      if (n.querySelector('span:last-child') && n.getAttribute('onclick') && n.getAttribute('onclick').includes("'"+page+"'")) n.classList.add('active');
-    });
-  }
-  document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
-  document.getElementById('top-cta').textContent = PAGE_CTAS[page] || 'Action';
+  const titleEl = document.getElementById('page-title');
+  const ctaEl = document.getElementById('top-cta');
+  if (titleEl) titleEl.textContent = PAGE_TITLES[page] || page;
+  if (ctaEl) ctaEl.textContent = PAGE_CTAS[page] || 'Action';
   window.scrollTo(0,0);
 }
+
+// Attach nav events after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(item) {
+    item.addEventListener('click', function() {
+      window.nav(this.getAttribute('data-page'), this);
+    });
+  });
+});
+
 
 function handleCTA() {
   const active = document.querySelector('.panel.active').id.replace('panel-','');
