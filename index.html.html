@@ -19,7 +19,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
-.app{display:flex;min-height:100vh;}
+.app{display:flex;min-height:100vh;position:relative;}
 
 /* SIDEBAR */
 .sidebar{width:240px;min-height:100vh;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
@@ -39,7 +39,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .client-name{font-size:13px;font-weight:500;} .client-role{font-size:10px;color:var(--text3);}
 
 /* MAIN */
-.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column;}
+.main{margin-left:240px;flex:1;min-height:100vh;display:flex;flex-direction:column;position:relative;z-index:1;}
 .topbar{padding:18px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface);position:sticky;top:0;z-index:50;flex-shrink:0;}
 .page-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;}
 .topbar-actions{display:flex;gap:8px;align-items:center;}
@@ -1368,3 +1368,28 @@ function loadTpl(key) { document.getElementById('reply-box').value=templates[key
 
 // ═══════ CRM ═══════
 const contacts={'Robert Chen':{av:'RC',meta:'r.chen@techfirm.io',note:'Needs intro call.'},'David Lee':{av:'DL',meta:'dlee@company.org',note:'Follow up by EOD.'},'Lisa Park':{av:'LP',meta:'lisa.p@email.com',note:'High interest — chatbot package.'},'Amanda Price':{av:'AP',meta:'amanda.p@gmail.com',note:'Warm — re
+// ═══════ NAV INIT — runs after all code is loaded ═══════
+(function() {
+  function initNav() {
+    var items = document.querySelectorAll('.nav-item[data-page]');
+    items.forEach(function(item) {
+      item.style.cursor = 'pointer';
+      item.onclick = function() {
+        var page = this.getAttribute('data-page');
+        document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+        var panel = document.getElementById('panel-' + page);
+        if (panel) panel.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+        this.classList.add('active');
+        var t = document.getElementById('page-title');
+        if (t) t.textContent = PAGE_TITLES[page] || page;
+        window.scrollTo(0,0);
+      };
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNav);
+  } else {
+    initNav();
+  }
+})();
