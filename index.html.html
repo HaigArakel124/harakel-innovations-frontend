@@ -306,23 +306,23 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
   </div>
   <nav class="nav">
     <div class="nav-section-label">Main</div>
-    <div class="nav-item active" onclick="nav('dashboard',this)"><span class="icon">◈</span><span>Dashboard</span></div>
-    <div class="nav-item" onclick="nav('analytics',this)"><span class="icon">◎</span><span>Analytics</span></div>
+    <div class="nav-item active" onclick="window.nav('dashboard',this)"><span class="icon">◈</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="window.nav('analytics',this)"><span class="icon">◎</span><span>Analytics</span></div>
     <div class="nav-section-label">Clients</div>
-    <div class="nav-item" onclick="nav('clients',this)"><span class="icon">◉</span><span>Client Portal</span><span class="nav-badge">3</span></div>
-    <div class="nav-item" onclick="nav('onboarding',this)"><span class="icon">⬡</span><span>Onboarding</span></div>
+    <div class="nav-item" onclick="window.nav('clients',this)"><span class="icon">◉</span><span>Client Portal</span><span class="nav-badge">3</span></div>
+    <div class="nav-item" onclick="window.nav('onboarding',this)"><span class="icon">⬡</span><span>Onboarding</span></div>
     <div class="nav-section-label">Tools</div>
-    <div class="nav-item" onclick="nav('builder',this)"><span class="icon">⊞</span><span>Website Builder</span></div>
-    <div class="nav-item" onclick="nav('chatbot',this)"><span class="icon">◌</span><span>AI Chatbot</span><span class="nav-badge" style="background:var(--green);color:#000">Live</span></div>
-    <div class="nav-item" onclick="nav('appointments',this)"><span class="icon">◷</span><span>Appointments</span><span class="nav-badge">4</span></div>
-    <div class="nav-item" onclick="nav('leads',this)"><span class="icon">◉</span><span>Leads</span><span class="nav-badge">12</span></div>
+    <div class="nav-item" onclick="window.nav('builder',this)"><span class="icon">⊞</span><span>Website Builder</span></div>
+    <div class="nav-item" onclick="window.nav('chatbot',this)"><span class="icon">◌</span><span>AI Chatbot</span><span class="nav-badge" style="background:var(--green);color:#000">Live</span></div>
+    <div class="nav-item" onclick="window.nav('appointments',this)"><span class="icon">◷</span><span>Appointments</span><span class="nav-badge">4</span></div>
+    <div class="nav-item" onclick="window.nav('leads',this)"><span class="icon">◉</span><span>Leads</span><span class="nav-badge">12</span></div>
     <div class="nav-section-label">Automation</div>
-    <div class="nav-item" onclick="nav('voice',this)"><span class="icon">☏</span><span>Voice AI</span></div>
-    <div class="nav-item" onclick="nav('email',this)"><span class="icon">◫</span><span>Email AI</span><span class="nav-badge">5</span></div>
-    <div class="nav-item" onclick="nav('crm',this)"><span class="icon">◧</span><span>CRM</span></div>
-    <div class="nav-item" onclick="nav('sms',this)"><span class="icon">✉</span><span>SMS & Reviews</span></div>
+    <div class="nav-item" onclick="window.nav('voice',this)"><span class="icon">☏</span><span>Voice AI</span></div>
+    <div class="nav-item" onclick="window.nav('email',this)"><span class="icon">◫</span><span>Email AI</span><span class="nav-badge">5</span></div>
+    <div class="nav-item" onclick="window.nav('crm',this)"><span class="icon">◧</span><span>CRM</span></div>
+    <div class="nav-item" onclick="window.nav('sms',this)"><span class="icon">✉</span><span>SMS & Reviews</span></div>
     <div class="nav-section-label">Business</div>
-    <div class="nav-item" onclick="nav('billing',this)"><span class="icon">💳</span><span>Billing</span></div>
+    <div class="nav-item" onclick="window.nav('billing',this)"><span class="icon">💳</span><span>Billing</span></div>
   </nav>
   <div class="sidebar-footer">
     <div class="client-badge">
@@ -354,15 +354,15 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div class="stat-card blue"><div class="stat-icon">⬡</div><div class="stat-value">3</div><div class="stat-label">Active clients</div><div class="stat-change up">1 onboarding</div></div>
   </div>
   <div class="grid-2" style="margin-bottom:18px;">
-    <div class="quick-action-btn" onclick="nav('onboarding',null)"><div style="font-size:20px;margin-bottom:5px;">⬡</div><div style="font-size:13px;font-weight:500;">Onboard new client</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Set up website, chatbot & automations</div></div>
-    <div class="quick-action-btn" onclick="nav('leads',null)"><div style="font-size:20px;margin-bottom:5px;">◉</div><div style="font-size:13px;font-weight:500;">View all leads</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">12 new leads need attention</div></div>
-    <div class="quick-action-btn" onclick="nav('appointments',null)"><div style="font-size:20px;margin-bottom:5px;">◷</div><div style="font-size:13px;font-weight:500;">Today's appointments</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">4 bookings scheduled</div></div>
-    <div class="quick-action-btn" onclick="nav('analytics',null)"><div style="font-size:20px;margin-bottom:5px;">◎</div><div style="font-size:13px;font-weight:500;">View analytics</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">See performance across all clients</div></div>
+    <div class="quick-action-btn" onclick="window.nav('onboarding',null)"><div style="font-size:20px;margin-bottom:5px;">⬡</div><div style="font-size:13px;font-weight:500;">Onboard new client</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Set up website, chatbot & automations</div></div>
+    <div class="quick-action-btn" onclick="window.nav('leads',null)"><div style="font-size:20px;margin-bottom:5px;">◉</div><div style="font-size:13px;font-weight:500;">View all leads</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">12 new leads need attention</div></div>
+    <div class="quick-action-btn" onclick="window.nav('appointments',null)"><div style="font-size:20px;margin-bottom:5px;">◷</div><div style="font-size:13px;font-weight:500;">Today's appointments</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">4 bookings scheduled</div></div>
+    <div class="quick-action-btn" onclick="window.nav('analytics',null)"><div style="font-size:20px;margin-bottom:5px;">◎</div><div style="font-size:13px;font-weight:500;">View analytics</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">See performance across all clients</div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
     <div class="flex-col">
       <div class="card">
-        <div class="card-header"><div class="card-title">Recent leads</div><span class="card-link" onclick="nav('leads',null)">View all →</span></div>
+        <div class="card-header"><div class="card-title">Recent leads</div><span class="card-link" onclick="window.nav('leads',null)">View all →</span></div>
         <div class="lead-item"><div class="lead-avatar" style="background:var(--pink-dim);color:var(--pink)">MR</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 2 min ago</div></div><span class="lead-status status-hot">Hot</span></div>
         <div class="lead-item"><div class="lead-avatar" style="background:var(--green-dim);color:var(--green)">JK</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Via website form · 18 min ago</div></div><span class="lead-status status-warm">Warm</span></div>
         <div class="lead-item"><div class="lead-avatar" style="background:var(--accent-glow);color:var(--accent2)">ST</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Sarah Thompson</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 1 hr ago</div></div><span class="lead-status status-booked">Booked</span></div>
@@ -379,7 +379,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     </div>
     <div class="flex-col">
       <div class="card">
-        <div class="card-header"><div class="card-title">Today's appointments</div><span class="card-link" onclick="nav('appointments',null)">View all →</span></div>
+        <div class="card-header"><div class="card-title">Today's appointments</div><span class="card-link" onclick="window.nav('appointments',null)">View all →</span></div>
         <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">9:00 AM</div><div class="appt-dot" style="background:var(--green)"></div><div><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Discovery call · 30 min</div></div></div>
         <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">11:00 AM</div><div class="appt-dot" style="background:var(--accent)"></div><div><div style="font-size:13px;font-weight:500;">TechPro Solutions</div><div style="font-size:11px;color:var(--text3)">Onboarding · 1 hr</div></div></div>
         <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">2:30 PM</div><div class="appt-dot" style="background:var(--amber)"></div><div><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Strategy · 45 min</div></div></div>
@@ -391,7 +391,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">March 2026 · 3 active subscriptions</div>
         <div class="progress-bar" style="margin-bottom:6px;"><div class="progress-fill" style="width:70%;background:var(--accent);"></div></div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">70% to $6,000 monthly goal</div>
-        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="nav('onboarding',null)">+ Onboard next client</button>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="window.nav('onboarding',null)">+ Onboard next client</button>
       </div>
     </div>
   </div>
@@ -587,7 +587,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:8px;">Client is live!</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:22px;">All tools have been configured. Your client is ready to start capturing leads.</div>
         <div style="display:flex;gap:10px;justify-content:center;">
-          <button class="btn btn-primary" onclick="nav('clients',null)">View in client portal</button>
+          <button class="btn btn-primary" onclick="window.nav('clients',null)">View in client portal</button>
           <button class="btn btn-ghost" onclick="toast('Login link sent to client!')">Send login link</button>
           <button class="btn btn-ghost" onclick="resetWizard()">Onboard another</button>
         </div>
@@ -941,7 +941,7 @@ Warm regards,
         <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--pink),var(--accent));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:white;flex-shrink:0;" id="crm-av">MR</div>
         <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="crm-name">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3);" id="crm-meta"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e08d81928981ce92a08d81898cce838f8d">[email&#160;protected]</a></div></div>
       </div>
-      <div style="display:flex;gap:5px;margin-bottom:14px;"><button class="btn btn-primary btn-xs" onclick="toast('Email drafted!')">✉ Email</button><button class="btn btn-ghost btn-xs" onclick="toast('Call initiated!')">📞 Call</button><button class="btn btn-ghost btn-xs" onclick="nav('appointments',null)">📅 Book</button></div>
+      <div style="display:flex;gap:5px;margin-bottom:14px;"><button class="btn btn-primary btn-xs" onclick="toast('Email drafted!')">✉ Email</button><button class="btn btn-ghost btn-xs" onclick="toast('Call initiated!')">📞 Call</button><button class="btn btn-ghost btn-xs" onclick="window.nav('appointments',null)">📅 Book</button></div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Pipeline stage</div>
       <select class="form-input" style="margin-bottom:12px;font-size:12px;" onchange="toast('Stage updated!')"><option>Proposal sent</option><option>New lead</option><option>Contacted</option><option>Meeting booked</option><option>Won</option></select>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Deal value</div>
@@ -1042,7 +1042,7 @@ Warm regards,
         <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">of $6K monthly goal</div>
         <div class="progress-bar" style="margin-bottom:6px;height:8px;"><div class="progress-fill" style="width:70%;background:linear-gradient(90deg,var(--accent),var(--green));"></div></div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">1 more Pro client gets you there</div>
-        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="nav('onboarding',null)">+ Onboard next client</button>
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="window.nav('onboarding',null)">+ Onboard next client</button>
       </div>
     </div>
   </div>
