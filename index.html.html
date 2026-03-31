@@ -1202,26 +1202,68 @@ function addBlock(type) {
 function setTheme(color) { document.querySelectorAll('.hero-cta,.contact-form button').forEach(el=>el.style.background=color); toast('Theme color updated!'); }
 
 // ═══════ CHATBOT ═══════
-const botR = ["I'd be happy to help! Could you share a bit more about what you're looking for?","Great question! Can I get your name and email first so we can follow up?","I can book that for you right away! What date and time works best?","Our team would love to help! I'm noting your inquiry now.","That's something I can definitely assist with. Would you like to schedule a consultation?"];
-let botIdx = 0;
-function sendChat(text) {
+// ═══════ REAL AI CHATBOT — Connected to Harakel Innovations Backend ═══════
+const API_URL = 'https://web-production-608a8.up.railway.app';
+const SESSION_ID = 'session_' + Math.random().toString(36).substr(2, 9);
+const CLIENT_ID = 'demo_client';
+
+async function sendChat(text) {
   const inp = document.getElementById('chat-in');
   const msg = text || inp.value.trim();
   if (!msg) return;
   const msgs = document.getElementById('chat-msgs');
+
+  // Show user message
   const u = document.createElement('div');
   u.className = 'chat-msg user';
   u.innerHTML = `<div><div class="msg-bubble">${msg}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;text-align:right;">Just now</div></div><div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">👤</div>`;
   msgs.appendChild(u);
   inp.value = '';
   msgs.scrollTop = msgs.scrollHeight;
-  setTimeout(() => {
+
+  // Show typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'chat-msg bot';
+  typing.id = 'typing-indicator';
+  typing.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">🤖</div><div><div class="msg-bubble" style="opacity:0.6;">Typing...</div></div>`;
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  try {
+    // Call your real backend API
+    const response = await fetch(`${API_URL}/api/chatbot/message`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        client_id: CLIENT_ID,
+        session_id: SESSION_ID
+      })
+    });
+
+    const data = await response.json();
+    const reply = data.response || "Thanks for your message! How can I help you?";
+
+    // Remove typing indicator
+    document.getElementById('typing-indicator')?.remove();
+
+    // Show real AI response
     const b = document.createElement('div');
     b.className = 'chat-msg bot';
-    b.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">🤖</div><div><div class="msg-bubble">${botR[botIdx++ % botR.length]}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;">Just now</div></div>`;
+    b.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">🤖</div><div><div class="msg-bubble">${reply}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;">Just now</div></div>`;
     msgs.appendChild(b);
     msgs.scrollTop = msgs.scrollHeight;
-  }, 800);
+
+  } catch (error) {
+    // Remove typing indicator
+    document.getElementById('typing-indicator')?.remove();
+    // Fallback response if API is unreachable
+    const b = document.createElement('div');
+    b.className = 'chat-msg bot';
+    b.innerHTML = `<div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">🤖</div><div><div class="msg-bubble">Hi! I'm here to help. How can I assist you today?</div><div style="font-size:10px;color:var(--text3);margin-top:3px;">Just now</div></div>`;
+    msgs.appendChild(b);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
 }
 
 // ═══════ CALENDAR ═══════
