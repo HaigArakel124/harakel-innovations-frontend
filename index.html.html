@@ -47,6 +47,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 /* PANELS */
 .panel{display:none;} .panel.active{display:block;}
+.wiz-step{display:none;} .wiz-step.active{display:block;}
 
 /* BUTTONS */
 .btn{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
@@ -512,7 +513,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     </div>
     <div class="card">
       <!-- Step 1 -->
-      <div class="panel active" id="ws1">
+      <div class="wiz-step active" id="ws1">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Tell us about the business</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">This info will configure all AI tools automatically.</div>
         <div class="grid-2"><div class="form-group"><label class="form-label">Business name *</label><input class="form-input" id="biz-name" placeholder="e.g. Bloom Beauty Co."></div><div class="form-group"><label class="form-label">Owner name *</label><input class="form-input" id="wiz-owner" placeholder="e.g. Sarah Thompson"></div></div>
@@ -522,7 +523,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div class="form-group"><label class="form-label">What does this business do?</label><textarea class="form-input" id="wiz-services" style="min-height:60px;" placeholder="e.g. We're a beauty salon specializing in hair and skincare..."></textarea></div>
       </div>
       <!-- Step 2 -->
-      <div class="panel" id="ws2">
+      <div class="wiz-step" id="ws2">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">What industry are they in?</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">We'll pre-configure the AI for their industry automatically.</div>
         <div class="grid-3" style="margin-bottom:8px;">
@@ -538,7 +539,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         </div>
       </div>
       <!-- Step 3 -->
-      <div class="panel" id="ws3">
+      <div class="wiz-step" id="ws3">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Which tools do they need?</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Select modules to activate. You can change this anytime.</div>
         <div class="grid-2">
@@ -553,7 +554,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         </div>
       </div>
       <!-- Step 4 -->
-      <div class="panel" id="ws4">
+      <div class="wiz-step" id="ws4">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Set up their branding</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Applied across their website, chatbot, and all client-facing tools.</div>
         <div class="form-group"><label class="form-label">Brand display name</label><input class="form-input" id="wiz-brand-display" placeholder="e.g. Bloom Beauty Assistant"></div>
@@ -569,7 +570,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div class="form-group"><label class="form-label">Chatbot greeting message</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. Hi! I'm Aria from Bloom Beauty. How can I help you today?"></textarea></div>
       </div>
       <!-- Step 5 -->
-      <div class="panel" id="ws5">
+      <div class="wiz-step" id="ws5">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Choose their plan</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Set the monthly fee. These are suggested tiers — you decide.</div>
         <div class="grid-3" style="margin-bottom:18px;">
@@ -581,7 +582,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div class="form-group"><label class="form-label">Internal notes</label><textarea class="form-input" style="min-height:50px;" placeholder="Notes about this client (not shown to them)..."></textarea></div>
       </div>
       <!-- Step 6 complete -->
-      <div class="panel" id="ws6" style="text-align:center;padding:20px 0;">
+      <div class="wiz-step" id="ws6" style="text-align:center;padding:20px 0;">
         <div style="font-size:52px;margin-bottom:14px;">🎉</div>
         <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:8px;">Client is live!</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:22px;">All tools have been configured. Your client is ready to start capturing leads.</div>
