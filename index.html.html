@@ -373,11 +373,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <div class="panel active" id="panel-dashboard">
   <div style="margin-bottom:20px;"><div class="section-heading">Good morning ☀️</div><div class="section-sub">Here's what's happening across your clients today.</div></div>
   <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
-    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="stat-leads-count">12</div><div class="stat-label">New leads</div><div class="stat-change up" id="stat-leads-change">↑ 3 since yesterday</div></div>
-    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="stat-appts-count">4</div><div class="stat-label">Appointments today</div><div class="stat-change up" id="stat-appts-change">↑ 1 new booking</div></div>
-    <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">94%</div><div class="stat-label">Chatbot uptime</div><div class="stat-change up">All bots running</div></div>
-    <div class="stat-card pink"><div class="stat-icon">◧</div><div class="stat-value">$24.5K</div><div class="stat-label">Pipeline value</div><div class="stat-change up">↑ $3.2K this week</div></div>
-    <div class="stat-card blue"><div class="stat-icon">⬡</div><div class="stat-value" id="stat-clients-count">3</div><div class="stat-label">Active clients</div><div class="stat-change up" id="stat-clients-change">1 onboarding</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="stat-leads-count">—</div><div class="stat-label">New leads</div><div class="stat-change up" id="stat-leads-change">Loading...</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="stat-appts-count">—</div><div class="stat-label">Appointments today</div><div class="stat-change up" id="stat-appts-change">Loading...</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">—</div><div class="stat-label">Chatbot uptime</div><div class="stat-change up">All bots running</div></div>
+    <div class="stat-card pink"><div class="stat-icon">◧</div><div class="stat-value">—</div><div class="stat-label">Pipeline value</div><div class="stat-change up">↑ $3.2K this week</div></div>
+    <div class="stat-card blue"><div class="stat-icon">⬡</div><div class="stat-value" id="stat-clients-count">—</div><div class="stat-label">Active clients</div><div class="stat-change up" id="stat-clients-change">Loading...</div></div>
   </div>
   <div class="grid-2" style="margin-bottom:18px;">
     <div class="quick-action-btn" onclick="window.nav('onboarding',null)"><div style="font-size:20px;margin-bottom:5px;">⬡</div><div style="font-size:13px;font-weight:500;">Onboard new client</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Set up website, chatbot & automations</div></div>
@@ -389,10 +389,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div class="flex-col">
       <div class="card">
         <div class="card-header"><div class="card-title">Recent leads</div><span class="card-link" onclick="window.nav('leads',null)">View all →</span></div>
-        <div id="dash-leads-list"><div class="lead-item"><div class="lead-avatar" style="background:var(--pink-dim);color:var(--pink)">MR</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 2 min ago</div></div><span class="lead-status status-hot">Hot</span></div>
-        <div class="lead-item"><div class="lead-avatar" style="background:var(--green-dim);color:var(--green)">JK</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Via website form · 18 min ago</div></div><span class="lead-status status-warm">Warm</span></div>
-        <div class="lead-item"><div class="lead-avatar" style="background:var(--accent-glow);color:var(--accent2)">ST</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Sarah Thompson</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 1 hr ago</div></div><span class="lead-status status-booked">Booked</span></div>
-        <div class="lead-item"><div class="lead-avatar" style="background:var(--amber-dim);color:var(--amber)">DL</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">David Lee</div><div style="font-size:11px;color:var(--text3)">Via email · 3 hr ago</div></div><span class="lead-status status-new">New</span></div>
+        <div id="dash-leads-list"><div style="font-size:12px;color:var(--text3);padding:12px 0;">Loading live data...</div>
         </div>
       </div>
       <div class="card">
@@ -407,10 +404,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div class="flex-col">
       <div class="card">
         <div class="card-header"><div class="card-title">Today's appointments</div><span class="card-link" onclick="window.nav('appointments',null)">View all →</span></div>
-        <div id="dash-appts-list"><div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">9:00 AM</div><div class="appt-dot" style="background:var(--green)"></div><div><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Discovery call · 30 min</div></div></div>
-        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">11:00 AM</div><div class="appt-dot" style="background:var(--accent)"></div><div><div style="font-size:13px;font-weight:500;">TechPro Solutions</div><div style="font-size:11px;color:var(--text3)">Onboarding · 1 hr</div></div></div>
-        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">2:30 PM</div><div class="appt-dot" style="background:var(--amber)"></div><div><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Strategy · 45 min</div></div></div>
-        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">4:00 PM</div><div class="appt-dot" style="background:var(--pink)"></div><div><div style="font-size:13px;font-weight:500;">Bloom Beauty Co.</div><div style="font-size:11px;color:var(--text3)">Demo · 30 min</div></div></div>
+        <div id="dash-appts-list"><div style="font-size:12px;color:var(--text3);padding:12px 0;">Loading live data...</div>
         </div>
       </div>
       <div class="card">
@@ -767,9 +761,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <!-- ═══════ LEADS ═══════ -->
 <div class="panel" id="panel-leads">
   <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
-    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="leads-new-count">12</div><div class="stat-label">New this week</div><div class="stat-change up">↑ 3 vs last week</div></div>
-    <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value" id="leads-hot-count">3</div><div class="stat-label">Hot leads</div><div class="stat-change up">Need follow-up now</div></div>
-    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="leads-booked-count">5</div><div class="stat-label">Booked</div><div class="stat-change up">Converted to appointments</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="leads-new-count">—</div><div class="stat-label">New this week</div><div class="stat-change up">Loading...</div></div>
+    <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value" id="leads-hot-count">—</div><div class="stat-label">Hot leads</div><div class="stat-change up">Loading...</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="leads-booked-count">—</div><div class="stat-label">Booked</div><div class="stat-change up">Loading...</div></div>
     <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">45%</div><div class="stat-label">Chatbot capture rate</div><div class="stat-change up">↑ 4pts this month</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:16px;">
@@ -781,7 +775,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:10px 16px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);">
       <div>Contact</div><div>Email</div><div>Source</div><div>Score</div><div>Status</div><div>Actions</div>
     </div>
-    <div id="leads-tbody"><div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="toast('Maria Rodriguez opened!')">
+    <div id="leads-tbody"><div style="padding:16px;font-size:12px;color:var(--text3);">Loading live data...</div><div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;display:none;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="toast('Maria Rodriguez opened!')">
       <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">MR</div><div>Maria Rodriguez<div style="font-size:10px;color:var(--text3);">(555) 234-5678</div></div></div>
       <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b6db98c4d9d2c4dfd1c3d3ccf6dbd7dfda98d5d9db">[email&#160;protected]</a></div>
       <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
@@ -1671,8 +1665,13 @@ async function loadLiveData() {
   }
 }
 
-// Run on page load
-document.addEventListener('DOMContentLoaded', loadLiveData);
+// Script runs at the bottom of <body> — DOM is fully ready, call directly.
+// Also register for DOMContentLoaded as a safety net.
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadLiveData);
+} else {
+  loadLiveData();
+}
 </script>
 </body>
 </html>
