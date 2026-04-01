@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Harakel Innovations</title>
+<meta name="description" content="Simple, transparent pricing for AI automation. Chatbot, leads, appointments, voice AI and more — starting at $397/month.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #18181f; --surface3: #1e1e28;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
+    --text: #f0f0f5; --text2: #9090a8; --text3: #5a5a72;
+    --accent: #6c63ff; --accent-glow: rgba(108,99,255,0.15);
+    --green: #00d9a3; --green-dim: rgba(0,217,163,0.12);
+    --amber: #ffb547; --pink: #ff6b9d;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Nav ── */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 64px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; background: linear-gradient(135deg, #6c63ff, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta { padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; text-decoration: none; }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 680px; margin: 0 auto; padding: 80px 24px 64px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(108,99,255,.15); border: 1px solid rgba(108,99,255,.3);
+    color: #8b84ff; font-size: 12px; font-weight: 500;
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 20px;
+  }
+  .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: #8b84ff; display: inline-block; }
+  .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(32px, 5vw, 52px); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 16px; }
+  .hero h1 em { font-style: normal; background: linear-gradient(135deg, #6c63ff, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { font-size: 16px; color: var(--text2); line-height: 1.7; max-width: 500px; margin: 0 auto; }
+
+  /* ── Toggle ── */
+  .billing-toggle { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 28px 0 0; font-size: 13px; color: var(--text2); }
+  .billing-toggle .save-badge { background: var(--green-dim); color: var(--green); font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+
+  /* ── Pricing grid ── */
+  .pricing-section { max-width: 1160px; margin: 0 auto; padding: 0 24px 96px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 1024px) { .pricing-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 600px)  { .pricing-grid { grid-template-columns: 1fr; } }
+
+  /* ── Pricing card ── */
+  .pricing-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 28px 24px; position: relative;
+    transition: border-color .2s, transform .2s;
+    display: flex; flex-direction: column;
+  }
+  .pricing-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .pricing-card.popular {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(108,99,255,0.06) 0%, var(--surface) 60%);
+  }
+  .pricing-card.popular:hover { border-color: #8b84ff; }
+  .pricing-card.custom-card {
+    border-style: dashed; border-color: rgba(255,255,255,0.1);
+    background: var(--surface2);
+  }
+  .pricing-card.custom-card:hover { border-color: rgba(255,181,71,0.4); }
+
+  .popular-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--accent), #8b84ff);
+    color: white; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+    padding: 4px 14px; border-radius: 20px; white-space: nowrap;
+  }
+
+  .card-plan { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .pricing-card.popular .card-plan { color: #8b84ff; }
+  .pricing-card.custom-card .card-plan { color: var(--amber); }
+
+  .card-price { font-family: 'Syne', sans-serif; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+  .card-price .amount { font-size: 44px; }
+  .card-price .period { font-size: 14px; font-weight: 400; color: var(--text3); }
+  .card-price .custom-label { font-size: 28px; color: var(--text); }
+
+  .card-desc { font-size: 12px; color: var(--text2); margin-bottom: 22px; line-height: 1.5; min-height: 32px; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin-bottom: 18px; }
+
+  .features { list-style: none; margin-bottom: 28px; flex: 1; }
+  .features li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: var(--text2); padding: 5px 0; line-height: 1.4; }
+  .features li .check { width: 16px; height: 16px; border-radius: 50%; background: var(--green-dim); color: var(--green); font-size: 9px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .pricing-card.popular .features li .check { background: var(--accent-glow); color: #8b84ff; }
+  .pricing-card.custom-card .features li .check { background: rgba(255,181,71,0.12); color: var(--amber); }
+
+  .card-cta {
+    display: block; width: 100%; padding: 13px; border-radius: 10px;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    text-align: center; text-decoration: none; cursor: pointer;
+    transition: all .15s; border: none;
+  }
+  .cta-primary { background: var(--accent); color: white; }
+  .cta-primary:hover { background: #8b84ff; transform: translateY(-1px); }
+  .pricing-card.popular .cta-primary { background: linear-gradient(135deg, var(--accent), #8b84ff); box-shadow: 0 4px 20px rgba(108,99,255,0.35); }
+  .pricing-card.popular .cta-primary:hover { box-shadow: 0 6px 28px rgba(108,99,255,0.45); transform: translateY(-1px); }
+  .cta-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+  .cta-ghost:hover { background: var(--surface2); color: var(--text); }
+  .cta-amber { background: rgba(255,181,71,0.12); color: var(--amber); border: 1px solid rgba(255,181,71,0.25); }
+  .cta-amber:hover { background: rgba(255,181,71,0.2); transform: translateY(-1px); }
+
+  /* ── Trust strip ── */
+  .trust-strip { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 32px 24px; text-align: center; margin-bottom: 80px; }
+  .trust-items { display: flex; justify-content: center; gap: 48px; flex-wrap: wrap; }
+  .trust-item { font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 7px; }
+  .trust-item span { color: var(--green); font-size: 15px; }
+
+  /* ── FAQ ── */
+  .faq-section { max-width: 680px; margin: 0 auto; padding: 0 24px 96px; }
+  .faq-title { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; text-align: center; margin-bottom: 40px; }
+  .faq-item { border-bottom: 1px solid var(--border); padding: 18px 0; cursor: pointer; }
+  .faq-item:last-child { border-bottom: none; }
+  .faq-q { font-size: 14px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .faq-q .icon { color: var(--text3); font-size: 18px; flex-shrink: 0; transition: transform .2s; }
+  .faq-item.open .faq-q .icon { transform: rotate(45deg); }
+  .faq-a { font-size: 13px; color: var(--text2); line-height: 1.7; max-height: 0; overflow: hidden; transition: max-height .25s ease, padding-top .25s; }
+  .faq-item.open .faq-a { max-height: 200px; padding-top: 10px; }
+
+  /* ── Footer ── */
+  footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  .footer-logo { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; background: linear-gradient(135deg, #6c63ff, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  footer p { font-size: 12px; color: var(--text3); }
+  footer nav { background: none; border: none; padding: 0; position: static; height: auto; }
+  footer nav a { font-size: 12px; color: var(--text3); text-decoration: none; }
+  footer nav a:hover { color: var(--text2); }
+
+  /* ── Success banner ── */
+  .success-banner { background: var(--green-dim); border: 1px solid rgba(0,217,163,0.25); color: var(--green); text-align: center; padding: 14px; font-size: 14px; font-weight: 500; display: none; }
+  .success-banner.show { display: block; }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 20px; }
+    .nav-links { display: none; }
+    footer { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Success banner (shown after Stripe redirect) -->
+<div class="success-banner" id="success-banner">
+  🎉 You're all set! Welcome to Harakel Innovations. We'll be in touch shortly.
+</div>
+
+<!-- Navigation -->
+<nav>
+  <a href="/" class="nav-logo">Harakel Innovations</a>
+  <ul class="nav-links">
+    <li><a href="/">Dashboard</a></li>
+    <li><a href="/pricing" style="color:var(--text);">Pricing</a></li>
+    <li><a href="mailto:andrewarakel146@gmail.com">Contact</a></li>
+  </ul>
+  <a href="mailto:andrewarakel146@gmail.com" class="nav-cta">Book a call</a>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge"><span></span> No hidden fees. Cancel anytime.</div>
+  <h1>The AI stack your clients<br>need — at a price that <em>makes sense</em></h1>
+  <p>Every plan includes setup, onboarding, and ongoing support. You bring the clients — we handle the AI.</p>
+</section>
+
+<!-- Pricing cards -->
+<section class="pricing-section">
+  <div class="pricing-grid">
+
+    <!-- Starter -->
+    <div class="pricing-card">
+      <div class="card-plan">Starter</div>
+      <div class="card-price"><span class="amount">$397</span><span class="period">/mo</span></div>
+      <div class="card-desc">The essentials to capture more leads and never miss a customer.</div>
+      <hr class="divider">
+      <ul class="features">
+        <li><span class="check">✓</span> AI Chatbot (24/7 on their website)</li>
+        <li><span class="check">✓</span> Lead capture &amp; qualification</li>
+        <li><span class="check">✓</span> CRM &amp; pipeline management</li>
+        <li><span class="check">✓</span> Appointment booking</li>
+        <li><span class="check">✓</span> Up to 500 leads/month</li>
+        <li><span class="check">✓</span> 1 business location</li>
+        <li><span class="check">✓</span> Setup &amp; onboarding included</li>
+      </ul>
+      <a href="https://web-production-608a8.up.railway.app/api/billing/checkout/starter" class="card-cta cta-primary">Get Started</a>
+    </div>
+
+    <!-- Pro (Most Popular) -->
+    <div class="pricing-card popular">
+      <div class="popular-badge">✦ Most Popular</div>
+      <div class="card-plan">Pro</div>
+      <div class="card-price"><span class="amount">$997</span><span class="period">/mo</span></div>
+      <div class="card-desc">The full AI automation suite — for businesses serious about growth.</div>
+      <hr class="divider">
+      <ul class="features">
+        <li><span class="check">✓</span> Everything in Starter</li>
+        <li><span class="check">✓</span> Email AI (auto-replies &amp; sequences)</li>
+        <li><span class="check">✓</span> Voice AI (AI phone receptionist)</li>
+        <li><span class="check">✓</span> SMS &amp; Google review automation</li>
+        <li><span class="check">✓</span> Up to 2,000 leads/month</li>
+        <li><span class="check">✓</span> Up to 3 locations</li>
+        <li><span class="check">✓</span> Priority support</li>
+      </ul>
+      <a href="https://web-production-608a8.up.railway.app/api/billing/checkout/pro" class="card-cta cta-primary">Get Started</a>
+    </div>
+
+    <!-- Enterprise -->
+    <div class="pricing-card">
+      <div class="card-plan">Enterprise</div>
+      <div class="card-price"><span class="custom-label">Custom</span></div>
+      <div class="card-desc">For agencies and larger businesses that need more power and flexibility.</div>
+      <hr class="divider">
+      <ul class="features">
+        <li><span class="check">✓</span> Everything in Pro</li>
+        <li><span class="check">✓</span> Unlimited leads &amp; locations</li>
+        <li><span class="check">✓</span> Dedicated account manager</li>
+        <li><span class="check">✓</span> Custom AI training &amp; integrations</li>
+        <li><span class="check">✓</span> White-label option</li>
+        <li><span class="check">✓</span> SLA &amp; uptime guarantee</li>
+        <li><span class="check">✓</span> Quarterly strategy calls</li>
+      </ul>
+      <a href="mailto:andrewarakel146@gmail.com?subject=Enterprise%20Plan%20Inquiry" class="card-cta cta-ghost">Contact Us</a>
+    </div>
+
+    <!-- Build Your Own -->
+    <div class="pricing-card custom-card">
+      <div class="card-plan">Build Your Own</div>
+      <div class="card-price"><span class="custom-label">Custom</span></div>
+      <div class="card-desc">Only pay for what you need. Mix and match AI tools for any budget.</div>
+      <hr class="divider">
+      <ul class="features">
+        <li><span class="check">✓</span> Choose any modules à la carte</li>
+        <li><span class="check">✓</span> AI Chatbot</li>
+        <li><span class="check">✓</span> Email AI</li>
+        <li><span class="check">✓</span> Voice AI</li>
+        <li><span class="check">✓</span> CRM &amp; Appointments</li>
+        <li><span class="check">✓</span> SMS &amp; Reviews</li>
+        <li><span class="check">✓</span> Priced per module you activate</li>
+      </ul>
+      <a href="mailto:andrewarakel146@gmail.com?subject=Custom%20Plan%20Inquiry" class="card-cta cta-amber">Let's Talk</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- Trust strip -->
+<div class="trust-strip">
+  <div class="trust-items">
+    <div class="trust-item"><span>✓</span> No setup fees</div>
+    <div class="trust-item"><span>✓</span> Cancel anytime</div>
+    <div class="trust-item"><span>✓</span> Onboarding included in every plan</div>
+    <div class="trust-item"><span>✓</span> Powered by Claude AI</div>
+    <div class="trust-item"><span>✓</span> Secure payments via Stripe</div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="faq-title">Common questions</div>
+
+  <div class="faq-item" onclick="toggleFaq(this)">
+    <div class="faq-q">How quickly can my client be up and running?<span class="icon">+</span></div>
+    <div class="faq-a">Most clients are fully set up within 24–48 hours of signing up. We handle the onboarding — you just send us the business details.</div>
+  </div>
+
+  <div class="faq-item" onclick="toggleFaq(this)">
+    <div class="faq-q">Is there a contract or minimum commitment?<span class="icon">+</span></div>
+    <div class="faq-a">No contracts. All plans are month-to-month and you can cancel anytime from your dashboard. No questions asked.</div>
+  </div>
+
+  <div class="faq-item" onclick="toggleFaq(this)">
+    <div class="faq-q">What happens if my client exceeds the lead limit?<span class="icon">+</span></div>
+    <div class="faq-a">We'll reach out before any service interruption. You can upgrade their plan at any time or contact us to discuss overage pricing.</div>
+  </div>
+
+  <div class="faq-item" onclick="toggleFaq(this)">
+    <div class="faq-q">Can I white-label this for my agency?<span class="icon">+</span></div>
+    <div class="faq-a">Yes — white-labelling is available on the Enterprise plan. Your clients see your brand, not ours. Contact us to discuss options.</div>
+  </div>
+
+  <div class="faq-item" onclick="toggleFaq(this)">
+    <div class="faq-q">How does the AI chatbot get installed on a client's website?<span class="icon">+</span></div>
+    <div class="faq-a">One line of code. After onboarding, you get a single &lt;script&gt; tag to paste before the &lt;/body&gt; of any website. Works on Wix, WordPress, Squarespace, Shopify — anywhere.</div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">Harakel Innovations</div>
+  <nav style="display:flex;gap:24px;">
+    <a href="mailto:andrewarakel146@gmail.com">Contact</a>
+    <a href="/pricing">Pricing</a>
+  </nav>
+  <p>© 2026 Harakel Innovations. All rights reserved.</p>
+</footer>
+
+<script>
+  // Show success banner if redirected back from Stripe
+  if (new URLSearchParams(window.location.search).get('success') === 'true') {
+    document.getElementById('success-banner').classList.add('show');
+    window.scrollTo(0, 0);
+  }
+
+  function toggleFaq(el) {
+    el.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
