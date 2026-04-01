@@ -459,11 +459,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
   <div class="section-heading">Analytics</div>
   <div class="section-sub">Track ROI and results across all your clients.</div>
   <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
-    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">147</div><div class="stat-label">Leads captured</div><div class="stat-change up">↑ 23% vs last month</div></div>
-    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value">89</div><div class="stat-label">Appointments booked</div><div class="stat-change up">↑ 18% vs last month</div></div>
-    <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">2,341</div><div class="stat-label">Chatbot conversations</div><div class="stat-change up">↑ 31% vs last month</div></div>
-    <div class="stat-card pink"><div class="stat-icon">☏</div><div class="stat-value">412</div><div class="stat-label">Calls handled</div><div class="stat-change up">↑ 12% vs last month</div></div>
-    <div class="stat-card blue"><div class="stat-icon">◫</div><div class="stat-value">68%</div><div class="stat-label">Email open rate</div><div class="stat-change up">↑ 8pts vs last month</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="an-leads">—</div><div class="stat-label">Leads captured</div><div class="stat-change up" id="an-leads-chg">Loading...</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="an-appts">—</div><div class="stat-label">Appointments booked</div><div class="stat-change up" id="an-appts-chg">Loading...</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value" id="an-clients">—</div><div class="stat-label">Active clients</div><div class="stat-change up" id="an-clients-chg">Loading...</div></div>
+    <div class="stat-card pink"><div class="stat-icon">◈</div><div class="stat-value" id="an-mrr">—</div><div class="stat-label">Monthly revenue</div><div class="stat-change up" id="an-mrr-chg">Loading...</div></div>
+    <div class="stat-card blue"><div class="stat-icon">◉</div><div class="stat-value" id="an-sources-count">—</div><div class="stat-label">Lead sources tracked</div><div class="stat-change up" id="an-sources-chg">Loading...</div></div>
   </div>
   <div class="grid-2" style="margin-bottom:18px;">
     <div class="card"><div class="card-title" style="margin-bottom:4px;">Leads captured</div><div style="font-size:11px;color:var(--text3);margin-bottom:14px;">Daily leads · last 20 days</div><div class="bar-chart" id="leads-chart"></div></div>
@@ -475,26 +475,26 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div style="display:flex;align-items:center;gap:20px;">
         <svg width="90" height="90" viewBox="0 0 36 36" style="flex-shrink:0;">
           <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--surface3)" stroke-width="4"/>
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="45 55" stroke-dashoffset="25" transform="rotate(-90 18 18)"/>
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--green)" stroke-width="4" stroke-dasharray="28 72" stroke-dashoffset="-20" transform="rotate(-90 18 18)"/>
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--amber)" stroke-width="4" stroke-dasharray="15 85" stroke-dashoffset="-48" transform="rotate(-90 18 18)"/>
-          <circle cx="18" cy="18" r="15.9" fill="none" stroke="var(--pink)" stroke-width="4" stroke-dasharray="12 88" stroke-dashoffset="-63" transform="rotate(-90 18 18)"/>
+          <circle id="an-arc-chatbot" cx="18" cy="18" r="15.9" fill="none" stroke="var(--accent)" stroke-width="4" stroke-dasharray="45 55" stroke-dashoffset="25" transform="rotate(-90 18 18)"/>
+          <circle id="an-arc-form" cx="18" cy="18" r="15.9" fill="none" stroke="var(--green)" stroke-width="4" stroke-dasharray="28 72" stroke-dashoffset="-20" transform="rotate(-90 18 18)"/>
+          <circle id="an-arc-email" cx="18" cy="18" r="15.9" fill="none" stroke="var(--amber)" stroke-width="4" stroke-dasharray="15 85" stroke-dashoffset="-48" transform="rotate(-90 18 18)"/>
+          <circle id="an-arc-voice" cx="18" cy="18" r="15.9" fill="none" stroke="var(--pink)" stroke-width="4" stroke-dasharray="12 88" stroke-dashoffset="-63" transform="rotate(-90 18 18)"/>
         </svg>
         <div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Chatbot<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">45%</span></div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Website form<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">28%</span></div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Email<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">15%</span></div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>Voice AI<span style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">12%</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>Chatbot<span id="an-src-chatbot" style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">—</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Website form<span id="an-src-form" style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">—</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Email<span id="an-src-email" style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">—</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--pink)"></div>Voice AI<span id="an-src-voice" style="margin-left:auto;font-weight:600;font-size:12px;padding-left:12px;">—</span></div>
         </div>
       </div>
     </div>
     <div class="card">
       <div class="card-title" style="margin-bottom:14px;">Chatbot & email performance</div>
-      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Conversations this month</span><span style="font-weight:600;">2,341</span></div>
-      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Lead capture rate</span><span style="font-weight:600;color:var(--green);">34%</span></div>
-      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Email open rate</span><span style="font-weight:600;color:var(--green);">68%</span></div>
-      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Reviews generated</span><span style="font-weight:600;color:var(--amber);">47 ⭐</span></div>
-      <div style="display:flex;justify-content:space-between;padding:9px 0;font-size:13px;"><span>Avg Google rating</span><span style="font-weight:600;color:var(--amber);">4.8 / 5</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Total leads</span><span id="an-perf-leads" style="font-weight:600;">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Booked leads</span><span id="an-perf-booked" style="font-weight:600;color:var(--green);">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Hot leads</span><span id="an-perf-hot" style="font-weight:600;color:var(--pink);">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;"><span>Total appointments</span><span id="an-perf-appts" style="font-weight:600;color:var(--amber);">—</span></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0;font-size:13px;"><span>Monthly revenue</span><span id="an-perf-mrr" style="font-weight:600;color:var(--green);">—</span></div>
     </div>
   </div>
 </div>
@@ -1111,9 +1111,127 @@ function buildBars(id, data, color) {
     wrap.appendChild(w);
   });
 }
-buildBars('leads-chart', [{l:'M10',v:8},{l:'T11',v:5},{l:'W12',v:9},{l:'T13',v:11},{l:'F14',v:7},{l:'M17',v:6},{l:'T18',v:10},{l:'W19',v:8},{l:'T20',v:12},{l:'F21',v:9},{l:'M24',v:11},{l:'T25',v:7},{l:'W26',v:14},{l:'T27',v:10},{l:'F28',v:8}], 'var(--accent)');
-buildBars('rev-chart', [{l:'Oct',v:800},{l:'Nov',v:1200},{l:'Dec',v:1800},{l:'Jan',v:2400},{l:'Feb',v:3200},{l:'Mar',v:4200}], 'var(--green)');
-buildBars('billing-chart', [{l:'Oct',v:800},{l:'Nov',v:1200},{l:'Dec',v:1800},{l:'Jan',v:2400},{l:'Feb',v:3200},{l:'Mar',v:4200}], 'var(--amber)');
+// Analytics charts populated by _updateAnalytics() after live data loads
+
+// ═══════ ANALYTICS UPDATE ═══════
+function _updateAnalytics(cd, leads, ls, apptCount) {
+  var total = ls && ls.total !== undefined ? ls.total : leads.length;
+  var byStatus = (ls && ls.by_status) || {};
+  var bySource = (ls && ls.by_source) || {};
+  var mrr = (cd && cd.total_mrr !== undefined) ? cd.total_mrr : 0;
+
+  // ── Stat cards ──
+  var el = document.getElementById('an-leads');
+  if (el) el.textContent = total;
+  el = document.getElementById('an-leads-chg');
+  if (el) el.textContent = (byStatus.new || 0) + ' new this period';
+
+  el = document.getElementById('an-appts');
+  if (el) el.textContent = apptCount;
+  el = document.getElementById('an-appts-chg');
+  if (el) el.textContent = 'All time bookings';
+
+  el = document.getElementById('an-clients');
+  if (el) el.textContent = (cd && cd.active !== undefined) ? cd.active : '—';
+  el = document.getElementById('an-clients-chg');
+  if (el) el.textContent = ((cd && cd.total) || 0) + ' total clients';
+
+  el = document.getElementById('an-mrr');
+  if (el) el.textContent = _fmtMoney(mrr);
+  el = document.getElementById('an-mrr-chg');
+  if (el) el.textContent = ((cd && cd.active) || 0) + ' active subscription' + ((cd && cd.active) !== 1 ? 's' : '');
+
+  var srcKeys = Object.keys(bySource).filter(function(k) { return (bySource[k] || 0) > 0; });
+  el = document.getElementById('an-sources-count');
+  if (el) el.textContent = srcKeys.length || '—';
+  el = document.getElementById('an-sources-chg');
+  if (el) el.textContent = srcKeys.length + ' active channel' + (srcKeys.length !== 1 ? 's' : '');
+
+  // ── Performance rows ──
+  el = document.getElementById('an-perf-leads');  if (el) el.textContent = total;
+  el = document.getElementById('an-perf-booked'); if (el) el.textContent = byStatus.booked || 0;
+  el = document.getElementById('an-perf-hot');    if (el) el.textContent = byStatus.hot || 0;
+  el = document.getElementById('an-perf-appts');  if (el) el.textContent = apptCount;
+  el = document.getElementById('an-perf-mrr');    if (el) el.textContent = _fmtMoney(mrr);
+
+  // ── Donut chart ──
+  var srcChatbot = bySource.chatbot || 0;
+  var srcForm    = bySource.website_form || bySource.form || bySource.website || 0;
+  var srcEmail   = bySource.email || 0;
+  var srcVoice   = bySource.voice || bySource.voice_ai || 0;
+  var srcTotal   = srcChatbot + srcForm + srcEmail + srcVoice;
+
+  if (srcTotal > 0) {
+    var pChatbot = Math.round((srcChatbot / srcTotal) * 100);
+    var pForm    = Math.round((srcForm    / srcTotal) * 100);
+    var pEmail   = Math.round((srcEmail   / srcTotal) * 100);
+    var pVoice   = 100 - pChatbot - pForm - pEmail; // absorb rounding remainder
+
+    var lChatbot = document.getElementById('an-src-chatbot');
+    var lForm    = document.getElementById('an-src-form');
+    var lEmail   = document.getElementById('an-src-email');
+    var lVoice   = document.getElementById('an-src-voice');
+    if (lChatbot) lChatbot.textContent = pChatbot + '%';
+    if (lForm)    lForm.textContent    = pForm + '%';
+    if (lEmail)   lEmail.textContent   = pEmail + '%';
+    if (lVoice)   lVoice.textContent   = pVoice + '%';
+
+    var off0 = 25, off1 = off0 - pChatbot, off2 = off1 - pForm, off3 = off2 - pEmail;
+    var arcC = document.getElementById('an-arc-chatbot');
+    var arcF = document.getElementById('an-arc-form');
+    var arcE = document.getElementById('an-arc-email');
+    var arcV = document.getElementById('an-arc-voice');
+    if (arcC) { arcC.setAttribute('stroke-dasharray', pChatbot + ' ' + (100 - pChatbot)); arcC.setAttribute('stroke-dashoffset', off0); }
+    if (arcF) { arcF.setAttribute('stroke-dasharray', pForm    + ' ' + (100 - pForm));    arcF.setAttribute('stroke-dashoffset', off1); }
+    if (arcE) { arcE.setAttribute('stroke-dasharray', pEmail   + ' ' + (100 - pEmail));   arcE.setAttribute('stroke-dashoffset', off2); }
+    if (arcV) { arcV.setAttribute('stroke-dasharray', pVoice   + ' ' + (100 - pVoice));   arcV.setAttribute('stroke-dashoffset', off3); }
+  }
+
+  // ── Leads chart (last 20 days) ──
+  var leadsWrap = document.getElementById('leads-chart');
+  if (leadsWrap) {
+    leadsWrap.innerHTML = '';
+    var now = new Date();
+    var days = [];
+    for (var i = 19; i >= 0; i--) {
+      var d = new Date(now); d.setDate(d.getDate() - i);
+      days.push(d.toISOString().split('T')[0]);
+    }
+    var byDay = {};
+    leads.forEach(function(l) { var day = l.created_at ? l.created_at.slice(0,10) : null; if (day) byDay[day] = (byDay[day] || 0) + 1; });
+    var chartData = days.map(function(day) { return { l: day.slice(5).replace('-','/'), v: byDay[day] || 0 }; });
+    var maxV = Math.max.apply(null, chartData.map(function(d) { return d.v; }));
+    if (maxV > 0) {
+      buildBars('leads-chart', chartData, 'var(--accent)');
+    } else {
+      leadsWrap.innerHTML = '<div style="width:100%;text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">No leads yet in this period</div>';
+    }
+  }
+
+  // ── Revenue chart (current month) ──
+  var revWrap = document.getElementById('rev-chart');
+  if (revWrap) {
+    revWrap.innerHTML = '';
+    var mLabel = new Date().toLocaleDateString('en-US', {month:'short', year:'2-digit'});
+    if (mrr > 0) {
+      buildBars('rev-chart', [{ l: mLabel, v: mrr }], 'var(--green)');
+    } else {
+      revWrap.innerHTML = '<div style="width:100%;text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">No revenue data yet</div>';
+    }
+  }
+
+  // ── Billing chart (mirrors revenue) ──
+  var billingWrap = document.getElementById('billing-chart');
+  if (billingWrap) {
+    billingWrap.innerHTML = '';
+    var bLabel = new Date().toLocaleDateString('en-US', {month:'short', year:'2-digit'});
+    if (mrr > 0) {
+      buildBars('billing-chart', [{ l: bLabel, v: mrr }], 'var(--amber)');
+    } else {
+      billingWrap.innerHTML = '<div style="width:100%;text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">No billing data yet</div>';
+    }
+  }
+}
 
 // ═══════ CLIENT PORTAL ═══════
 const clients = {
@@ -1654,6 +1772,8 @@ var REAL_CLIENT_ID = '0499cf98-24f7-402d-9bf2-fcf605d23789';
 
 async function loadLiveData() {
   try {
+    var _anCd = null, _anLeads = [], _anLs = null, _anApptCount = 0;
+
     // Run all fetches in parallel
     var results = await Promise.allSettled([
       fetch(API_URL + '/api/clients/'),
@@ -1684,6 +1804,7 @@ async function loadLiveData() {
       if (cd.clients && cd.clients.length > 0) {
         _updateClientPortal(cd.clients);
       }
+      _anCd = cd;
     }
 
     // ── Leads ────────────────────────────────────────────────
@@ -1699,6 +1820,7 @@ async function loadLiveData() {
       var qlLeads = document.getElementById('qlink-leads-desc');
       if (qlLeads) qlLeads.textContent = total + ' lead' + (total !== 1 ? 's' : '') + ' need attention';
 
+      _anLeads = leads;
       _updateDashboardLeads(leads);
       _updateLeadsTable(leads);
 
@@ -1740,6 +1862,7 @@ async function loadLiveData() {
       if (el3) el3.textContent = byStatus.hot || 0;
       var el4 = document.getElementById('leads-booked-count');
       if (el4) el4.textContent = byStatus.booked || 0;
+      _anLs = ls;
     }
 
     // ── Appointments ─────────────────────────────────────────
@@ -1754,10 +1877,13 @@ async function loadLiveData() {
       var qlAppts = document.getElementById('qlink-appts-desc');
       if (qlAppts) qlAppts.textContent = apptCount + ' booking' + (apptCount !== 1 ? 's' : '') + ' scheduled';
 
+      _anApptCount = apptCount;
       var todayStr = new Date().toISOString().split('T')[0];
       var todayAppts = appts.filter(function(a) { return a.scheduled_time && a.scheduled_time.startsWith(todayStr); });
       _updateDashboardAppts(todayAppts.length > 0 ? todayAppts : appts);
     }
+
+    _updateAnalytics(_anCd, _anLeads, _anLs, _anApptCount);
 
   } catch (e) {
     console.error('[Harakel] loadLiveData error:', e);
