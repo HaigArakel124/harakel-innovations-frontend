@@ -1564,109 +1564,110 @@ function _updateClientPortal(clientsList) {
   }
 }
 
+// Hard-coded real client ID from Supabase
+var REAL_CLIENT_ID = '0499cf98-24f7-402d-9bf2-fcf605d23789';
+
 async function loadLiveData() {
   try {
-    // 1. Load clients
-    var cr = await fetch(API_URL + '/api/clients/');
-    if (!cr.ok) return;
-    var cd = await cr.json();
+    // Run all fetches in parallel
+    var results = await Promise.allSettled([
+      fetch(API_URL + '/api/clients/'),
+      fetch(API_URL + '/api/leads/' + REAL_CLIENT_ID + '?limit=20'),
+      fetch(API_URL + '/api/leads/stats/' + REAL_CLIENT_ID),
+      fetch(API_URL + '/api/appointments/' + REAL_CLIENT_ID),
+    ]);
 
-    // Update dashboard stat: active clients count
-    var clientsCountEl = document.getElementById('stat-clients-count');
-    if (clientsCountEl && cd.active !== undefined) {
-      clientsCountEl.textContent = cd.active;
-      var changeEl = document.getElementById('stat-clients-change');
-      if (changeEl) changeEl.textContent = cd.total + ' total clients';
-    }
+    // ── Clients ──────────────────────────────────────────────
+    var clientsRes = results[0];
+    if (clientsRes.status === 'fulfilled' && clientsRes.value.ok) {
+      var cd = await clientsRes.value.json();
 
-    // Update dashboard MRR
-    if (cd.total_mrr !== undefined) {
-      var mrrEl = document.getElementById('dash-mrr');
-      if (mrrEl) mrrEl.textContent = _fmtMoney(cd.total_mrr);
-      var mrrSub = document.getElementById('dash-mrr-sub');
-      if (mrrSub && cd.active !== undefined) {
-        mrrSub.textContent = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}) + ' · ' + cd.active + ' active subscription' + (cd.active !== 1 ? 's' : '');
+      var clientsCountEl = document.getElementById('stat-clients-count');
+      if (clientsCountEl && cd.active !== undefined) {
+        clientsCountEl.textContent = cd.active;
+        var changeEl = document.getElementById('stat-clients-change');
+        if (changeEl) changeEl.textContent = cd.total + ' total client' + (cd.total !== 1 ? 's' : '');
+      }
+
+      if (cd.total_mrr !== undefined) {
+        var mrrEl = document.getElementById('dash-mrr');
+        if (mrrEl) mrrEl.textContent = _fmtMoney(cd.total_mrr);
+        var mrrSub = document.getElementById('dash-mrr-sub');
+        if (mrrSub) mrrSub.textContent = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}) + ' · ' + (cd.active || 0) + ' active subscription' + (cd.active !== 1 ? 's' : '');
+      }
+
+      if (cd.clients && cd.clients.length > 0) {
+        _updateClientPortal(cd.clients);
       }
     }
 
-    // Update client portal cards
-    if (cd.clients && cd.clients.length > 0) {
-      _updateClientPortal(cd.clients);
-    }
-
-    // Get first client ID for lead/appointment queries
-    var firstClient = cd.clients && cd.clients[0];
-    if (!firstClient) return;
-    var cid = firstClient.id;
-
-    // 2. Load leads, lead stats, and appointments in parallel
-    var results = await Promise.allSettled([
-      fetch(API_URL + '/api/leads/' + cid + '?limit=20'),
-      fetch(API_URL + '/api/leads/stats/' + cid),
-      fetch(API_URL + '/api/appointments/' + cid),
-    ]);
-
-    // Process leads
-    var leadsRes = results[0];
+    // ── Leads ────────────────────────────────────────────────
+    var leadsRes = results[1];
     if (leadsRes.status === 'fulfilled' && leadsRes.value.ok) {
       var ld = await leadsRes.value.json();
-      var leads = ld.leads || ld || [];
-      if (Array.isArray(leads) && leads.length > 0) {
+      var leads = ld.leads || [];
+      var total = ld.count !== undefined ? ld.count : leads.length;
+
+      // Always update stat count (even if 0)
+      var statLeads = document.getElementById('stat-leads-count');
+      if (statLeads) statLeads.textContent = total;
+      var qlLeads = document.getElementById('qlink-leads-desc');
+      if (qlLeads) qlLeads.textContent = total + ' lead' + (total !== 1 ? 's' : '') + ' need attention';
+
+      if (leads.length > 0) {
         _updateDashboardLeads(leads);
         _updateLeadsTable(leads);
-        var statLeads = document.getElementById('stat-leads-count');
-        if (statLeads) statLeads.textContent = leads.length;
-        var qlLeads = document.getElementById('qlink-leads-desc');
-        if (qlLeads) qlLeads.textContent = leads.length + ' lead' + (leads.length !== 1 ? 's' : '') + ' need attention';
-        var leadsNew = leads.filter(function(l){ return l.status === 'new'; }).length;
-        var leadsHot = leads.filter(function(l){ return l.status === 'hot'; }).length;
-        var leadsBooked = leads.filter(function(l){ return l.status === 'booked'; }).length;
+
         var leadsNewEl = document.getElementById('leads-new-count');
         var leadsHotEl = document.getElementById('leads-hot-count');
         var leadsBookedEl = document.getElementById('leads-booked-count');
-        if (leadsNewEl) leadsNewEl.textContent = leadsNew;
-        if (leadsHotEl) leadsHotEl.textContent = leadsHot;
-        if (leadsBookedEl) leadsBookedEl.textContent = leadsBooked;
+        if (leadsNewEl) leadsNewEl.textContent = leads.filter(function(l){ return l.status === 'new'; }).length;
+        if (leadsHotEl) leadsHotEl.textContent = leads.filter(function(l){ return l.status === 'hot'; }).length;
+        if (leadsBookedEl) leadsBookedEl.textContent = leads.filter(function(l){ return l.status === 'booked'; }).length;
       }
     }
 
-    // Process lead stats (override with server-side counts if available)
-    var statsRes = results[1];
+    // ── Lead stats (API returns { total, by_status: {new, hot, ...}, by_source: {...} }) ──
+    var statsRes = results[2];
     if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
       var ls = await statsRes.value.json();
-      if (ls.new !== undefined) { var el2 = document.getElementById('leads-new-count'); if (el2) el2.textContent = ls.new; }
-      if (ls.hot !== undefined) { var el3 = document.getElementById('leads-hot-count'); if (el3) el3.textContent = ls.hot; }
-      if (ls.booked !== undefined) { var el4 = document.getElementById('leads-booked-count'); if (el4) el4.textContent = ls.booked; }
+      var byStatus = ls.by_status || {};
+
       if (ls.total !== undefined) {
         var el5 = document.getElementById('stat-leads-count');
         if (el5) el5.textContent = ls.total;
         var el6 = document.getElementById('qlink-leads-desc');
         if (el6) el6.textContent = ls.total + ' lead' + (ls.total !== 1 ? 's' : '') + ' need attention';
       }
+      var el2 = document.getElementById('leads-new-count');
+      if (el2) el2.textContent = byStatus.new || 0;
+      var el3 = document.getElementById('leads-hot-count');
+      if (el3) el3.textContent = byStatus.hot || 0;
+      var el4 = document.getElementById('leads-booked-count');
+      if (el4) el4.textContent = byStatus.booked || 0;
     }
 
-    // Process appointments
-    var apptsRes = results[2];
+    // ── Appointments ─────────────────────────────────────────
+    var apptsRes = results[3];
     if (apptsRes.status === 'fulfilled' && apptsRes.value.ok) {
       var ad = await apptsRes.value.json();
-      var appts = ad.appointments || ad || [];
-      if (Array.isArray(appts) && appts.length > 0) {
-        // Filter to today's appointments
+      var appts = ad.appointments || [];
+      var apptCount = ad.count !== undefined ? ad.count : appts.length;
+
+      var statAppts = document.getElementById('stat-appts-count');
+      if (statAppts) statAppts.textContent = apptCount;
+      var qlAppts = document.getElementById('qlink-appts-desc');
+      if (qlAppts) qlAppts.textContent = apptCount + ' booking' + (apptCount !== 1 ? 's' : '') + ' scheduled';
+
+      if (appts.length > 0) {
         var todayStr = new Date().toISOString().split('T')[0];
-        var todayAppts = appts.filter(function(a) {
-          return a.scheduled_time && a.scheduled_time.startsWith(todayStr);
-        });
-        var showAppts = todayAppts.length > 0 ? todayAppts : appts;
-        _updateDashboardAppts(showAppts);
-        var statAppts = document.getElementById('stat-appts-count');
-        if (statAppts) statAppts.textContent = todayAppts.length || appts.length;
-        var qlAppts = document.getElementById('qlink-appts-desc');
-        if (qlAppts) qlAppts.textContent = (todayAppts.length || appts.length) + ' booking' + ((todayAppts.length || appts.length) !== 1 ? 's' : '') + ' scheduled';
+        var todayAppts = appts.filter(function(a) { return a.scheduled_time && a.scheduled_time.startsWith(todayStr); });
+        _updateDashboardAppts(todayAppts.length > 0 ? todayAppts : appts);
       }
     }
 
   } catch (e) {
-    console.warn('[Harakel] Live data unavailable, using mock data.', e.message);
+    console.error('[Harakel] loadLiveData error:', e);
   }
 }
 
