@@ -470,30 +470,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
   <div class="section-sub">Manage each client's modules, settings, and billing.</div>
   <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
     <div id="clients-portal-list">
-      <div class="client-card selected" onclick="selectClient(this,'bloom')" id="cc-bloom">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff6b9d,#ffb547);">BB</div>
-          <div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">Bloom Beauty Co.</div><span class="lead-status" style="background:var(--accent-glow);color:var(--accent2);">Pro</span></div><div style="font-size:11px;color:var(--text3);">bloombeautyco.com · Active since Jan 2026</div></div>
-          <span class="lead-status status-active">● Active</span>
-        </div>
-        <div class="grid-3"><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">68</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">42</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">$1,800</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div></div>
-      </div>
-      <div class="client-card" onclick="selectClient(this,'techpro')" id="cc-techpro">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#4da6ff);">TP</div>
-          <div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">TechPro Solutions</div><span class="lead-status" style="background:var(--blue-dim);color:var(--blue);">Starter</span></div><div style="font-size:11px;color:var(--text3);">techprosolutions.com · Active since Feb 2026</div></div>
-          <span class="lead-status status-active">● Active</span>
-        </div>
-        <div class="grid-3"><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">52</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">31</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">$1,400</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div></div>
-      </div>
-      <div class="client-card" onclick="selectClient(this,'lee')" id="cc-lee">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          <div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#00d9a3,#4da6ff);">LC</div>
-          <div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;"><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">Lee's Chiropractic</div><span class="lead-status" style="background:var(--accent-glow);color:var(--accent2);">Pro</span></div><div style="font-size:11px;color:var(--text3);">leeschiro.com · Trial ends Apr 5</div></div>
-          <span class="lead-status status-trial">● Trial</span>
-        </div>
-        <div class="grid-3"><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">27</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">16</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div><div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;">$1,000</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div></div>
-      </div>
+      <div style="padding:16px;font-size:12px;color:var(--text3);">Loading live data...</div>
     </div>
     <div class="card" style="position:sticky;top:90px;align-self:start;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
@@ -505,16 +482,16 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <button class="btn btn-ghost btn-sm" onclick="toast('Login link sent!')">Send link</button>
       </div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Active modules</div>
-      <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">AI Chatbot</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Appointments</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Voice AI</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Email AI</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">SMS & Reviews</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">CRM</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle on" id="toggle-website_builder" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">AI Chatbot</div></div><div class="toggle on" id="toggle-chatbot" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Appointments</div></div><div class="toggle on" id="toggle-appointments" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Voice AI</div></div><div class="toggle on" id="toggle-voice_ai" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Email AI</div></div><div class="toggle on" id="toggle-email_ai" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">SMS & Reviews</div></div><div class="toggle on" id="toggle-sms_reviews" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">CRM</div></div><div class="toggle" id="toggle-crm" onclick="this.classList.toggle('on')"></div></div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">White-label branding</div>
-        <div class="form-group"><label class="form-label">Brand name shown to customers</label><input class="form-input" style="font-size:12px;" value="Bloom Beauty AI Assistant"></div>
+        <div class="form-group"><label class="form-label">Brand name shown to customers</label><input class="form-input" style="font-size:12px;" id="d-bot-name" value=""></div>
         <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="toast('Branding saved!')">Save branding</button>
       </div>
     </div>
@@ -1117,11 +1094,12 @@ function selectClient(el, id) {
   const logo = c.logo || (c.business_name || 'CL').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
   const name = c.name || c.business_name || 'Client';
   const url = c.url || c.website || (c.business_name || 'client').toLowerCase().replace(/\s+/g, '') + '.com';
-  const grad = c.grad || 'linear-gradient(135deg,var(--accent),var(--blue))';
+  const grad = c._grad || c.grad || 'linear-gradient(135deg,var(--accent),var(--blue))';
   document.getElementById('d-logo').textContent = logo;
   document.getElementById('d-logo').style.background = grad;
   document.getElementById('d-name').textContent = name;
   document.getElementById('d-url').textContent = url;
+  if (c.modules) _updateClientSidebar(c);
   toast('Viewing: ' + name);
 }
 
@@ -1484,14 +1462,30 @@ function _updateDashboardAppts(appts) {
   }).join('');
 }
 
+var _moduleKeys = ['website_builder','chatbot','appointments','voice_ai','email_ai','sms_reviews','crm'];
+function _updateClientSidebar(c) {
+  var mods = c.modules || {};
+  _moduleKeys.forEach(function(key) {
+    var t = document.getElementById('toggle-' + key);
+    if (!t) return;
+    if (mods[key]) { t.classList.add('on'); } else { t.classList.remove('on'); }
+  });
+  var botNameEl = document.getElementById('d-bot-name');
+  if (botNameEl) botNameEl.value = c.bot_name || c.business_name || '';
+}
+
 function _updateClientPortal(clientsList) {
   var el = document.getElementById('clients-portal-list');
-  if (!el || !clientsList || clientsList.length === 0) return;
+  if (!el || !clientsList || clientsList.length === 0) {
+    if (el) el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3);">No clients yet.</div>';
+    return;
+  }
   window._apiClients = window._apiClients || {};
   el.innerHTML = clientsList.map(function(c, i) {
-    window._apiClients[c.id] = c;
-    var initials = _initials(c.business_name);
     var grad = _gradients[i % _gradients.length];
+    window._apiClients[c.id] = c;
+    window._apiClients[c.id]._grad = grad;
+    var initials = _initials(c.business_name);
     var statusBadge = c.is_active ? '<span class="lead-status status-active">● Active</span>' : '<span class="lead-status status-trial">● Inactive</span>';
     var plan = c.plan || 'starter';
     var fee = c.monthly_fee ? '$' + Number(c.monthly_fee).toLocaleString() : '—';
@@ -1511,19 +1505,13 @@ function _updateClientPortal(clientsList) {
       '</div>' +
     '</div>';
   }).join('');
-  // Auto-select the first client in the detail panel
-  if (clientsList[0]) {
-    var first = clientsList[0];
-    var firstEl = el.querySelector('.client-card');
-    if (firstEl) {
-      var logo = _initials(first.business_name);
-      var grad0 = _gradients[0];
-      document.getElementById('d-logo').textContent = logo;
-      document.getElementById('d-logo').style.background = grad0;
-      document.getElementById('d-name').textContent = first.business_name || 'Client';
-      document.getElementById('d-url').textContent = first.website || (first.business_name || 'client').toLowerCase().replace(/\s+/g,'') + '.com';
-    }
-  }
+  // Auto-populate sidebar with first client
+  var first = clientsList[0];
+  document.getElementById('d-logo').textContent = _initials(first.business_name);
+  document.getElementById('d-logo').style.background = _gradients[0];
+  document.getElementById('d-name').textContent = first.business_name || 'Client';
+  document.getElementById('d-url').textContent = first.website || (first.business_name || 'client').toLowerCase().replace(/\s+/g,'') + '.com';
+  _updateClientSidebar(first);
 }
 
 // Hard-coded real client ID from Supabase
