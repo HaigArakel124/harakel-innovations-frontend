@@ -761,9 +761,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <!-- ═══════ LEADS ═══════ -->
 <div class="panel" id="panel-leads">
   <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
-    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="leads-new-count">—</div><div class="stat-label">New this week</div><div class="stat-change up">Loading...</div></div>
-    <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value" id="leads-hot-count">—</div><div class="stat-label">Hot leads</div><div class="stat-change up">Loading...</div></div>
-    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="leads-booked-count">—</div><div class="stat-label">Booked</div><div class="stat-change up">Loading...</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="leads-new-count">—</div><div class="stat-label">New this week</div><div class="stat-change up" id="leads-new-change">—</div></div>
+    <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value" id="leads-hot-count">—</div><div class="stat-label">Hot leads</div><div class="stat-change up" id="leads-hot-change">—</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="leads-booked-count">—</div><div class="stat-label">Booked</div><div class="stat-change up" id="leads-booked-change">—</div></div>
     <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">45%</div><div class="stat-label">Chatbot capture rate</div><div class="stat-change up">↑ 4pts this month</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:16px;">
@@ -775,47 +775,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:10px 16px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);">
       <div>Contact</div><div>Email</div><div>Source</div><div>Score</div><div>Status</div><div>Actions</div>
     </div>
-    <div id="leads-tbody"><div style="padding:16px;font-size:12px;color:var(--text3);">Loading live data...</div><div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;display:none;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="toast('Maria Rodriguez opened!')">
-      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">MR</div><div>Maria Rodriguez<div style="font-size:10px;color:var(--text3);">(555) 234-5678</div></div></div>
-      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b6db98c4d9d2c4dfd1c3d3ccf6dbd7dfda98d5d9db">[email&#160;protected]</a></div>
-      <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
-      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div></div></div>
-      <div><span class="lead-status status-hot">Hot</span></div>
-      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="event.stopPropagation();toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="event.stopPropagation();toast('Notes!')">Notes</button></div>
-    </div>
-    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--green-dim);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">JK</div><div>James Kim<div style="font-size:10px;color:var(--text3);">(555) 876-5432</div></div></div>
-      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bbd1dad6dec895d0d2d6fbd9d2c195d8d4">[email&#160;protected]</a></div>
-      <div><span class="source-badge source-form">⬡ Form</span></div>
-      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div></div></div>
-      <div><span class="lead-status status-warm">Warm</span></div>
-      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast('Email drafted!')">Email</button></div>
-    </div>
-    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--accent-glow);color:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">ST</div><div>Sarah Thompson<div style="font-size:10px;color:var(--text3);">(555) 111-2233</div></div></div>
-      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="cbb8e5bfa3a4a6bbb8a4a58baea6aaa2a7e5a8a4a6">[email&#160;protected]</a></div>
-      <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
-      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div><div class="score-dot"></div></div></div>
-      <div><span class="lead-status status-booked">Booked</span></div>
-      <div><button class="btn btn-ghost btn-xs" onclick="toast('Appointment viewed!')">View appt.</button></div>
-    </div>
-    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--amber-dim);color:var(--amber);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">DL</div><div>David Lee<div style="font-size:10px;color:var(--text3);">(555) 987-6543</div></div></div>
-      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="492d252c2c092a26243928273067263b2e">[email&#160;protected]</a></div>
-      <div><span class="source-badge source-email">◫ Email</span></div>
-      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div><div class="score-dot"></div><div class="score-dot"></div></div></div>
-      <div><span class="lead-status status-new">New</span></div>
-      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast('SMS sent!')">SMS</button></div>
-    </div>
-    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;align-items:center;cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-      <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--blue-dim);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">AP</div><div>Amanda Price<div style="font-size:10px;color:var(--text3);">(555) 444-7890</div></div></div>
-      <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f1909c909f9590df81b1969c90989ddf929e9c">[email&#160;protected]</a></div>
-      <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
-      <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div></div></div>
-      <div><span class="lead-status status-warm">Warm</span></div>
-      <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast('Notes!')">Notes</button></div>
-    </div>
-    </div>
+    <div id="leads-tbody"><div style="padding:16px;font-size:12px;color:var(--text3);">Loading live data...</div></div>
   </div>
 </div>
 
@@ -1491,7 +1451,10 @@ function _updateDashboardLeads(leads) {
 function _updateLeadsTable(leads) {
   var el = document.getElementById('leads-tbody');
   if (!el) return;
-  if (!leads || leads.length === 0) return;
+  if (!leads || leads.length === 0) {
+    el.innerHTML = '<div style="padding:16px;font-size:12px;color:var(--text3);">No leads yet.</div>';
+    return;
+  }
   el.innerHTML = leads.map(function(l, i) {
     var cp = _colorPairs[i % _colorPairs.length];
     var status = l.status || 'new';
@@ -1499,7 +1462,8 @@ function _updateLeadsTable(leads) {
     var badge = _sourceBadge[src] || _sourceBadge['chatbot'];
     var email = l.email || '—';
     var phone = l.phone || '';
-    return '<div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'"><div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(' + cp[0] + ');color:var(' + cp[1] + ');display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">' + _initials(l.name) + '</div><div>' + (l.name || 'Unknown') + '<div style="font-size:10px;color:var(--text3);">' + phone + '</div></div></div><div style="font-size:12px;color:var(--text2);">' + email + '</div><div><span class="source-badge ' + badge + '</span></div><div><div class="score-bar">' + [1,2,3,4,5].map(function(n){ return '<div class="score-dot' + (n <= 3 ? ' filled' : '') + '"></div>'; }).join('') + '</div></div><div><span class="lead-status ' + (_statusClass[status] || 'status-new') + '">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span></div><div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast(\'Booking opened!\')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast(\'Notes!\')">Notes</button></div></div>';
+    var score = Math.min(5, Math.max(0, l.score || 0));
+    return '<div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'"><div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(' + cp[0] + ');color:var(' + cp[1] + ');display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">' + _initials(l.name) + '</div><div>' + (l.name || 'Unknown') + '<div style="font-size:10px;color:var(--text3);">' + phone + '</div></div></div><div style="font-size:12px;color:var(--text2);">' + email + '</div><div><span class="source-badge ' + badge + '</span></div><div><div class="score-bar">' + [1,2,3,4,5].map(function(n){ return '<div class="score-dot' + (n <= score ? ' filled' : '') + '"></div>'; }).join('') + '</div></div><div><span class="lead-status ' + (_statusClass[status] || 'status-new') + '">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span></div><div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast(\'Booking opened!\')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast(\'Notes!\')">Notes</button></div></div>';
   }).join('');
 }
 
@@ -1612,17 +1576,27 @@ async function loadLiveData() {
       var qlLeads = document.getElementById('qlink-leads-desc');
       if (qlLeads) qlLeads.textContent = total + ' lead' + (total !== 1 ? 's' : '') + ' need attention';
 
-      if (leads.length > 0) {
-        _updateDashboardLeads(leads);
-        _updateLeadsTable(leads);
+      _updateDashboardLeads(leads);
+      _updateLeadsTable(leads);
 
-        var leadsNewEl = document.getElementById('leads-new-count');
-        var leadsHotEl = document.getElementById('leads-hot-count');
-        var leadsBookedEl = document.getElementById('leads-booked-count');
-        if (leadsNewEl) leadsNewEl.textContent = leads.filter(function(l){ return l.status === 'new'; }).length;
-        if (leadsHotEl) leadsHotEl.textContent = leads.filter(function(l){ return l.status === 'hot'; }).length;
-        if (leadsBookedEl) leadsBookedEl.textContent = leads.filter(function(l){ return l.status === 'booked'; }).length;
-      }
+      var newCount = leads.filter(function(l){ return l.status === 'new'; }).length;
+      var hotCount = leads.filter(function(l){ return l.status === 'hot'; }).length;
+      var warmCount = leads.filter(function(l){ return l.status === 'warm'; }).length;
+      var bookedCount = leads.filter(function(l){ return l.status === 'booked'; }).length;
+
+      var leadsNewEl = document.getElementById('leads-new-count');
+      var leadsHotEl = document.getElementById('leads-hot-count');
+      var leadsBookedEl = document.getElementById('leads-booked-count');
+      if (leadsNewEl) leadsNewEl.textContent = newCount;
+      if (leadsHotEl) leadsHotEl.textContent = hotCount;
+      if (leadsBookedEl) leadsBookedEl.textContent = bookedCount;
+
+      var newChg = document.getElementById('leads-new-change');
+      var hotChg = document.getElementById('leads-hot-change');
+      var bookedChg = document.getElementById('leads-booked-change');
+      if (newChg) newChg.textContent = newCount + ' of ' + total + ' total';
+      if (hotChg) hotChg.textContent = hotCount + (warmCount ? ' hot · ' + warmCount + ' warm' : ' hot leads');
+      if (bookedChg) bookedChg.textContent = bookedCount + ' appointment' + (bookedCount !== 1 ? 's' : '') + ' set';
     }
 
     // ── Lead stats (API returns { total, by_status: {new, hot, ...}, by_source: {...} }) ──
