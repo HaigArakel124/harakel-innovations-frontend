@@ -515,26 +515,26 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div class="panel active" id="ws1">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Tell us about the business</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">This info will configure all AI tools automatically.</div>
-        <div class="grid-2"><div class="form-group"><label class="form-label">Business name *</label><input class="form-input" id="biz-name" placeholder="e.g. Bloom Beauty Co."></div><div class="form-group"><label class="form-label">Owner name *</label><input class="form-input" placeholder="e.g. Sarah Thompson"></div></div>
-        <div class="grid-2"><div class="form-group"><label class="form-label">Phone *</label><input class="form-input" placeholder="(555) 000-0000"></div><div class="form-group"><label class="form-label">Email *</label><input class="form-input" placeholder="owner@business.com"></div></div>
-        <div class="form-group"><label class="form-label">Business address</label><input class="form-input" placeholder="123 Main St, City, State"></div>
-        <div class="grid-2"><div class="form-group"><label class="form-label">Website (if existing)</label><input class="form-input" placeholder="www.yourbusiness.com"></div><div class="form-group"><label class="form-label">Business hours</label><input class="form-input" placeholder="Mon–Fri 9am–6pm"></div></div>
-        <div class="form-group"><label class="form-label">What does this business do?</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. We're a beauty salon specializing in hair and skincare..."></textarea></div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Business name *</label><input class="form-input" id="biz-name" placeholder="e.g. Bloom Beauty Co."></div><div class="form-group"><label class="form-label">Owner name *</label><input class="form-input" id="wiz-owner" placeholder="e.g. Sarah Thompson"></div></div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="wiz-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="wiz-email" placeholder="owner@business.com"></div></div>
+        <div class="form-group"><label class="form-label">Business address</label><input class="form-input" id="wiz-address" placeholder="123 Main St, City, State"></div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Website (if existing)</label><input class="form-input" id="wiz-website" placeholder="www.yourbusiness.com"></div><div class="form-group"><label class="form-label">Business hours</label><input class="form-input" id="wiz-hours" placeholder="Mon–Fri 9am–6pm"></div></div>
+        <div class="form-group"><label class="form-label">What does this business do?</label><textarea class="form-input" id="wiz-services" style="min-height:60px;" placeholder="e.g. We're a beauty salon specializing in hair and skincare..."></textarea></div>
       </div>
       <!-- Step 2 -->
       <div class="panel" id="ws2">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">What industry are they in?</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">We'll pre-configure the AI for their industry automatically.</div>
         <div class="grid-3" style="margin-bottom:8px;">
-          <div class="niche-btn selected" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">💅</div><div style="font-size:12px;font-weight:500;">Beauty & Wellness</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🏥</div><div style="font-size:12px;font-weight:500;">Medical / Healthcare</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">⚖️</div><div style="font-size:12px;font-weight:500;">Legal Services</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🏠</div><div style="font-size:12px;font-weight:500;">Real Estate</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🍕</div><div style="font-size:12px;font-weight:500;">Restaurant / Food</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🔧</div><div style="font-size:12px;font-weight:500;">Home Services</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">💼</div><div style="font-size:12px;font-weight:500;">Consulting / B2B</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🚗</div><div style="font-size:12px;font-weight:500;">Auto Services</div></div>
-          <div class="niche-btn" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🎓</div><div style="font-size:12px;font-weight:500;">Education</div></div>
+          <div class="niche-btn selected" data-value="beauty" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">💅</div><div style="font-size:12px;font-weight:500;">Beauty & Wellness</div></div>
+          <div class="niche-btn" data-value="medical" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🏥</div><div style="font-size:12px;font-weight:500;">Medical / Healthcare</div></div>
+          <div class="niche-btn" data-value="legal" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">⚖️</div><div style="font-size:12px;font-weight:500;">Legal Services</div></div>
+          <div class="niche-btn" data-value="real_estate" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🏠</div><div style="font-size:12px;font-weight:500;">Real Estate</div></div>
+          <div class="niche-btn" data-value="restaurant" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🍕</div><div style="font-size:12px;font-weight:500;">Restaurant / Food</div></div>
+          <div class="niche-btn" data-value="home_services" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🔧</div><div style="font-size:12px;font-weight:500;">Home Services</div></div>
+          <div class="niche-btn" data-value="consulting" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">💼</div><div style="font-size:12px;font-weight:500;">Consulting / B2B</div></div>
+          <div class="niche-btn" data-value="auto" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🚗</div><div style="font-size:12px;font-weight:500;">Auto Services</div></div>
+          <div class="niche-btn" data-value="education" onclick="pickNiche(this)"><div style="font-size:20px;margin-bottom:5px;">🎓</div><div style="font-size:12px;font-weight:500;">Education</div></div>
         </div>
       </div>
       <!-- Step 3 -->
@@ -542,29 +542,29 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Which tools do they need?</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Select modules to activate. You can change this anytime.</div>
         <div class="grid-2">
-          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⬡</div><div><div style="font-size:13px;font-weight:500;">Website Builder</div><div style="font-size:11px;color:var(--text3);">Professional website</div></div></div>
-          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◎</div><div><div style="font-size:13px;font-weight:500;">AI Chatbot</div><div style="font-size:11px;color:var(--text3);">24/7 on their website</div></div></div>
-          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◷</div><div><div style="font-size:13px;font-weight:500;">Appointments</div><div style="font-size:11px;color:var(--text3);">AI booking system</div></div></div>
-          <div class="module-btn selected" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◉</div><div><div style="font-size:13px;font-weight:500;">Lead Capture</div><div style="font-size:11px;color:var(--text3);">Auto-capture & qualify</div></div></div>
-          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">☏</div><div><div style="font-size:13px;font-weight:500;">Voice AI</div><div style="font-size:11px;color:var(--text3);">AI phone receptionist</div></div></div>
-          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◫</div><div><div style="font-size:13px;font-weight:500;">Email AI</div><div style="font-size:11px;color:var(--text3);">Auto-replies & sequences</div></div></div>
-          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◧</div><div><div style="font-size:13px;font-weight:500;">CRM</div><div style="font-size:11px;color:var(--text3);">Pipeline management</div></div></div>
-          <div class="module-btn" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⭐</div><div><div style="font-size:13px;font-weight:500;">SMS & Reviews</div><div style="font-size:11px;color:var(--text3);">Texts + review generation</div></div></div>
+          <div class="module-btn selected" data-module="website_builder" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⬡</div><div><div style="font-size:13px;font-weight:500;">Website Builder</div><div style="font-size:11px;color:var(--text3);">Professional website</div></div></div>
+          <div class="module-btn selected" data-module="chatbot" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◎</div><div><div style="font-size:13px;font-weight:500;">AI Chatbot</div><div style="font-size:11px;color:var(--text3);">24/7 on their website</div></div></div>
+          <div class="module-btn selected" data-module="appointments" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◷</div><div><div style="font-size:13px;font-weight:500;">Appointments</div><div style="font-size:11px;color:var(--text3);">AI booking system</div></div></div>
+          <div class="module-btn selected" data-module="leads" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◉</div><div><div style="font-size:13px;font-weight:500;">Lead Capture</div><div style="font-size:11px;color:var(--text3);">Auto-capture & qualify</div></div></div>
+          <div class="module-btn" data-module="voice_ai" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">☏</div><div><div style="font-size:13px;font-weight:500;">Voice AI</div><div style="font-size:11px;color:var(--text3);">AI phone receptionist</div></div></div>
+          <div class="module-btn" data-module="email_ai" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◫</div><div><div style="font-size:13px;font-weight:500;">Email AI</div><div style="font-size:11px;color:var(--text3);">Auto-replies & sequences</div></div></div>
+          <div class="module-btn" data-module="crm" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◧</div><div><div style="font-size:13px;font-weight:500;">CRM</div><div style="font-size:11px;color:var(--text3);">Pipeline management</div></div></div>
+          <div class="module-btn" data-module="sms_reviews" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⭐</div><div><div style="font-size:13px;font-weight:500;">SMS & Reviews</div><div style="font-size:11px;color:var(--text3);">Texts + review generation</div></div></div>
         </div>
       </div>
       <!-- Step 4 -->
       <div class="panel" id="ws4">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Set up their branding</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Applied across their website, chatbot, and all client-facing tools.</div>
-        <div class="form-group"><label class="form-label">Brand display name</label><input class="form-input" placeholder="e.g. Bloom Beauty Assistant"></div>
-        <div class="form-group"><label class="form-label">AI assistant name</label><input class="form-input" placeholder="e.g. Aria, Nova, Luna..."></div>
+        <div class="form-group"><label class="form-label">Brand display name</label><input class="form-input" id="wiz-brand-display" placeholder="e.g. Bloom Beauty Assistant"></div>
+        <div class="form-group"><label class="form-label">AI assistant name</label><input class="form-input" id="wiz-bot-name" placeholder="e.g. Aria, Nova, Luna..."></div>
         <div class="form-group"><label class="form-label">Brand color</label><div style="display:flex;gap:8px;margin-top:6px;">
-          <div style="width:30px;height:30px;border-radius:7px;background:#6c63ff;cursor:pointer;border:2px solid white;" onclick="toast('Color selected!')"></div>
-          <div style="width:30px;height:30px;border-radius:7px;background:#ff6b9d;cursor:pointer;" onclick="toast('Color selected!')"></div>
-          <div style="width:30px;height:30px;border-radius:7px;background:#00d9a3;cursor:pointer;" onclick="toast('Color selected!')"></div>
-          <div style="width:30px;height:30px;border-radius:7px;background:#ffb547;cursor:pointer;" onclick="toast('Color selected!')"></div>
-          <div style="width:30px;height:30px;border-radius:7px;background:#4da6ff;cursor:pointer;" onclick="toast('Color selected!')"></div>
-          <input type="color" style="width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);cursor:pointer;padding:2px;background:var(--surface2);">
+          <div style="width:30px;height:30px;border-radius:7px;background:#6c63ff;cursor:pointer;border:2px solid white;" onclick="document.getElementById('wiz-brand-color').value='#6c63ff';toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#ff6b9d;cursor:pointer;" onclick="document.getElementById('wiz-brand-color').value='#ff6b9d';toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#00d9a3;cursor:pointer;" onclick="document.getElementById('wiz-brand-color').value='#00d9a3';toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#ffb547;cursor:pointer;" onclick="document.getElementById('wiz-brand-color').value='#ffb547';toast('Color selected!')"></div>
+          <div style="width:30px;height:30px;border-radius:7px;background:#4da6ff;cursor:pointer;" onclick="document.getElementById('wiz-brand-color').value='#4da6ff';toast('Color selected!')"></div>
+          <input type="color" id="wiz-brand-color" value="#6c63ff" style="width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);cursor:pointer;padding:2px;background:var(--surface2);">
         </div></div>
         <div class="form-group"><label class="form-label">Chatbot greeting message</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. Hi! I'm Aria from Bloom Beauty. How can I help you today?"></textarea></div>
       </div>
@@ -1105,13 +1105,19 @@ function selectClient(el, id) {
 
 // ═══════ ONBOARDING WIZARD ═══════
 let wStep = 1, wTotal = 5;
+var _wizIndustry = 'beauty';
+var _wizPlan = 'pro';
+var _wizFee = 1000.0;
+
 function wNext() {
-  if (wStep === 1 && !document.getElementById('biz-name').value.trim()) { toast('Please enter the business name.','error'); return; }
+  if (wStep === 1) {
+    if (!document.getElementById('biz-name').value.trim()) { toast('Please enter the business name.', 'error'); return; }
+    if (!document.getElementById('wiz-owner').value.trim()) { toast('Please enter the owner name.', 'error'); return; }
+    if (!document.getElementById('wiz-email').value.trim()) { toast('Please enter an email address.', 'error'); return; }
+  }
   if (wStep >= wTotal) {
-    document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
-    document.getElementById('ws6').classList.add('active');
-    document.getElementById('wiz-footer').style.display = 'none';
-    wMark(wStep, 'done'); return;
+    submitOnboarding();
+    return;
   }
   wMark(wStep, 'done'); wStep++;
   wMark(wStep, 'active');
@@ -1141,18 +1147,112 @@ function wMark(n, state) {
   if (state === 'done') { c.textContent = '✓'; if (l) l.classList.add('done'); }
   else c.textContent = n;
 }
-function pickNiche(el) { document.querySelectorAll('.niche-btn').forEach(b => b.classList.remove('selected')); el.classList.add('selected'); }
-function pickPlan(el, v) { document.querySelectorAll('.niche-btn').forEach(b => b.classList.remove('selected')); el.classList.add('selected'); if(document.getElementById('custom-fee')) document.getElementById('custom-fee').value='$'+v; }
+function pickNiche(el) {
+  document.querySelectorAll('#ws2 .niche-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  _wizIndustry = el.dataset.value || 'general';
+}
+function pickPlan(el, v) {
+  document.querySelectorAll('#ws5 .niche-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  _wizFee = parseFloat(v);
+  _wizPlan = v === '500' ? 'starter' : v === '1500' ? 'enterprise' : 'pro';
+  if (document.getElementById('custom-fee')) document.getElementById('custom-fee').value = '$' + v;
+}
+async function submitOnboarding() {
+  var btn = document.getElementById('wiz-next');
+  btn.disabled = true;
+  btn.textContent = 'Launching...';
+
+  var modules = {};
+  document.querySelectorAll('#ws3 .module-btn').forEach(function(b) {
+    if (b.dataset.module) modules[b.dataset.module] = b.classList.contains('selected');
+  });
+
+  var feeStr = (document.getElementById('custom-fee').value || '').replace(/[^0-9.]/g, '');
+  var fee = feeStr ? parseFloat(feeStr) : _wizFee;
+
+  var payload = {
+    business_name: document.getElementById('biz-name').value.trim(),
+    owner_name: document.getElementById('wiz-owner').value.trim(),
+    email: document.getElementById('wiz-email').value.trim(),
+    phone: document.getElementById('wiz-phone').value.trim() || null,
+    address: document.getElementById('wiz-address').value.trim() || null,
+    website: document.getElementById('wiz-website').value.trim() || null,
+    industry: _wizIndustry,
+    business_hours: document.getElementById('wiz-hours').value.trim() || 'Mon-Fri 9am-6pm',
+    services: document.getElementById('wiz-services').value.trim() || null,
+    bot_name: document.getElementById('wiz-bot-name').value.trim() || 'Aria',
+    brand_color: document.getElementById('wiz-brand-color').value || '#6c63ff',
+    plan: _wizPlan,
+    monthly_fee: fee,
+  };
+
+  try {
+    var res = await fetch(API_URL + '/api/clients/', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      var errText = await res.text();
+      throw new Error(errText);
+    }
+    wMark(wStep, 'done');
+    document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
+    document.getElementById('ws6').classList.add('active');
+    document.getElementById('wiz-footer').style.display = 'none';
+    toast(payload.business_name + ' is now live!');
+  } catch (e) {
+    console.error('[Harakel] submitOnboarding error:', e);
+    toast('Failed to create client. Please try again.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Launch client →';
+  }
+}
 function resetWizard() {
-  wStep=1;
-  document.querySelectorAll('[id^="ws"]').forEach(s=>s.classList.remove('active'));
+  wStep = 1;
+  _wizIndustry = 'beauty';
+  _wizPlan = 'pro';
+  _wizFee = 1000.0;
+  // Clear Step 1 inputs
+  ['biz-name','wiz-owner','wiz-email','wiz-phone','wiz-address','wiz-website','wiz-hours','wiz-services'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  // Reset Step 2 industry selection
+  document.querySelectorAll('#ws2 .niche-btn').forEach(b => b.classList.remove('selected'));
+  var firstNiche = document.querySelector('#ws2 .niche-btn[data-value="beauty"]');
+  if (firstNiche) firstNiche.classList.add('selected');
+  // Reset Step 3 module selection
+  document.querySelectorAll('#ws3 .module-btn').forEach(function(b) {
+    var key = b.dataset.module;
+    b.classList.toggle('selected', ['website_builder','chatbot','appointments','leads'].indexOf(key) !== -1);
+  });
+  // Clear Step 4 branding
+  ['wiz-brand-display','wiz-bot-name'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var colorEl = document.getElementById('wiz-brand-color');
+  if (colorEl) colorEl.value = '#6c63ff';
+  // Reset Step 5 plan
+  document.querySelectorAll('#ws5 .niche-btn').forEach(b => b.classList.remove('selected'));
+  var proPlan = document.querySelector('#ws5 .niche-btn[onclick*="1000"]');
+  if (proPlan) proPlan.classList.add('selected');
+  var feeEl = document.getElementById('custom-fee');
+  if (feeEl) feeEl.value = '$1000';
+  // Reset wizard UI
+  document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
   document.getElementById('ws1').classList.add('active');
-  document.getElementById('wiz-footer').style.display='flex';
-  wMark(1,'active'); for(let i=2;i<=5;i++) wMark(i,'');
-  document.getElementById('wiz-indicator').textContent='Step 1 of 5';
-  document.getElementById('wiz-back').style.visibility='hidden';
-  document.getElementById('wiz-next').textContent='Continue →';
-  document.getElementById('wiz-next').classList.remove('btn-success');
+  document.getElementById('wiz-footer').style.display = 'flex';
+  wMark(1, 'active'); for (let i = 2; i <= 5; i++) wMark(i, '');
+  document.getElementById('wiz-indicator').textContent = 'Step 1 of 5';
+  document.getElementById('wiz-back').style.visibility = 'hidden';
+  var nextBtn = document.getElementById('wiz-next');
+  nextBtn.textContent = 'Continue →';
+  nextBtn.classList.remove('btn-success');
+  nextBtn.disabled = false;
 }
 
 // ═══════ WEBSITE BUILDER ═══════
