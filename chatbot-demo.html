@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Business — Harakel Chatbot Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #18181f;
+    --border: rgba(255,255,255,0.07); --text: #f0f0f5;
+    --text2: #9090a8; --text3: #5a5a72;
+    --accent: #6c63ff; --green: #00d9a3;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* ── Nav ── */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 48px; height: 64px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; background: linear-gradient(135deg, #6c63ff, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-links { display: flex; gap: 32px; list-style: none; }
+  .nav-links a { color: var(--text2); text-decoration: none; font-size: 14px; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta { padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit; }
+
+  /* ── Hero ── */
+  .hero {
+    max-width: 860px; margin: 0 auto; padding: 96px 24px 80px;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(108,99,255,.15); border: 1px solid rgba(108,99,255,.3);
+    color: #8b84ff; font-size: 12px; font-weight: 500;
+    padding: 5px 14px; border-radius: 20px; margin-bottom: 24px;
+  }
+  .hero-badge span { width: 6px; height: 6px; border-radius: 50%; background: #8b84ff; display: inline-block; }
+  .hero h1 { font-family: 'Syne', sans-serif; font-size: clamp(36px, 6vw, 60px); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 18px; }
+  .hero h1 em { font-style: normal; background: linear-gradient(135deg, #6c63ff, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { font-size: 17px; color: var(--text2); max-width: 540px; margin: 0 auto 36px; line-height: 1.7; }
+  .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn-hero { padding: 13px 28px; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; transition: all .15s; border: none; }
+  .btn-hero-primary { background: var(--accent); color: white; }
+  .btn-hero-primary:hover { background: #8b84ff; transform: translateY(-1px); }
+  .btn-hero-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+  .btn-hero-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  /* ── Features ── */
+  .features { max-width: 1040px; margin: 0 auto; padding: 0 24px 96px; }
+  .features-label { text-align: center; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 14px; }
+  .features h2 { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; text-align: center; margin-bottom: 48px; }
+  .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
+  .feature-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px; transition: border-color .2s;
+  }
+  .feature-card:hover { border-color: rgba(255,255,255,.14); }
+  .feature-icon { font-size: 26px; margin-bottom: 14px; }
+  .feature-card h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .feature-card p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  /* ── Social proof ── */
+  .proof { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 48px 24px; text-align: center; }
+  .proof-stats { display: flex; justify-content: center; gap: 64px; flex-wrap: wrap; }
+  .proof-stat-n { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--green)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .proof-stat-l { font-size: 13px; color: var(--text2); margin-top: 4px; }
+
+  /* ── CTA strip ── */
+  .cta-strip {
+    max-width: 640px; margin: 0 auto; padding: 80px 24px 96px; text-align: center;
+  }
+  .cta-strip h2 { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+  .cta-strip p { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+
+  /* ── Demo notice ── */
+  .demo-notice {
+    position: fixed; bottom: 92px; left: 24px; z-index: 999;
+    background: var(--surface); border: 1px solid rgba(108,99,255,.35);
+    border-radius: 12px; padding: 12px 16px; max-width: 240px;
+    font-size: 12px; color: var(--text2); line-height: 1.5;
+    box-shadow: 0 4px 20px rgba(0,0,0,.4);
+    animation: hk-slide-in .4s ease .8s both;
+  }
+  .demo-notice strong { color: #8b84ff; display: block; margin-bottom: 2px; font-size: 13px; }
+  @keyframes hk-slide-in { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+
+  /* ── Footer ── */
+  footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; }
+  footer .footer-logo { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; background: linear-gradient(135deg, #6c63ff, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  footer p { font-size: 12px; color: var(--text3); }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-logo">Test Business</div>
+  <ul class="nav-links">
+    <li><a href="#">Services</a></li>
+    <li><a href="#">About</a></li>
+    <li><a href="#">Pricing</a></li>
+    <li><a href="#">Contact</a></li>
+  </ul>
+  <button class="nav-cta">Book a call</button>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge"><span></span> AI-powered automation</div>
+  <h1>Grow your business<br>with <em>intelligent AI</em></h1>
+  <p>Automate leads, appointments, and customer conversations — so you can focus on what matters most.</p>
+  <div class="hero-btns">
+    <button class="btn-hero btn-hero-primary">Get started free</button>
+    <button class="btn-hero btn-hero-ghost">See how it works</button>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features">
+  <div class="features-label">What we offer</div>
+  <h2>Everything your business needs</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">💬</div>
+      <h3>AI Chatbot</h3>
+      <p>24/7 website chatbot that captures leads, answers questions, and books appointments automatically.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Smart Appointments</h3>
+      <p>Let customers book themselves — no phone tag, no back-and-forth. Fully automated scheduling.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>Lead Capture</h3>
+      <p>Qualify and capture leads the moment they land on your site. Never miss a potential customer again.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">☏</div>
+      <h3>Voice AI</h3>
+      <p>An AI receptionist that answers calls, captures info, and routes callers — even after hours.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📧</div>
+      <h3>Email AI</h3>
+      <p>Automated follow-up sequences, review requests, and appointment reminders — all on autopilot.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⭐</div>
+      <h3>SMS & Reviews</h3>
+      <p>Automatically request Google reviews from happy customers and boost your online reputation.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Social proof -->
+<section class="proof">
+  <div class="proof-stats">
+    <div><div class="proof-stat-n">3x</div><div class="proof-stat-l">More leads captured</div></div>
+    <div><div class="proof-stat-n">60%</div><div class="proof-stat-l">Less time on admin</div></div>
+    <div><div class="proof-stat-n">24/7</div><div class="proof-stat-l">Always-on AI support</div></div>
+    <div><div class="proof-stat-n">4.9★</div><div class="proof-stat-l">Average client rating</div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-strip">
+  <h2>Ready to automate your growth?</h2>
+  <p>Join businesses already using Harakel Innovations to capture more leads and save time every day.</p>
+  <button class="btn-hero btn-hero-primary" style="font-size:15px;padding:14px 36px;">Start your free trial</button>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-logo">Test Business</div>
+  <p>Powered by Harakel Innovations &copy; 2026</p>
+</footer>
+
+<!-- Demo helper tooltip -->
+<div class="demo-notice">
+  <strong>Try the AI chatbot</strong>
+  Click the chat bubble in the bottom-right corner to talk to Aria.
+</div>
+
+<!-- ═══════ Harakel Chatbot Widget ═══════ -->
+<script>
+  window.HarakelChatbot = {
+    client_id:   '0499cf98-24f7-402d-9bf2-fcf605d23789',
+    api_url:     'https://web-production-608a8.up.railway.app',
+    // bot_name and brand_color are fetched automatically from the API
+  };
+</script>
+<script src="chatbot-widget.js"></script>
+
+</body>
+</html>
