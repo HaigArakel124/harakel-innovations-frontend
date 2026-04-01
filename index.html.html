@@ -373,26 +373,27 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <div class="panel active" id="panel-dashboard">
   <div style="margin-bottom:20px;"><div class="section-heading">Good morning ☀️</div><div class="section-sub">Here's what's happening across your clients today.</div></div>
   <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
-    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">12</div><div class="stat-label">New leads</div><div class="stat-change up">↑ 3 since yesterday</div></div>
-    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value">4</div><div class="stat-label">Appointments today</div><div class="stat-change up">↑ 1 new booking</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="stat-leads-count">12</div><div class="stat-label">New leads</div><div class="stat-change up" id="stat-leads-change">↑ 3 since yesterday</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="stat-appts-count">4</div><div class="stat-label">Appointments today</div><div class="stat-change up" id="stat-appts-change">↑ 1 new booking</div></div>
     <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">94%</div><div class="stat-label">Chatbot uptime</div><div class="stat-change up">All bots running</div></div>
     <div class="stat-card pink"><div class="stat-icon">◧</div><div class="stat-value">$24.5K</div><div class="stat-label">Pipeline value</div><div class="stat-change up">↑ $3.2K this week</div></div>
-    <div class="stat-card blue"><div class="stat-icon">⬡</div><div class="stat-value">3</div><div class="stat-label">Active clients</div><div class="stat-change up">1 onboarding</div></div>
+    <div class="stat-card blue"><div class="stat-icon">⬡</div><div class="stat-value" id="stat-clients-count">3</div><div class="stat-label">Active clients</div><div class="stat-change up" id="stat-clients-change">1 onboarding</div></div>
   </div>
   <div class="grid-2" style="margin-bottom:18px;">
     <div class="quick-action-btn" onclick="window.nav('onboarding',null)"><div style="font-size:20px;margin-bottom:5px;">⬡</div><div style="font-size:13px;font-weight:500;">Onboard new client</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Set up website, chatbot & automations</div></div>
-    <div class="quick-action-btn" onclick="window.nav('leads',null)"><div style="font-size:20px;margin-bottom:5px;">◉</div><div style="font-size:13px;font-weight:500;">View all leads</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">12 new leads need attention</div></div>
-    <div class="quick-action-btn" onclick="window.nav('appointments',null)"><div style="font-size:20px;margin-bottom:5px;">◷</div><div style="font-size:13px;font-weight:500;">Today's appointments</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">4 bookings scheduled</div></div>
+    <div class="quick-action-btn" onclick="window.nav('leads',null)"><div style="font-size:20px;margin-bottom:5px;">◉</div><div style="font-size:13px;font-weight:500;">View all leads</div><div style="font-size:11px;color:var(--text3);margin-top:2px;" id="qlink-leads-desc">12 new leads need attention</div></div>
+    <div class="quick-action-btn" onclick="window.nav('appointments',null)"><div style="font-size:20px;margin-bottom:5px;">◷</div><div style="font-size:13px;font-weight:500;">Today's appointments</div><div style="font-size:11px;color:var(--text3);margin-top:2px;" id="qlink-appts-desc">4 bookings scheduled</div></div>
     <div class="quick-action-btn" onclick="window.nav('analytics',null)"><div style="font-size:20px;margin-bottom:5px;">◎</div><div style="font-size:13px;font-weight:500;">View analytics</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">See performance across all clients</div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
     <div class="flex-col">
       <div class="card">
         <div class="card-header"><div class="card-title">Recent leads</div><span class="card-link" onclick="window.nav('leads',null)">View all →</span></div>
-        <div class="lead-item"><div class="lead-avatar" style="background:var(--pink-dim);color:var(--pink)">MR</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 2 min ago</div></div><span class="lead-status status-hot">Hot</span></div>
+        <div id="dash-leads-list"><div class="lead-item"><div class="lead-avatar" style="background:var(--pink-dim);color:var(--pink)">MR</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 2 min ago</div></div><span class="lead-status status-hot">Hot</span></div>
         <div class="lead-item"><div class="lead-avatar" style="background:var(--green-dim);color:var(--green)">JK</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Via website form · 18 min ago</div></div><span class="lead-status status-warm">Warm</span></div>
         <div class="lead-item"><div class="lead-avatar" style="background:var(--accent-glow);color:var(--accent2)">ST</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">Sarah Thompson</div><div style="font-size:11px;color:var(--text3)">Via chatbot · 1 hr ago</div></div><span class="lead-status status-booked">Booked</span></div>
         <div class="lead-item"><div class="lead-avatar" style="background:var(--amber-dim);color:var(--amber)">DL</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">David Lee</div><div style="font-size:11px;color:var(--text3)">Via email · 3 hr ago</div></div><span class="lead-status status-new">New</span></div>
+        </div>
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title">Live activity feed</div><span class="lead-status status-active">● Live</span></div>
@@ -406,15 +407,16 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div class="flex-col">
       <div class="card">
         <div class="card-header"><div class="card-title">Today's appointments</div><span class="card-link" onclick="window.nav('appointments',null)">View all →</span></div>
-        <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">9:00 AM</div><div class="appt-dot" style="background:var(--green)"></div><div><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Discovery call · 30 min</div></div></div>
+        <div id="dash-appts-list"><div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">9:00 AM</div><div class="appt-dot" style="background:var(--green)"></div><div><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><div style="font-size:11px;color:var(--text3)">Discovery call · 30 min</div></div></div>
         <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">11:00 AM</div><div class="appt-dot" style="background:var(--accent)"></div><div><div style="font-size:13px;font-weight:500;">TechPro Solutions</div><div style="font-size:11px;color:var(--text3)">Onboarding · 1 hr</div></div></div>
         <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">2:30 PM</div><div class="appt-dot" style="background:var(--amber)"></div><div><div style="font-size:13px;font-weight:500;">James Kim</div><div style="font-size:11px;color:var(--text3)">Strategy · 45 min</div></div></div>
         <div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">4:00 PM</div><div class="appt-dot" style="background:var(--pink)"></div><div><div style="font-size:13px;font-weight:500;">Bloom Beauty Co.</div><div style="font-size:11px;color:var(--text3)">Demo · 30 min</div></div></div>
+        </div>
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title">Monthly revenue</div></div>
-        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;">$4,200</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;">March 2026 · 3 active subscriptions</div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;" id="dash-mrr">$4,200</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="dash-mrr-sub">March 2026 · 3 active subscriptions</div>
         <div class="progress-bar" style="margin-bottom:6px;"><div class="progress-fill" style="width:70%;background:var(--accent);"></div></div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">70% to $6,000 monthly goal</div>
         <button class="btn btn-primary btn-sm" style="width:100%;" onclick="window.nav('onboarding',null)">+ Onboard next client</button>
@@ -473,7 +475,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
   <div class="section-heading">Client Portal</div>
   <div class="section-sub">Manage each client's modules, settings, and billing.</div>
   <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
-    <div>
+    <div id="clients-portal-list">
       <div class="client-card selected" onclick="selectClient(this,'bloom')" id="cc-bloom">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
           <div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:linear-gradient(135deg,#ff6b9d,#ffb547);">BB</div>
@@ -765,9 +767,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <!-- ═══════ LEADS ═══════ -->
 <div class="panel" id="panel-leads">
   <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
-    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">12</div><div class="stat-label">New this week</div><div class="stat-change up">↑ 3 vs last week</div></div>
-    <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value">3</div><div class="stat-label">Hot leads</div><div class="stat-change up">Need follow-up now</div></div>
-    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value">5</div><div class="stat-label">Booked</div><div class="stat-change up">Converted to appointments</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="leads-new-count">12</div><div class="stat-label">New this week</div><div class="stat-change up">↑ 3 vs last week</div></div>
+    <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value" id="leads-hot-count">3</div><div class="stat-label">Hot leads</div><div class="stat-change up">Need follow-up now</div></div>
+    <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="leads-booked-count">5</div><div class="stat-label">Booked</div><div class="stat-change up">Converted to appointments</div></div>
     <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">45%</div><div class="stat-label">Chatbot capture rate</div><div class="stat-change up">↑ 4pts this month</div></div>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:16px;">
@@ -779,7 +781,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:10px 16px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);">
       <div>Contact</div><div>Email</div><div>Source</div><div>Score</div><div>Status</div><div>Actions</div>
     </div>
-    <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="toast('Maria Rodriguez opened!')">
+    <div id="leads-tbody"><div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''" onclick="toast('Maria Rodriguez opened!')">
       <div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(--pink-dim);color:var(--pink);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">MR</div><div>Maria Rodriguez<div style="font-size:10px;color:var(--text3);">(555) 234-5678</div></div></div>
       <div style="font-size:12px;color:var(--text2);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b6db98c4d9d2c4dfd1c3d3ccf6dbd7dfda98d5d9db">[email&#160;protected]</a></div>
       <div><span class="source-badge source-chatbot">◎ Chatbot</span></div>
@@ -818,6 +820,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div><div class="score-bar"><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot filled"></div><div class="score-dot"></div></div></div>
       <div><span class="lead-status status-warm">Warm</span></div>
       <div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast('Booking opened!')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast('Notes!')">Notes</button></div>
+    </div>
     </div>
   </div>
 </div>
@@ -1155,12 +1158,17 @@ const clients = {
 function selectClient(el, id) {
   document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  const c = clients[id];
-  document.getElementById('d-logo').textContent = c.logo;
-  document.getElementById('d-logo').style.background = c.grad;
-  document.getElementById('d-name').textContent = c.name;
-  document.getElementById('d-url').textContent = c.url;
-  toast('Viewing: ' + c.name);
+  const c = clients[id] || (window._apiClients && window._apiClients[id]);
+  if (!c) return;
+  const logo = c.logo || (c.business_name || 'CL').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
+  const name = c.name || c.business_name || 'Client';
+  const url = c.url || c.website || (c.business_name || 'client').toLowerCase().replace(/\s+/g, '') + '.com';
+  const grad = c.grad || 'linear-gradient(135deg,var(--accent),var(--blue))';
+  document.getElementById('d-logo').textContent = logo;
+  document.getElementById('d-logo').style.background = grad;
+  document.getElementById('d-name').textContent = name;
+  document.getElementById('d-url').textContent = url;
+  toast('Viewing: ' + name);
 }
 
 // ═══════ ONBOARDING WIZARD ═══════
@@ -1436,3 +1444,234 @@ window.addEventListener('load', function() {
     });
   });
 });
+
+// ═══════════════════════════════════════════════════════
+// LIVE DATA — connects to Harakel Innovations Backend API
+// ═══════════════════════════════════════════════════════
+
+function _timeAgo(dateStr) {
+  var diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return Math.floor(diff / 60) + ' min ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + ' hr ago';
+  return Math.floor(diff / 86400) + ' days ago';
+}
+
+function _fmtMoney(n) {
+  if (!n && n !== 0) return '—';
+  return n >= 1000 ? '$' + (n / 1000).toFixed(1) + 'K' : '$' + n;
+}
+
+function _initials(name) {
+  return (name || 'UN').split(' ').map(function(p) { return p[0]; }).join('').toUpperCase().slice(0, 2);
+}
+
+var _colorPairs = [
+  ['--pink-dim','--pink'], ['--green-dim','--green'], ['--accent-glow','--accent2'],
+  ['--amber-dim','--amber'], ['--blue-dim','--blue']
+];
+
+var _gradients = [
+  'linear-gradient(135deg,#ff6b9d,#ffb547)',
+  'linear-gradient(135deg,#6c63ff,#4da6ff)',
+  'linear-gradient(135deg,#00d9a3,#4da6ff)',
+  'linear-gradient(135deg,#ffb547,#ff6b9d)',
+];
+
+var _statusClass = { hot:'status-hot', warm:'status-warm', new:'status-new', booked:'status-booked' };
+var _sourceBadge = { chatbot:'source-chatbot">◎ Chatbot', form:'source-form">⬡ Form', email:'source-email">◫ Email', voice:'source-phone">☏ Voice' };
+
+function _updateDashboardLeads(leads) {
+  var el = document.getElementById('dash-leads-list');
+  if (!el) return;
+  var html = leads.slice(0, 4).map(function(l, i) {
+    var cp = _colorPairs[i % _colorPairs.length];
+    var status = l.status || 'new';
+    var source = l.source ? 'Via ' + l.source : 'Via chatbot';
+    var time = l.created_at ? _timeAgo(l.created_at) : 'Recently';
+    return '<div class="lead-item"><div class="lead-avatar" style="background:var(' + cp[0] + ');color:var(' + cp[1] + ')">' + _initials(l.name) + '</div><div style="flex:1"><div style="font-size:13px;font-weight:500;">' + (l.name || 'Unknown') + '</div><div style="font-size:11px;color:var(--text3)">' + source + ' · ' + time + '</div></div><span class="lead-status ' + (_statusClass[status] || 'status-new') + '">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span></div>';
+  }).join('');
+  el.innerHTML = html;
+}
+
+function _updateLeadsTable(leads) {
+  var el = document.getElementById('leads-tbody');
+  if (!el) return;
+  if (!leads || leads.length === 0) return;
+  el.innerHTML = leads.map(function(l, i) {
+    var cp = _colorPairs[i % _colorPairs.length];
+    var status = l.status || 'new';
+    var src = l.source || 'chatbot';
+    var badge = _sourceBadge[src] || _sourceBadge['chatbot'];
+    var email = l.email || '—';
+    var phone = l.phone || '';
+    return '<div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:12px 16px;border-bottom:1px solid var(--border);align-items:center;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'"><div style="display:flex;align-items:center;gap:9px;font-size:13px;"><div style="width:28px;height:28px;border-radius:7px;background:var(' + cp[0] + ');color:var(' + cp[1] + ');display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">' + _initials(l.name) + '</div><div>' + (l.name || 'Unknown') + '<div style="font-size:10px;color:var(--text3);">' + phone + '</div></div></div><div style="font-size:12px;color:var(--text2);">' + email + '</div><div><span class="source-badge ' + badge + '</span></div><div><div class="score-bar">' + [1,2,3,4,5].map(function(n){ return '<div class="score-dot' + (n <= 3 ? ' filled' : '') + '"></div>'; }).join('') + '</div></div><div><span class="lead-status ' + (_statusClass[status] || 'status-new') + '">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span></div><div style="display:flex;gap:4px;"><button class="btn btn-primary btn-xs" onclick="toast(\'Booking opened!\')">Book</button><button class="btn btn-ghost btn-xs" onclick="toast(\'Notes!\')">Notes</button></div></div>';
+  }).join('');
+}
+
+function _updateDashboardAppts(appts) {
+  var el = document.getElementById('dash-appts-list');
+  if (!el || !appts || appts.length === 0) return;
+  var dotColors = ['--green','--accent','--amber','--pink','--blue'];
+  el.innerHTML = appts.slice(0, 4).map(function(a, i) {
+    var name = a.customer_name || a.name || 'Appointment';
+    var type = a.appointment_type || a.type || 'Meeting';
+    var time = a.scheduled_time ? new Date(a.scheduled_time).toLocaleTimeString('en-US', {hour:'numeric',minute:'2-digit'}) : '—';
+    var dur = a.duration ? a.duration + ' min' : '30 min';
+    return '<div class="appt-item"><div style="width:56px;font-size:11px;color:var(--text3);">' + time + '</div><div class="appt-dot" style="background:var(' + dotColors[i % dotColors.length] + ')"></div><div><div style="font-size:13px;font-weight:500;">' + name + '</div><div style="font-size:11px;color:var(--text3)">' + type + ' · ' + dur + '</div></div></div>';
+  }).join('');
+}
+
+function _updateClientPortal(clientsList) {
+  var el = document.getElementById('clients-portal-list');
+  if (!el || !clientsList || clientsList.length === 0) return;
+  window._apiClients = window._apiClients || {};
+  el.innerHTML = clientsList.map(function(c, i) {
+    window._apiClients[c.id] = c;
+    var initials = _initials(c.business_name);
+    var grad = _gradients[i % _gradients.length];
+    var statusBadge = c.is_active ? '<span class="lead-status status-active">● Active</span>' : '<span class="lead-status status-trial">● Inactive</span>';
+    var plan = c.plan || 'starter';
+    var fee = c.monthly_fee ? '$' + Number(c.monthly_fee).toLocaleString() : '—';
+    var website = c.website || (c.business_name || 'client').toLowerCase().replace(/\s+/g,'') + '.com';
+    var since = c.created_at ? new Date(c.created_at).toLocaleDateString('en-US',{month:'short',year:'numeric'}) : '';
+    return '<div class="client-card' + (i === 0 ? ' selected' : '') + '" onclick="selectClient(this,\'' + c.id + '\')">' +
+      '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">' +
+        '<div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:' + grad + ';">' + initials + '</div>' +
+        '<div style="flex:1;"><div style="display:flex;align-items:center;gap:8px;"><div style="font-family:\'Syne\',sans-serif;font-size:14px;font-weight:700;">' + c.business_name + '</div><span class="lead-status" style="background:var(--accent-glow);color:var(--accent2);">' + plan.charAt(0).toUpperCase() + plan.slice(1) + '</span></div>' +
+        '<div style="font-size:11px;color:var(--text3);">' + website + (since ? ' · Active since ' + since : '') + '</div></div>' +
+        statusBadge +
+      '</div>' +
+      '<div class="grid-3">' +
+        '<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;">—</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div>' +
+        '<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;">—</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div>' +
+        '<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;">' + fee + '</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  // Auto-select the first client in the detail panel
+  if (clientsList[0]) {
+    var first = clientsList[0];
+    var firstEl = el.querySelector('.client-card');
+    if (firstEl) {
+      var logo = _initials(first.business_name);
+      var grad0 = _gradients[0];
+      document.getElementById('d-logo').textContent = logo;
+      document.getElementById('d-logo').style.background = grad0;
+      document.getElementById('d-name').textContent = first.business_name || 'Client';
+      document.getElementById('d-url').textContent = first.website || (first.business_name || 'client').toLowerCase().replace(/\s+/g,'') + '.com';
+    }
+  }
+}
+
+async function loadLiveData() {
+  try {
+    // 1. Load clients
+    var cr = await fetch(API_URL + '/api/clients/');
+    if (!cr.ok) return;
+    var cd = await cr.json();
+
+    // Update dashboard stat: active clients count
+    var clientsCountEl = document.getElementById('stat-clients-count');
+    if (clientsCountEl && cd.active !== undefined) {
+      clientsCountEl.textContent = cd.active;
+      var changeEl = document.getElementById('stat-clients-change');
+      if (changeEl) changeEl.textContent = cd.total + ' total clients';
+    }
+
+    // Update dashboard MRR
+    if (cd.total_mrr !== undefined) {
+      var mrrEl = document.getElementById('dash-mrr');
+      if (mrrEl) mrrEl.textContent = _fmtMoney(cd.total_mrr);
+      var mrrSub = document.getElementById('dash-mrr-sub');
+      if (mrrSub && cd.active !== undefined) {
+        mrrSub.textContent = new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}) + ' · ' + cd.active + ' active subscription' + (cd.active !== 1 ? 's' : '');
+      }
+    }
+
+    // Update client portal cards
+    if (cd.clients && cd.clients.length > 0) {
+      _updateClientPortal(cd.clients);
+    }
+
+    // Get first client ID for lead/appointment queries
+    var firstClient = cd.clients && cd.clients[0];
+    if (!firstClient) return;
+    var cid = firstClient.id;
+
+    // 2. Load leads, lead stats, and appointments in parallel
+    var results = await Promise.allSettled([
+      fetch(API_URL + '/api/leads/' + cid + '?limit=20'),
+      fetch(API_URL + '/api/leads/stats/' + cid),
+      fetch(API_URL + '/api/appointments/' + cid),
+    ]);
+
+    // Process leads
+    var leadsRes = results[0];
+    if (leadsRes.status === 'fulfilled' && leadsRes.value.ok) {
+      var ld = await leadsRes.value.json();
+      var leads = ld.leads || ld || [];
+      if (Array.isArray(leads) && leads.length > 0) {
+        _updateDashboardLeads(leads);
+        _updateLeadsTable(leads);
+        var statLeads = document.getElementById('stat-leads-count');
+        if (statLeads) statLeads.textContent = leads.length;
+        var qlLeads = document.getElementById('qlink-leads-desc');
+        if (qlLeads) qlLeads.textContent = leads.length + ' lead' + (leads.length !== 1 ? 's' : '') + ' need attention';
+        var leadsNew = leads.filter(function(l){ return l.status === 'new'; }).length;
+        var leadsHot = leads.filter(function(l){ return l.status === 'hot'; }).length;
+        var leadsBooked = leads.filter(function(l){ return l.status === 'booked'; }).length;
+        var leadsNewEl = document.getElementById('leads-new-count');
+        var leadsHotEl = document.getElementById('leads-hot-count');
+        var leadsBookedEl = document.getElementById('leads-booked-count');
+        if (leadsNewEl) leadsNewEl.textContent = leadsNew;
+        if (leadsHotEl) leadsHotEl.textContent = leadsHot;
+        if (leadsBookedEl) leadsBookedEl.textContent = leadsBooked;
+      }
+    }
+
+    // Process lead stats (override with server-side counts if available)
+    var statsRes = results[1];
+    if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
+      var ls = await statsRes.value.json();
+      if (ls.new !== undefined) { var el2 = document.getElementById('leads-new-count'); if (el2) el2.textContent = ls.new; }
+      if (ls.hot !== undefined) { var el3 = document.getElementById('leads-hot-count'); if (el3) el3.textContent = ls.hot; }
+      if (ls.booked !== undefined) { var el4 = document.getElementById('leads-booked-count'); if (el4) el4.textContent = ls.booked; }
+      if (ls.total !== undefined) {
+        var el5 = document.getElementById('stat-leads-count');
+        if (el5) el5.textContent = ls.total;
+        var el6 = document.getElementById('qlink-leads-desc');
+        if (el6) el6.textContent = ls.total + ' lead' + (ls.total !== 1 ? 's' : '') + ' need attention';
+      }
+    }
+
+    // Process appointments
+    var apptsRes = results[2];
+    if (apptsRes.status === 'fulfilled' && apptsRes.value.ok) {
+      var ad = await apptsRes.value.json();
+      var appts = ad.appointments || ad || [];
+      if (Array.isArray(appts) && appts.length > 0) {
+        // Filter to today's appointments
+        var todayStr = new Date().toISOString().split('T')[0];
+        var todayAppts = appts.filter(function(a) {
+          return a.scheduled_time && a.scheduled_time.startsWith(todayStr);
+        });
+        var showAppts = todayAppts.length > 0 ? todayAppts : appts;
+        _updateDashboardAppts(showAppts);
+        var statAppts = document.getElementById('stat-appts-count');
+        if (statAppts) statAppts.textContent = todayAppts.length || appts.length;
+        var qlAppts = document.getElementById('qlink-appts-desc');
+        if (qlAppts) qlAppts.textContent = (todayAppts.length || appts.length) + ' booking' + ((todayAppts.length || appts.length) !== 1 ? 's' : '') + ' scheduled';
+      }
+    }
+
+  } catch (e) {
+    console.warn('[Harakel] Live data unavailable, using mock data.', e.message);
+  }
+}
+
+// Run on page load
+document.addEventListener('DOMContentLoaded', loadLiveData);
+</script>
+</body>
+</html>
