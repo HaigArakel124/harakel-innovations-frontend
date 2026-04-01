@@ -895,39 +895,33 @@ Warm regards,
 <!-- ═══════ CRM ═══════ -->
 <div class="panel" id="panel-crm">
   <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
-    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">38</div><div class="stat-label">Total contacts</div><div class="stat-change up">↑ 4 this week</div></div>
-    <div class="stat-card green"><div class="stat-icon">◈</div><div class="stat-value">$24,500</div><div class="stat-label">Pipeline value</div><div class="stat-change up">↑ $3,200 this week</div></div>
-    <div class="stat-card amber"><div class="stat-icon">◷</div><div class="stat-value">7</div><div class="stat-label">Deals in progress</div><div class="stat-change up">2 closing soon</div></div>
+    <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="crm-stat-contacts">—</div><div class="stat-label">Total contacts</div><div class="stat-change up" id="crm-stat-contacts-chg">Loading...</div></div>
+    <div class="stat-card green"><div class="stat-icon">◈</div><div class="stat-value" id="crm-stat-pipeline">—</div><div class="stat-label">Pipeline value</div><div class="stat-change up" id="crm-stat-pipeline-chg">Loading...</div></div>
+    <div class="stat-card amber"><div class="stat-icon">◷</div><div class="stat-value" id="crm-stat-deals">—</div><div class="stat-label">Deals in progress</div><div class="stat-change up" id="crm-stat-deals-chg">Loading...</div></div>
     <div class="stat-card pink"><div class="stat-icon">⭐</div><div class="stat-value">82%</div><div class="stat-label">Response rate</div><div class="stat-change up">↑ 5% vs last month</div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 260px;gap:18px;">
     <div class="card">
       <div class="card-header"><div class="card-title">Sales pipeline</div></div>
       <div class="pipeline-board">
-        <div class="pipeline-col"><div class="pipeline-col-header"><span>New leads</span><span class="pipeline-count">3</span></div>
-          <div class="pipeline-card" onclick="openContact('Robert Chen')"><div class="pipeline-card-name">Robert Chen</div><div class="pipeline-card-detail">Via website form</div><div class="pipeline-card-value">Est. $1,200</div></div>
-          <div class="pipeline-card" onclick="openContact('David Lee')"><div class="pipeline-card-name">David Lee</div><div class="pipeline-card-detail">Via email</div><div class="pipeline-card-value">Est. $800</div></div>
-          <div class="pipeline-card" onclick="openContact('Lisa Park')"><div class="pipeline-card-name">Lisa Park</div><div class="pipeline-card-detail">Via chatbot</div><div class="pipeline-card-value">Est. $2,400</div></div>
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>New leads</span><span class="pipeline-count" id="pipe-count-new">—</span></div>
+          <div id="pipe-cards-new"></div>
           <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
         </div>
-        <div class="pipeline-col"><div class="pipeline-col-header"><span>Contacted</span><span class="pipeline-count">2</span></div>
-          <div class="pipeline-card" onclick="openContact('Amanda Price')"><div class="pipeline-card-name">Amanda Price</div><div class="pipeline-card-detail">Email sent · 2h ago</div><div class="pipeline-card-value">Est. $3,500</div></div>
-          <div class="pipeline-card" onclick="openContact('Kevin Wu')"><div class="pipeline-card-name">Kevin Wu</div><div class="pipeline-card-detail">Call made · yesterday</div><div class="pipeline-card-value">Est. $900</div></div>
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>Contacted</span><span class="pipeline-count" id="pipe-count-warm">—</span></div>
+          <div id="pipe-cards-warm"></div>
           <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
         </div>
-        <div class="pipeline-col"><div class="pipeline-col-header"><span>Meeting booked</span><span class="pipeline-count">2</span></div>
-          <div class="pipeline-card pipeline-card-warm" onclick="openContact('James Kim')"><div class="pipeline-card-name">James Kim</div><div class="pipeline-card-detail">Thu 2:30 PM</div><div class="pipeline-card-value">Est. $4,800</div></div>
-          <div class="pipeline-card pipeline-card-warm" onclick="openContact('Bloom Beauty Co.')"><div class="pipeline-card-name">Bloom Beauty Co.</div><div class="pipeline-card-detail">Today 4:00 PM</div><div class="pipeline-card-value">Est. $2,100</div></div>
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>Meeting booked</span><span class="pipeline-count" id="pipe-count-booked">—</span></div>
+          <div id="pipe-cards-booked"></div>
           <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
         </div>
-        <div class="pipeline-col"><div class="pipeline-col-header"><span>Proposal sent</span><span class="pipeline-count">2</span></div>
-          <div class="pipeline-card pipeline-card-hot" onclick="openContact('TechPro Solutions')"><div class="pipeline-card-name">TechPro Solutions</div><div class="pipeline-card-detail">Awaiting response</div><div class="pipeline-card-value">$6,500</div></div>
-          <div class="pipeline-card pipeline-card-hot" onclick="openContact('Maria Rodriguez')"><div class="pipeline-card-name">Maria Rodriguez</div><div class="pipeline-card-detail">Verbal yes · follow up</div><div class="pipeline-card-value">$2,800</div></div>
+        <div class="pipeline-col"><div class="pipeline-col-header"><span>Proposal sent</span><span class="pipeline-count" id="pipe-count-hot">—</span></div>
+          <div id="pipe-cards-hot"></div>
           <button class="pipeline-add-btn" onclick="toast('Add contact!')">+ Add</button>
         </div>
-        <div class="pipeline-col"><div class="pipeline-col-header" style="color:var(--green)"><span>Won ✓</span><span class="pipeline-count" style="background:var(--green-dim);color:var(--green);">2</span></div>
-          <div class="pipeline-card pipeline-card-won" onclick="openContact('Sarah Thompson')"><div class="pipeline-card-name">Sarah Thompson</div><div class="pipeline-card-detail">Closed Mar 20</div><div class="pipeline-card-value" style="color:var(--green)">$3,200 ✓</div></div>
-          <div class="pipeline-card pipeline-card-won" onclick="openContact('Acme Corp')"><div class="pipeline-card-name">Acme Corp</div><div class="pipeline-card-detail">Closed Mar 14</div><div class="pipeline-card-value" style="color:var(--green)">$5,800 ✓</div></div>
+        <div class="pipeline-col"><div class="pipeline-col-header" style="color:var(--green)"><span>Won ✓</span><span class="pipeline-count" id="pipe-count-won" style="background:var(--green-dim);color:var(--green);">—</span></div>
+          <div id="pipe-cards-won"></div>
         </div>
       </div>
     </div>
@@ -938,16 +932,13 @@ Warm regards,
       </div>
       <div style="display:flex;gap:5px;margin-bottom:14px;"><button class="btn btn-primary btn-xs" onclick="toast('Email drafted!')">✉ Email</button><button class="btn btn-ghost btn-xs" onclick="toast('Call initiated!')">📞 Call</button><button class="btn btn-ghost btn-xs" onclick="window.nav('appointments',null)">📅 Book</button></div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Pipeline stage</div>
-      <select class="form-input" style="margin-bottom:12px;font-size:12px;" onchange="toast('Stage updated!')"><option>Proposal sent</option><option>New lead</option><option>Contacted</option><option>Meeting booked</option><option>Won</option></select>
+      <select id="crm-stage" class="form-input" style="margin-bottom:12px;font-size:12px;" onchange="toast('Stage updated!')"><option>New lead</option><option>Contacted</option><option>Meeting booked</option><option>Proposal sent</option><option>Won</option></select>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Deal value</div>
-      <input class="form-input" value="$2,800" style="margin-bottom:12px;font-size:12px;">
+      <input id="crm-value" class="form-input" value="—" style="margin-bottom:12px;font-size:12px;">
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Activity</div>
-      <div class="timeline-item"><div class="timeline-dot" style="background:var(--accent);"></div><div><div style="font-size:12px;font-weight:500;">Proposal sent via email</div><div style="font-size:10px;color:var(--text3);">Today · 8:30 AM</div></div></div>
-      <div class="timeline-item"><div class="timeline-dot" style="background:var(--green);"></div><div><div style="font-size:12px;font-weight:500;">Appointment confirmed</div><div style="font-size:10px;color:var(--text3);">Yesterday · 3:15 PM</div></div></div>
-      <div class="timeline-item"><div class="timeline-dot" style="background:var(--amber);"></div><div><div style="font-size:12px;font-weight:500;">Chatbot conversation — booked call</div><div style="font-size:10px;color:var(--text3);">Mar 24 · 11:02 AM</div></div></div>
-      <div class="timeline-item" style="padding-bottom:0;"><div class="timeline-dot" style="background:var(--text3);"></div><div><div style="font-size:12px;font-weight:500;">Lead captured via chatbot</div><div style="font-size:10px;color:var(--text3);">Mar 24 · 10:58 AM</div></div></div>
+      <div id="crm-timeline"></div>
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
-        <textarea class="form-input" style="min-height:60px;font-size:12px;">Verbal yes on proposal. Follow up Thursday to close.</textarea>
+        <textarea id="crm-notes" class="form-input" style="min-height:60px;font-size:12px;" placeholder="Add a note..."></textarea>
         <button class="btn btn-ghost btn-xs" style="width:100%;margin-top:6px;" onclick="toast('Note saved!')">Save note</button>
       </div>
     </div>
@@ -1230,6 +1221,119 @@ function _updateAnalytics(cd, leads, ls, apptCount) {
     } else {
       billingWrap.innerHTML = '<div style="width:100%;text-align:center;padding:20px 0;font-size:12px;color:var(--text3);">No billing data yet</div>';
     }
+  }
+}
+
+// ═══════ CRM ═══════
+var _crmLeads = [];
+function _escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function openContact(idx) {
+  var lead = _crmLeads[idx];
+  if (!lead) return;
+  var name = lead.name || lead.contact_name || 'Unknown';
+  var initials = name.split(' ').map(function(p){ return p[0] || ''; }).join('').toUpperCase().slice(0,2) || '??';
+  var avEl = document.getElementById('crm-av');
+  if (avEl) avEl.textContent = initials;
+  var nameEl = document.getElementById('crm-name');
+  if (nameEl) nameEl.textContent = name;
+  var metaEl = document.getElementById('crm-meta');
+  if (metaEl) metaEl.textContent = lead.email || lead.phone || ('Via ' + (lead.source || 'unknown'));
+  var stageEl = document.getElementById('crm-stage');
+  if (stageEl) {
+    var stageMap = {new:'New lead', warm:'Contacted', contacted:'Contacted', booked:'Meeting booked', hot:'Proposal sent', proposal:'Proposal sent', won:'Won', closed:'Won'};
+    var stageVal = stageMap[lead.status] || 'New lead';
+    for (var i = 0; i < stageEl.options.length; i++) {
+      if (stageEl.options[i].text === stageVal) { stageEl.selectedIndex = i; break; }
+    }
+  }
+  var valueEl = document.getElementById('crm-value');
+  if (valueEl) valueEl.value = lead.estimated_value ? _fmtMoney(lead.estimated_value) : '—';
+  var timelineEl = document.getElementById('crm-timeline');
+  if (timelineEl) {
+    var dateStr = '';
+    if (lead.created_at) {
+      var d = new Date(lead.created_at);
+      dateStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    }
+    timelineEl.innerHTML = '<div class="timeline-item" style="padding-bottom:0;"><div class="timeline-dot" style="background:var(--accent);"></div><div><div style="font-size:12px;font-weight:500;">Lead captured via ' + _escHtml(lead.source || 'unknown') + '</div><div style="font-size:10px;color:var(--text3);">' + (dateStr || 'Unknown date') + '</div></div></div>';
+  }
+  var notesEl = document.getElementById('crm-notes');
+  if (notesEl) notesEl.value = lead.notes || '';
+  document.querySelectorAll('#pipe-cards-new .pipeline-card, #pipe-cards-warm .pipeline-card, #pipe-cards-booked .pipeline-card, #pipe-cards-hot .pipeline-card, #pipe-cards-won .pipeline-card').forEach(function(c){ c.classList.remove('pipeline-card-selected'); });
+  document.querySelectorAll('.pipeline-card[data-idx="' + idx + '"]').forEach(function(c){ c.classList.add('pipeline-card-selected'); });
+}
+function _updateCRM(leads, ls) {
+  _crmLeads = leads || [];
+  var total = (ls && ls.total !== undefined) ? ls.total : _crmLeads.length;
+  var byStatus = (ls && ls.by_status) || {};
+
+  // Stat cards
+  var el = document.getElementById('crm-stat-contacts');
+  if (el) el.textContent = total;
+  el = document.getElementById('crm-stat-contacts-chg');
+  if (el) el.textContent = total + ' total lead' + (total !== 1 ? 's' : '') + ' in system';
+
+  var activeDeals = (byStatus.warm || 0) + (byStatus.contacted || 0) + (byStatus.hot || 0) + (byStatus.booked || 0);
+  el = document.getElementById('crm-stat-deals');
+  if (el) el.textContent = activeDeals;
+  el = document.getElementById('crm-stat-deals-chg');
+  if (el) el.textContent = activeDeals + ' active deal' + (activeDeals !== 1 ? 's' : '');
+
+  el = document.getElementById('crm-stat-pipeline');
+  if (el) el.textContent = _fmtMoney(total * 0); // no value data — show placeholder
+  el = document.getElementById('crm-stat-pipeline-chg');
+  if (el) el.textContent = 'Estimated pipeline';
+
+  // Group leads by pipeline column
+  var colMap = {new:'new', warm:'warm', contacted:'warm', booked:'booked', hot:'hot', proposal:'hot', won:'won', closed:'won'};
+  var cols = {new:[], warm:[], booked:[], hot:[], won:[]};
+  _crmLeads.forEach(function(lead, idx) {
+    var col = colMap[lead.status] || 'new';
+    cols[col].push({lead:lead, idx:idx});
+  });
+
+  var colClasses = {new:'', warm:'', booked:'pipeline-card-warm', hot:'pipeline-card-hot', won:'pipeline-card-won'};
+  Object.keys(cols).forEach(function(colKey) {
+    var items = cols[colKey];
+    var countEl = document.getElementById('pipe-count-' + colKey);
+    if (countEl) countEl.textContent = items.length;
+    var cardsEl = document.getElementById('pipe-cards-' + colKey);
+    if (!cardsEl) return;
+    if (items.length === 0) {
+      cardsEl.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 4px;text-align:center;">No leads</div>';
+      return;
+    }
+    var extraClass = colClasses[colKey] ? ' ' + colClasses[colKey] : '';
+    var wonStyle = colKey === 'won' ? ' style="color:var(--green)"' : '';
+    cardsEl.innerHTML = items.map(function(item) {
+      var lead = item.lead;
+      var name = lead.name || lead.contact_name || 'Unknown lead';
+      var detail = 'Via ' + (lead.source || 'unknown');
+      if (lead.created_at) {
+        var d = new Date(lead.created_at);
+        detail += ' · ' + d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      }
+      var valStr = lead.estimated_value ? _fmtMoney(lead.estimated_value) : 'New lead';
+      if (colKey === 'won') valStr += ' ✓';
+      return '<div class="pipeline-card' + extraClass + '" data-idx="' + item.idx + '" onclick="openContact(' + item.idx + ')">' +
+        '<div class="pipeline-card-name">' + _escHtml(name) + '</div>' +
+        '<div class="pipeline-card-detail">' + _escHtml(detail) + '</div>' +
+        '<div class="pipeline-card-value"' + wonStyle + '>' + _escHtml(valStr) + '</div>' +
+        '</div>';
+    }).join('');
+  });
+
+  // Show first lead in detail panel
+  if (_crmLeads.length > 0) openContact(0);
+  else {
+    var nameEl = document.getElementById('crm-name');
+    if (nameEl) nameEl.textContent = 'No contacts yet';
+    var metaEl = document.getElementById('crm-meta');
+    if (metaEl) metaEl.textContent = 'Leads will appear here';
+    var avEl = document.getElementById('crm-av');
+    if (avEl) avEl.textContent = '—';
   }
 }
 
@@ -1884,6 +1988,7 @@ async function loadLiveData() {
     }
 
     _updateAnalytics(_anCd, _anLeads, _anLs, _anApptCount);
+    _updateCRM(_anLeads, _anLs);
 
   } catch (e) {
     console.error('[Harakel] loadLiveData error:', e);
