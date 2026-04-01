@@ -748,16 +748,13 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <div class="panel" id="panel-appointments">
   <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
     <div class="card">
-      <div class="card-header"><div class="card-title">March 2026</div><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-xs">‹</button><button class="btn btn-ghost btn-xs">›</button></div></div>
+      <div class="card-header"><div class="card-title" id="cal-month-title">Loading...</div><div style="display:flex;gap:6px;"><button class="btn btn-ghost btn-xs">‹</button><button class="btn btn-ghost btn-xs">›</button></div></div>
       <div class="cal-grid" id="cal-grid"></div>
     </div>
     <div class="flex-col">
       <div class="card">
-        <div class="card-header"><div class="card-title">Today · Mar 26</div><span class="lead-status status-booked">4 today</span></div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:7px;cursor:pointer;" onclick="toast('Maria Rodriguez — Discovery call')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">Maria Rodriguez</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">9:00 AM</span></div><div style="font-size:11px;color:var(--text3);">Discovery call · 30 min · Via chatbot</div></div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:7px;cursor:pointer;" onclick="toast('TechPro Solutions — Onboarding')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">TechPro Solutions</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">11:00 AM</span></div><div style="font-size:11px;color:var(--text3);">Onboarding · 1 hr · Manual</div></div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:7px;cursor:pointer;" onclick="toast('James Kim — Strategy session')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">James Kim</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">2:30 PM</span></div><div style="font-size:11px;color:var(--text3);">Strategy session · 45 min · Via chatbot</div></div>
-        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;margin-bottom:14px;cursor:pointer;" onclick="toast('Bloom Beauty Co. — Demo')"><div style="display:flex;justify-content:space-between;margin-bottom:4px;"><div style="font-size:13px;font-weight:500;">Bloom Beauty Co.</div><span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">4:00 PM</span></div><div style="font-size:11px;color:var(--text3);">Demo · 30 min · Via website</div></div>
+        <div class="card-header"><div class="card-title" id="appt-today-title">Today</div><span class="lead-status status-booked" id="appt-today-badge">Loading...</span></div>
+        <div id="appt-today-list"><div style="padding:12px 0;font-size:12px;color:var(--text3);">Loading appointments...</div></div>
         <div style="padding-top:14px;border-top:1px solid var(--border);">
           <div style="font-size:13px;font-weight:500;margin-bottom:10px;">+ Book new appointment</div>
           <div class="form-group"><label class="form-label">Client name</label><input class="form-input" id="new-appt-name" placeholder="Full name"></div>
@@ -1598,20 +1595,134 @@ async function sendChat(text) {
 }
 
 // ═══════ CALENDAR ═══════
-function buildCal() {
-  const g = document.getElementById('cal-grid');
+// ═══════ APPOINTMENTS ═══════
+function _updateAppointments(appts) {
+  var now = new Date();
+  var todayStr = now.toISOString().split('T')[0];
+
+  // Today's date label for header
+  var todayLabel = 'Today · ' + now.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+  var titleEl = document.getElementById('appt-today-title');
+  if (titleEl) titleEl.textContent = todayLabel;
+
+  // Mark calendar days that have appointments (same month)
+  var apptDays = [];
+  appts.forEach(function(a) {
+    var t = a.scheduled_time || a.date || '';
+    if (t) {
+      var d = new Date(t);
+      if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) {
+        apptDays.push(d.getDate());
+      }
+    }
+  });
+  buildCal(apptDays);
+
+  // Split: today vs upcoming
+  var todayAppts = appts.filter(function(a) {
+    var t = a.scheduled_time || a.date || '';
+    return t && t.startsWith(todayStr);
+  });
+  var upcomingAppts = appts.filter(function(a) {
+    var t = a.scheduled_time || a.date || '';
+    return t && t > todayStr;
+  }).sort(function(a, b) {
+    return (a.scheduled_time || a.date || '') < (b.scheduled_time || b.date || '') ? -1 : 1;
+  });
+
+  var badgeEl = document.getElementById('appt-today-badge');
+  var listEl = document.getElementById('appt-today-list');
+
+  if (appts.length === 0) {
+    // Empty state
+    if (badgeEl) { badgeEl.textContent = '0 today'; }
+    if (listEl) {
+      listEl.innerHTML = '<div style="padding:18px 0;text-align:center;">' +
+        '<div style="font-size:28px;margin-bottom:8px;">📅</div>' +
+        '<div style="font-size:13px;font-weight:500;margin-bottom:4px;">No appointments yet</div>' +
+        '<div style="font-size:11px;color:var(--text3);">Book your first appointment using the form below.</div>' +
+        '</div>';
+    }
+    return;
+  }
+
+  // Choose which appointments to display in the list
+  var displayAppts = todayAppts.length > 0 ? todayAppts : upcomingAppts.slice(0, 5);
+  var listTitle = todayAppts.length > 0
+    ? todayAppts.length + ' today'
+    : (upcomingAppts.length > 0 ? upcomingAppts.length + ' upcoming' : '0 today');
+
+  if (badgeEl) badgeEl.textContent = listTitle;
+  if (todayAppts.length === 0 && titleEl) {
+    titleEl.textContent = upcomingAppts.length > 0 ? 'Upcoming' : 'No appointments today';
+  }
+
+  if (!listEl) return;
+
+  if (displayAppts.length === 0) {
+    listEl.innerHTML = '<div style="padding:12px 0;font-size:12px;color:var(--text3);text-align:center;">No appointments today.<br><span style="font-size:11px;">Next: ' +
+      (upcomingAppts.length > 0
+        ? new Date(upcomingAppts[0].scheduled_time || upcomingAppts[0].date).toLocaleDateString('en-US',{month:'short',day:'numeric'})
+        : 'None scheduled') + '</span></div>';
+    return;
+  }
+
+  listEl.innerHTML = displayAppts.map(function(a, idx) {
+    var name = a.contact_name || a.client_name || a.name || 'Unknown';
+    var type = a.appointment_type || a.type || 'Appointment';
+    var source = a.source || a.booking_source || '';
+    var dur = a.duration_minutes ? a.duration_minutes + ' min' : '';
+    var detail = [type, dur, source ? 'Via ' + source : ''].filter(Boolean).join(' · ');
+    var timeStr = '—';
+    if (a.scheduled_time || a.date) {
+      var d = new Date(a.scheduled_time || a.date);
+      timeStr = d.toLocaleTimeString('en-US', {hour:'numeric', minute:'2-digit'});
+    }
+    var mb = idx < displayAppts.length - 1 ? 'margin-bottom:7px;' : 'margin-bottom:14px;';
+    return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;' + mb + 'cursor:pointer;" onclick="toast(\'' + _escHtml(name) + ' — ' + _escHtml(type) + '\')">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
+      '<div style="font-size:13px;font-weight:500;">' + _escHtml(name) + '</div>' +
+      '<span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">' + timeStr + '</span>' +
+      '</div>' +
+      '<div style="font-size:11px;color:var(--text3);">' + _escHtml(detail) + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function buildCal(apptDays) {
+  var g = document.getElementById('cal-grid');
   if (!g) return;
-  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => { const el=document.createElement('div'); el.className='cal-day-name'; el.textContent=d; g.appendChild(el); });
-  const appts=[5,8,12,15,19,22,26,28];
-  for(let d=1;d<=31;d++) {
-    const el=document.createElement('div'); el.className='cal-day';
-    if(d===26) el.classList.add('today');
-    if(appts.includes(d)) el.classList.add('has-appt');
-    el.textContent=d;
-    el.onclick=()=>{ document.querySelectorAll('.cal-day').forEach(x=>x.classList.remove('selected')); el.classList.add('selected'); };
+  g.innerHTML = '';
+  var apptDaySet = apptDays || [];
+  var now = new Date();
+  var year = now.getFullYear();
+  var month = now.getMonth();
+  var todayDate = now.getDate();
+  var monthLabel = now.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+  var titleEl = document.getElementById('cal-month-title');
+  if (titleEl) titleEl.textContent = monthLabel;
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(function(d) {
+    var el = document.createElement('div'); el.className = 'cal-day-name'; el.textContent = d; g.appendChild(el);
+  });
+  var firstDow = new Date(year, month, 1).getDay();
+  var daysInMonth = new Date(year, month + 1, 0).getDate();
+  var daysInPrev = new Date(year, month, 0).getDate();
+  for (var p = firstDow - 1; p >= 0; p--) {
+    var el = document.createElement('div'); el.className = 'cal-day other-month'; el.textContent = daysInPrev - p; g.appendChild(el);
+  }
+  for (var d = 1; d <= daysInMonth; d++) {
+    var el = document.createElement('div'); el.className = 'cal-day';
+    if (d === todayDate) el.classList.add('today');
+    if (apptDaySet.indexOf(d) !== -1) el.classList.add('has-appt');
+    el.textContent = d;
+    el.onclick = (function(day) { return function() { document.querySelectorAll('.cal-day').forEach(function(x){ x.classList.remove('selected'); }); this.classList.add('selected'); }; })(d);
     g.appendChild(el);
   }
-  for(let i=1;i<=4;i++) { const el=document.createElement('div'); el.className='cal-day other-month'; el.textContent=i; g.appendChild(el); }
+  var filled = firstDow + daysInMonth;
+  var trailing = filled % 7 === 0 ? 0 : 7 - (filled % 7);
+  for (var t = 1; t <= trailing; t++) {
+    var el = document.createElement('div'); el.className = 'cal-day other-month'; el.textContent = t; g.appendChild(el);
+  }
 }
 buildCal();
 
@@ -1876,7 +1987,7 @@ var REAL_CLIENT_ID = '0499cf98-24f7-402d-9bf2-fcf605d23789';
 
 async function loadLiveData() {
   try {
-    var _anCd = null, _anLeads = [], _anLs = null, _anApptCount = 0;
+    var _anCd = null, _anLeads = [], _anLs = null, _anApptCount = 0, _anAppts = [];
 
     // Run all fetches in parallel
     var results = await Promise.allSettled([
@@ -1982,6 +2093,7 @@ async function loadLiveData() {
       if (qlAppts) qlAppts.textContent = apptCount + ' booking' + (apptCount !== 1 ? 's' : '') + ' scheduled';
 
       _anApptCount = apptCount;
+      _anAppts = appts;
       var todayStr = new Date().toISOString().split('T')[0];
       var todayAppts = appts.filter(function(a) { return a.scheduled_time && a.scheduled_time.startsWith(todayStr); });
       _updateDashboardAppts(todayAppts.length > 0 ? todayAppts : appts);
@@ -1989,6 +2101,7 @@ async function loadLiveData() {
 
     _updateAnalytics(_anCd, _anLeads, _anLs, _anApptCount);
     _updateCRM(_anLeads, _anLs);
+    _updateAppointments(_anAppts);
 
   } catch (e) {
     console.error('[Harakel] loadLiveData error:', e);
