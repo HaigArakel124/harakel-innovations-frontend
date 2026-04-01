@@ -17,8 +17,13 @@
 
   /* ── Config ─────────────────────────────────────────────────────────────── */
   var cfg = window.HarakelChatbot || {};
-  var CLIENT_ID   = cfg.client_id   || '';
-  var API_URL     = (cfg.api_url || 'https://web-production-608a8.up.railway.app').replace(/\/$/, '');
+  // Support data-client-id / data-api-url attributes on the <script> tag
+  var _scriptEl = document.currentScript || (function () {
+    var s = document.getElementsByTagName('script');
+    return s[s.length - 1];
+  }());
+  var CLIENT_ID = cfg.client_id || (_scriptEl && _scriptEl.getAttribute('data-client-id')) || '';
+  var API_URL   = (cfg.api_url || (_scriptEl && _scriptEl.getAttribute('data-api-url')) || 'https://web-production-608a8.up.railway.app').replace(/\/$/, '');
   var SESSION_ID  = 'hk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
   var botName    = cfg.bot_name    || 'Aria';

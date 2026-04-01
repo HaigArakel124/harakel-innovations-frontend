@@ -303,6 +303,22 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 .login-desc{font-size:13px;color:var(--text2);margin-bottom:24px;}
 .login-error{background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.25);color:var(--pink);font-size:12px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;}
 .login-footer{margin-top:20px;font-size:11px;color:var(--text3);text-align:center;}
+
+/* ── Embed modal ── */
+.embed-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;animation:hk-fade-in .15s ease;}
+.embed-modal{background:var(--surface);border:1px solid var(--border2);border-radius:16px;width:100%;max-width:560px;padding:28px;position:relative;animation:hk-slide-up .2s ease;}
+@keyframes hk-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes hk-slide-up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.embed-modal-title{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;margin-bottom:4px;}
+.embed-modal-sub{font-size:12px;color:var(--text2);margin-bottom:20px;}
+.embed-instructions{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.6;}
+.embed-instructions code{background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:monospace;font-size:11px;color:var(--accent2);}
+.embed-code-wrap{position:relative;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+.embed-code{font-family:monospace;font-size:12px;color:var(--green);word-break:break-all;line-height:1.6;white-space:pre-wrap;user-select:all;}
+.embed-copy-btn{position:absolute;top:10px;right:10px;padding:5px 12px;font-size:11px;font-weight:500;font-family:inherit;background:var(--accent);color:white;border:none;border-radius:6px;cursor:pointer;transition:background .15s;}
+.embed-copy-btn:hover{background:#8b84ff;}
+.embed-close-btn{position:absolute;top:16px;right:16px;width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.embed-close-btn:hover{background:var(--surface3);color:var(--text);}
 </style>
 </head>
 <body>
@@ -512,9 +528,10 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div class="client-logo" id="d-logo" style="width:38px;height:38px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#ff6b9d,#ffb547);">BB</div>
         <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="d-name">Bloom Beauty Co.</div><div style="font-size:11px;color:var(--text3);" id="d-url">bloombeautyco.com</div></div>
       </div>
-      <div style="display:flex;gap:6px;margin-bottom:16px;">
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" onclick="toast('Opening client dashboard!')">Dashboard</button>
         <button class="btn btn-ghost btn-sm" onclick="toast('Login link sent!')">Send link</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--accent2);" onclick="showEmbedModalForSelected()">⟨/⟩ Embed</button>
       </div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Active modules</div>
       <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle on" id="toggle-website_builder" onclick="this.classList.toggle('on')"></div></div>
@@ -1340,9 +1357,11 @@ const clients = {
   techpro: {logo:'TP',name:'TechPro Solutions', url:'techprosolutions.com',grad:'linear-gradient(135deg,#6c63ff,#4da6ff)'},
   lee:     {logo:'LC',name:"Lee's Chiropractic",url:'leeschiro.com',       grad:'linear-gradient(135deg,#00d9a3,#4da6ff)'},
 };
+var _selectedClientId = null;
 function selectClient(el, id) {
   document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
+  _selectedClientId = id;
   const c = clients[id] || (window._apiClients && window._apiClients[id]);
   if (!c) return;
   const logo = c.logo || (c.business_name || 'CL').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
@@ -1355,6 +1374,44 @@ function selectClient(el, id) {
   document.getElementById('d-url').textContent = url;
   if (c.modules) _updateClientSidebar(c);
   toast('Viewing: ' + name);
+}
+
+// ═══════ EMBED MODAL ═══════
+function showEmbedModal(clientId, bizName) {
+  var snippet = '<script\n  src="https://harakel-innovations-frontend.vercel.app/chatbot-widget.js"\n  data-client-id="' + clientId + '"\n><\/script>';
+  document.getElementById('embed-biz-name').textContent = bizName || 'this client';
+  document.getElementById('embed-code-snippet').textContent = snippet;
+  document.getElementById('embed-copy-btn').textContent = 'Copy';
+  document.getElementById('embed-modal-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function showEmbedModalForSelected() {
+  var id = _selectedClientId;
+  if (!id) { toast('No client selected.', 'error'); return; }
+  var c = (window._apiClients && window._apiClients[id]) || clients[id];
+  var name = (c && (c.business_name || c.name)) || 'this client';
+  showEmbedModal(id, name);
+}
+function closeEmbedModal() {
+  document.getElementById('embed-modal-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+function copyEmbedCode() {
+  var code = document.getElementById('embed-code-snippet').textContent;
+  var btn = document.getElementById('embed-copy-btn');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).then(function() {
+      btn.textContent = '✓ Copied!';
+      setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = code; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✓ Copied!';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+  }
 }
 
 // ═══════ ONBOARDING WIZARD ═══════
@@ -1959,6 +2016,7 @@ function _updateClientPortal(clientsList) {
     var fee = c.monthly_fee ? '$' + Number(c.monthly_fee).toLocaleString() : '—';
     var website = c.website || (c.business_name || 'client').toLowerCase().replace(/\s+/g,'') + '.com';
     var since = c.created_at ? new Date(c.created_at).toLocaleDateString('en-US',{month:'short',year:'numeric'}) : '';
+    var escapedBizName = c.business_name.replace(/'/g, "\\'");
     return '<div class="client-card' + (i === 0 ? ' selected' : '') + '" onclick="selectClient(this,\'' + c.id + '\')">' +
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">' +
         '<div class="client-logo" style="width:40px;height:40px;font-size:13px;font-weight:800;background:' + grad + ';">' + initials + '</div>' +
@@ -1966,14 +2024,16 @@ function _updateClientPortal(clientsList) {
         '<div style="font-size:11px;color:var(--text3);">' + website + (since ? ' · Active since ' + since : '') + '</div></div>' +
         statusBadge +
       '</div>' +
-      '<div class="grid-3">' +
+      '<div class="grid-3" style="margin-bottom:10px;">' +
         '<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;">—</div><div style="font-size:10px;color:var(--text3);">Leads this month</div></div>' +
         '<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;">—</div><div style="font-size:10px;color:var(--text3);">Appointments</div></div>' +
         '<div style="background:var(--surface2);border-radius:8px;padding:10px;"><div style="font-family:\'Syne\',sans-serif;font-size:18px;font-weight:700;">' + fee + '</div><div style="font-size:10px;color:var(--text3);">Monthly fee</div></div>' +
       '</div>' +
+      '<button class="btn btn-ghost btn-xs" style="color:var(--accent2);font-size:11px;" onclick="event.stopPropagation();showEmbedModal(\'' + c.id + '\',\'' + escapedBizName + '\')">⟨/⟩ Embed chatbot</button>' +
     '</div>';
   }).join('');
   // Auto-populate sidebar with first client
+  _selectedClientId = clientsList[0].id;
   var first = clientsList[0];
   document.getElementById('d-logo').textContent = _initials(first.business_name);
   document.getElementById('d-logo').style.background = _gradients[0];
@@ -2160,5 +2220,25 @@ function logout() {
 // Script runs at the bottom of <body> — DOM is fully ready.
 initAuth();
 </script>
+
+<!-- ═══════ Embed Chatbot Modal ═══════ -->
+<div id="embed-modal-overlay" class="embed-overlay" style="display:none;" onclick="if(event.target===this)closeEmbedModal()">
+  <div class="embed-modal">
+    <button class="embed-close-btn" onclick="closeEmbedModal()" title="Close">✕</button>
+    <div class="embed-modal-title">Embed chatbot for <span id="embed-biz-name">this client</span></div>
+    <div class="embed-modal-sub">One line of code — drops the AI chatbot onto any website.</div>
+    <div class="embed-instructions">
+      Paste this snippet just before the <code>&lt;/body&gt;</code> tag on your client's website:
+    </div>
+    <div class="embed-code-wrap">
+      <button class="embed-copy-btn" id="embed-copy-btn" onclick="copyEmbedCode()">Copy</button>
+      <div class="embed-code" id="embed-code-snippet"></div>
+    </div>
+    <div style="font-size:11px;color:var(--text3);line-height:1.6;">
+      The chatbot will automatically load with this client's name, brand color, and AI settings.
+      No other configuration needed.
+    </div>
+  </div>
+</div>
 </body>
 </html>
