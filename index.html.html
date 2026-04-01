@@ -1505,7 +1505,11 @@ function _updateLeadsTable(leads) {
 
 function _updateDashboardAppts(appts) {
   var el = document.getElementById('dash-appts-list');
-  if (!el || !appts || appts.length === 0) return;
+  if (!el) return;
+  if (!appts || appts.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0;">No appointments today.</div>';
+    return;
+  }
   var dotColors = ['--green','--accent','--amber','--pink','--blue'];
   el.innerHTML = appts.slice(0, 4).map(function(a, i) {
     var name = a.customer_name || a.name || 'Appointment';
@@ -1653,11 +1657,9 @@ async function loadLiveData() {
       var qlAppts = document.getElementById('qlink-appts-desc');
       if (qlAppts) qlAppts.textContent = apptCount + ' booking' + (apptCount !== 1 ? 's' : '') + ' scheduled';
 
-      if (appts.length > 0) {
-        var todayStr = new Date().toISOString().split('T')[0];
-        var todayAppts = appts.filter(function(a) { return a.scheduled_time && a.scheduled_time.startsWith(todayStr); });
-        _updateDashboardAppts(todayAppts.length > 0 ? todayAppts : appts);
-      }
+      var todayStr = new Date().toISOString().split('T')[0];
+      var todayAppts = appts.filter(function(a) { return a.scheduled_time && a.scheduled_time.startsWith(todayStr); });
+      _updateDashboardAppts(todayAppts.length > 0 ? todayAppts : appts);
     }
 
   } catch (e) {
