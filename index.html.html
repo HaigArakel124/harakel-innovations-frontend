@@ -303,6 +303,26 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 .login-desc{font-size:13px;color:var(--text2);margin-bottom:24px;}
 .login-error{background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.25);color:var(--pink);font-size:12px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;}
 .login-footer{margin-top:20px;font-size:11px;color:var(--text3);text-align:center;}
+.wiz-plan-card{border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:all .15s;position:relative;background:var(--surface2);user-select:none;}
+.wiz-plan-card:hover{border-color:var(--border2);transform:translateY(-1px);}
+.wiz-plan-card.selected{border-color:var(--accent);background:rgba(108,99,255,0.07);}
+.wiz-plan-card.wiz-plan-popular{border-color:rgba(108,99,255,0.35);}
+.wiz-plan-card.wiz-plan-popular.selected{border-color:var(--accent);}
+.wiz-plan-popular-badge{position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),#8b84ff);color:white;font-size:10px;font-weight:600;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.wiz-plan-price{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;line-height:1;margin-bottom:2px;}
+.wiz-plan-price .per{font-size:12px;font-weight:400;color:var(--text3);}
+.wiz-plan-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text2);}
+.wiz-plan-card.selected .wiz-plan-name{color:var(--text);}
+.wiz-plan-features{list-style:none;margin:0;}
+.wiz-plan-features li{font-size:11px;color:var(--text3);padding:2px 0;display:flex;align-items:flex-start;gap:5px;}
+.wiz-plan-features li::before{content:"✓";color:var(--green);font-weight:700;flex-shrink:0;}
+.wiz-plan-card.selected .wiz-plan-features li{color:var(--text2);}
+.wiz-plan-card.wiz-plan-custom .wiz-plan-price{color:var(--amber);}
+.wiz-plan-card.wiz-plan-custom.selected{border-color:var(--amber);background:rgba(255,181,71,0.06);}
+.wiz-plan-card.wiz-plan-custom .wiz-plan-features li::before{color:var(--amber);}
+.wiz-touch-msg{background:rgba(255,181,71,0.08);border:1px solid rgba(255,181,71,0.2);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:none;}
+.wiz-touch-msg .wiz-touch-title{font-size:13px;font-weight:600;color:var(--amber);margin-bottom:4px;}
+.wiz-touch-msg .wiz-touch-body{font-size:12px;color:var(--text2);line-height:1.6;}
 
 /* ── Embed modal ── */
 .embed-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:1000;display:flex;align-items:center;justify-content:center;padding:24px;animation:hk-fade-in .15s ease;}
@@ -560,7 +580,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc2">2</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Industry</div></div><div class="step-line" id="sl2"></div>
       <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc3">3</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Modules</div></div><div class="step-line" id="sl3"></div>
       <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc4">4</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Branding</div></div><div class="step-line" id="sl4"></div>
-      <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc5">5</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Plan</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;"><div class="step-circle" id="sc5">5</div><div style="font-size:10px;color:var(--text3);margin-top:4px;">Plan & Pay</div></div>
     </div>
     <div class="card">
       <!-- Step 1 -->
@@ -620,17 +640,64 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         </div></div>
         <div class="form-group"><label class="form-label">Chatbot greeting message</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. Hi! I'm Aria from Bloom Beauty. How can I help you today?"></textarea></div>
       </div>
-      <!-- Step 5 -->
+      <!-- Step 5 — Plan & Pay -->
       <div class="wiz-step" id="ws5">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Choose their plan</div>
-        <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Set the monthly fee. These are suggested tiers — you decide.</div>
-        <div class="grid-3" style="margin-bottom:18px;">
-          <div class="niche-btn" onclick="pickPlan(this,'500')" style="padding:18px 12px;"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;">$500<span style="font-size:12px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:13px;font-weight:600;margin-bottom:4px;">Starter</div><div style="font-size:10px;color:var(--text3);text-align:left;">Website + Chatbot + Leads</div></div>
-          <div class="niche-btn selected" onclick="pickPlan(this,'1000')" style="padding:18px 12px;"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;">$1,000<span style="font-size:12px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:13px;font-weight:600;margin-bottom:4px;">Pro</div><div style="font-size:10px;color:var(--text3);text-align:left;">Everything + Voice + Email + CRM</div></div>
-          <div class="niche-btn" onclick="pickPlan(this,'1500')" style="padding:18px 12px;"><div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:3px;">$1,500<span style="font-size:12px;font-weight:400;color:var(--text3)">/mo</span></div><div style="font-size:13px;font-weight:600;margin-bottom:4px;">Enterprise</div><div style="font-size:10px;color:var(--text3);text-align:left;">All modules + priority support</div></div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:18px;">Select a plan — Starter and Pro go straight to Stripe checkout.</div>
+        <div class="grid-2" style="margin-bottom:16px;">
+          <!-- Starter -->
+          <div class="wiz-plan-card" id="wplan-starter" onclick="pickWizPlan('starter')">
+            <div class="wiz-plan-price">$397<span class="per">/mo</span></div>
+            <div class="wiz-plan-name">Starter</div>
+            <ul class="wiz-plan-features">
+              <li>AI Chatbot (24/7 on their site)</li>
+              <li>Lead capture &amp; CRM</li>
+              <li>Appointment booking</li>
+              <li>Up to 500 leads/mo · 1 location</li>
+            </ul>
+          </div>
+          <!-- Pro -->
+          <div class="wiz-plan-card wiz-plan-popular selected" id="wplan-pro" onclick="pickWizPlan('pro')">
+            <div class="wiz-plan-popular-badge">✦ Most Popular</div>
+            <div class="wiz-plan-price">$997<span class="per">/mo</span></div>
+            <div class="wiz-plan-name">Pro</div>
+            <ul class="wiz-plan-features">
+              <li>Everything in Starter</li>
+              <li>Email AI + Voice AI</li>
+              <li>SMS &amp; Review automation</li>
+              <li>Up to 2,000 leads/mo · 3 locations</li>
+            </ul>
+          </div>
+          <!-- Enterprise -->
+          <div class="wiz-plan-card wiz-plan-custom" id="wplan-enterprise" onclick="pickWizPlan('enterprise')">
+            <div class="wiz-plan-price">Custom</div>
+            <div class="wiz-plan-name">Enterprise</div>
+            <ul class="wiz-plan-features">
+              <li>Everything in Pro</li>
+              <li>Unlimited leads &amp; locations</li>
+              <li>Dedicated support &amp; SLA</li>
+              <li>Custom integrations</li>
+            </ul>
+          </div>
+          <!-- Build Your Own -->
+          <div class="wiz-plan-card wiz-plan-custom" id="wplan-custom" onclick="pickWizPlan('custom')">
+            <div class="wiz-plan-price">Custom</div>
+            <div class="wiz-plan-name">Build Your Own</div>
+            <ul class="wiz-plan-features">
+              <li>Choose only what you need</li>
+              <li>Any mix of AI modules</li>
+              <li>Priced per module activated</li>
+              <li>Flexible for any budget</li>
+            </ul>
+          </div>
         </div>
-        <div class="grid-2"><div class="form-group"><label class="form-label">Custom fee (override)</label><input class="form-input" id="custom-fee" placeholder="e.g. $1,200"></div><div class="form-group"><label class="form-label">Billing start date</label><input class="form-input" type="date" value="2026-04-01"></div></div>
-        <div class="form-group"><label class="form-label">Internal notes</label><textarea class="form-input" style="min-height:50px;" placeholder="Notes about this client (not shown to them)..."></textarea></div>
+        <!-- "We'll be in touch" — shown for Enterprise / Custom -->
+        <div class="wiz-touch-msg" id="wiz-touch-msg">
+          <div class="wiz-touch-title">We'll be in touch shortly</div>
+          <div class="wiz-touch-body">Enterprise and custom plans are configured manually. Submit this request and we'll reach out within 24 hours to finalise pricing and get them set up.</div>
+        </div>
+        <div class="form-group"><label class="form-label">Custom fee override (optional)</label><input class="form-input" id="custom-fee" placeholder="e.g. $1,200" style="font-size:13px;"></div>
+        <div class="form-group"><label class="form-label">Internal notes</label><textarea class="form-input" style="min-height:48px;font-size:13px;" id="wiz-notes" placeholder="Notes about this client (not shown to them)..."></textarea></div>
       </div>
       <!-- Step 6 complete -->
       <div class="wiz-step" id="ws6" style="text-align:center;padding:20px 0;">
@@ -1418,7 +1485,8 @@ function copyEmbedCode() {
 let wStep = 1, wTotal = 5;
 var _wizIndustry = 'beauty';
 var _wizPlan = 'pro';
-var _wizFee = 1000.0;
+var _wizFee = 997.0;
+var _wizNeedsCheckout = true; // false for enterprise/custom plans
 
 function wNext() {
   if (wStep === 1) {
@@ -1427,7 +1495,16 @@ function wNext() {
     if (!document.getElementById('wiz-email').value.trim()) { toast('Please enter an email address.', 'error'); return; }
   }
   if (wStep >= wTotal) {
-    submitOnboarding();
+    if (_wizNeedsCheckout) {
+      // Starter / Pro → save state then go to Stripe
+      _saveWizardState();
+      var successUrl = encodeURIComponent(window.location.origin + window.location.pathname + '?hk_checkout=1');
+      var cancelUrl  = encodeURIComponent(window.location.origin + window.location.pathname);
+      window.location.href = API_URL + '/api/billing/checkout/' + _wizPlan + '?success_url=' + successUrl + '&cancel_url=' + cancelUrl;
+    } else {
+      // Enterprise / Custom → submit directly (manual billing)
+      submitOnboarding();
+    }
     return;
   }
   wMark(wStep, 'done'); wStep++;
@@ -1436,8 +1513,14 @@ function wNext() {
   document.getElementById('ws' + wStep).classList.add('active');
   document.getElementById('wiz-indicator').textContent = `Step ${wStep} of ${wTotal}`;
   document.getElementById('wiz-back').style.visibility = 'visible';
-  document.getElementById('wiz-next').textContent = wStep === wTotal ? 'Launch client →' : 'Continue →';
-  if (wStep === wTotal) document.getElementById('wiz-next').classList.add('btn-success');
+  if (wStep === wTotal) {
+    // Arriving at plan step — set button text based on selected plan
+    document.getElementById('wiz-next').textContent = _wizNeedsCheckout ? 'Proceed to checkout →' : 'Submit request →';
+    document.getElementById('wiz-next').classList.add('btn-success');
+  } else {
+    document.getElementById('wiz-next').textContent = 'Continue →';
+    document.getElementById('wiz-next').classList.remove('btn-success');
+  }
 }
 function wPrev() {
   if (wStep <= 1) return;
@@ -1463,12 +1546,22 @@ function pickNiche(el) {
   el.classList.add('selected');
   _wizIndustry = el.dataset.value || 'general';
 }
-function pickPlan(el, v) {
-  document.querySelectorAll('#ws5 .niche-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-  _wizFee = parseFloat(v);
-  _wizPlan = v === '500' ? 'starter' : v === '1500' ? 'enterprise' : 'pro';
-  if (document.getElementById('custom-fee')) document.getElementById('custom-fee').value = '$' + v;
+function pickWizPlan(plan) {
+  document.querySelectorAll('.wiz-plan-card').forEach(function(c) { c.classList.remove('selected'); });
+  var card = document.getElementById('wplan-' + plan);
+  if (card) card.classList.add('selected');
+  _wizPlan = plan;
+  var fees = {starter: 397, pro: 997};
+  _wizFee = fees[plan] || 0;
+  var isCustomPlan = (plan === 'enterprise' || plan === 'custom');
+  _wizNeedsCheckout = !isCustomPlan;
+  var touchMsg = document.getElementById('wiz-touch-msg');
+  if (touchMsg) touchMsg.style.display = isCustomPlan ? 'block' : 'none';
+  var nextBtn = document.getElementById('wiz-next');
+  if (nextBtn) nextBtn.textContent = isCustomPlan ? 'Submit request →' : 'Proceed to checkout →';
+  var feeEl = document.getElementById('custom-fee');
+  if (feeEl && fees[plan]) feeEl.value = '$' + fees[plan];
+  else if (feeEl && !fees[plan]) feeEl.value = '';
 }
 async function submitOnboarding() {
   var btn = document.getElementById('wiz-next');
@@ -1548,11 +1641,14 @@ function resetWizard() {
   var colorEl = document.getElementById('wiz-brand-color');
   if (colorEl) colorEl.value = '#6c63ff';
   // Reset Step 5 plan
-  document.querySelectorAll('#ws5 .niche-btn').forEach(b => b.classList.remove('selected'));
-  var proPlan = document.querySelector('#ws5 .niche-btn[onclick*="1000"]');
-  if (proPlan) proPlan.classList.add('selected');
+  document.querySelectorAll('.wiz-plan-card').forEach(function(c) { c.classList.remove('selected'); });
+  var proCard = document.getElementById('wplan-pro');
+  if (proCard) proCard.classList.add('selected');
+  _wizPlan = 'pro'; _wizFee = 997.0; _wizNeedsCheckout = true;
+  var touchMsg = document.getElementById('wiz-touch-msg');
+  if (touchMsg) touchMsg.style.display = 'none';
   var feeEl = document.getElementById('custom-fee');
-  if (feeEl) feeEl.value = '$1000';
+  if (feeEl) feeEl.value = '';
   // Reset wizard UI
   document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
   document.getElementById('ws1').classList.add('active');
@@ -1564,6 +1660,77 @@ function resetWizard() {
   nextBtn.textContent = 'Continue →';
   nextBtn.classList.remove('btn-success');
   nextBtn.disabled = false;
+}
+
+// ═══════ ONBOARDING CHECKOUT HELPERS ═══════
+function _saveWizardState() {
+  var mods = [];
+  document.querySelectorAll('#ws3 .module-btn').forEach(function(b) {
+    if (b.dataset.module && b.classList.contains('selected')) mods.push(b.dataset.module);
+  });
+  var state = {
+    biz_name:      (document.getElementById('biz-name')||{}).value || '',
+    owner_name:    (document.getElementById('wiz-owner')||{}).value || '',
+    email:         (document.getElementById('wiz-email')||{}).value || '',
+    phone:         (document.getElementById('wiz-phone')||{}).value || '',
+    address:       (document.getElementById('wiz-address')||{}).value || '',
+    website:       (document.getElementById('wiz-website')||{}).value || '',
+    hours:         (document.getElementById('wiz-hours')||{}).value || '',
+    services:      (document.getElementById('wiz-services')||{}).value || '',
+    industry:      _wizIndustry,
+    modules:       mods,
+    brand_display: (document.getElementById('wiz-brand-display')||{}).value || '',
+    bot_name:      (document.getElementById('wiz-bot-name')||{}).value || '',
+    brand_color:   (document.getElementById('wiz-brand-color')||{}).value || '#6c63ff',
+    plan:          _wizPlan,
+    fee:           _wizFee,
+    custom_fee:    (document.getElementById('custom-fee')||{}).value || '',
+    notes:         (document.getElementById('wiz-notes')||{}).value || '',
+  };
+  localStorage.setItem('hk_wiz_state', JSON.stringify(state));
+}
+function _restoreWizardState(state) {
+  // Step 1
+  var f1 = {'biz-name':'biz_name','wiz-owner':'owner_name','wiz-email':'email','wiz-phone':'phone','wiz-address':'address','wiz-website':'website','wiz-hours':'hours','wiz-services':'services'};
+  Object.keys(f1).forEach(function(id) { var el = document.getElementById(id); if (el) el.value = state[f1[id]] || ''; });
+  // Step 2 industry
+  if (state.industry) {
+    _wizIndustry = state.industry;
+    document.querySelectorAll('#ws2 .niche-btn').forEach(function(b) { b.classList.remove('selected'); });
+    var nb = document.querySelector('#ws2 .niche-btn[data-value="' + state.industry + '"]');
+    if (nb) nb.classList.add('selected');
+  }
+  // Step 3 modules
+  if (state.modules) {
+    document.querySelectorAll('#ws3 .module-btn').forEach(function(b) {
+      b.classList.toggle('selected', state.modules.indexOf(b.dataset.module) !== -1);
+    });
+  }
+  // Step 4 branding
+  ['wiz-brand-display','wiz-bot-name'].forEach(function(id) { var el = document.getElementById(id); if (el) el.value = state[id.replace('wiz-','').replace('-','_')] || ''; });
+  var colorEl = document.getElementById('wiz-brand-color'); if (colorEl) colorEl.value = state.brand_color || '#6c63ff';
+  // Step 5 plan
+  if (state.plan) pickWizPlan(state.plan);
+  var feeEl = document.getElementById('custom-fee'); if (feeEl) feeEl.value = state.custom_fee || '';
+  var notesEl = document.getElementById('wiz-notes'); if (notesEl) notesEl.value = state.notes || '';
+  if (state.fee !== undefined) _wizFee = state.fee;
+}
+function _checkCheckoutReturn() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('hk_checkout') !== '1') return;
+  var raw = localStorage.getItem('hk_wiz_state');
+  if (!raw) return;
+  try {
+    var state = JSON.parse(raw);
+    localStorage.removeItem('hk_wiz_state');
+    window.history.replaceState({}, '', window.location.pathname); // clean up URL
+    nav('onboarding', null);
+    _restoreWizardState(state);
+    _wizNeedsCheckout = false; // payment already complete
+    setTimeout(function() { submitOnboarding(); }, 150);
+  } catch (e) {
+    console.error('[Harakel] checkout return error:', e);
+  }
 }
 
 // ═══════ WEBSITE BUILDER ═══════
@@ -2178,6 +2345,7 @@ function initAuth() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app-root').style.display = 'flex';
     loadLiveData();
+    _checkCheckoutReturn();
   }
   // else: login screen stays visible, app stays hidden
 }
