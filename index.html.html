@@ -2336,16 +2336,33 @@ async function loadLiveData() {
 }
 
 // ═══════ AUTH ═══════
-var _AUTH_KEY = 'harakel_session';
-var _AUTH_USER = 'admin';
-var _AUTH_PASS = 'harakel2024';
+var AUTH_API = API_URL + '/api/auth/login';
+
+// Nav items hidden for the "sales" role
+var SALES_HIDDEN_PAGES = ['leads','crm','appointments','analytics','settings'];
+
+function _applyRoleVisibility() {
+  var role = localStorage.getItem('hk_role') || '';
+  if (role === 'sales') {
+    SALES_HIDDEN_PAGES.forEach(function(page) {
+      var el = document.querySelector('.nav-item[data-page="' + page + '"]');
+      if (el) el.style.display = 'none';
+    });
+  }
+}
+
+function _showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = 'flex';
+  _applyRoleVisibility();
+  loadLiveData();
+  _checkCheckoutReturn();
+}
 
 function initAuth() {
-  if (localStorage.getItem(_AUTH_KEY) === 'authenticated') {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-root').style.display = 'flex';
-    loadLiveData();
-    _checkCheckoutReturn();
+  var token = localStorage.getItem('hk_token');
+  if (token) {
+    _showDashboard();
   }
   // else: login screen stays visible, app stays hidden
 }
@@ -2357,25 +2374,40 @@ function submitLogin(e) {
   var errEl = document.getElementById('login-error');
   var btn = document.getElementById('login-btn');
 
-  if (user === _AUTH_USER && pass === _AUTH_PASS) {
-    errEl.style.display = 'none';
-    btn.textContent = 'Signing in...';
-    btn.disabled = true;
-    localStorage.setItem(_AUTH_KEY, 'authenticated');
-    setTimeout(function() {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-root').style.display = 'flex';
-      loadLiveData();
-    }, 400);
-  } else {
+  errEl.style.display = 'none';
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+
+  fetch(AUTH_API, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({username: user, password: pass})
+  })
+  .then(function(res) {
+    if (res.status === 401) throw new Error('invalid');
+    if (!res.ok) throw new Error('server');
+    return res.json();
+  })
+  .then(function(data) {
+    localStorage.setItem('hk_token', data.access_token);
+    localStorage.setItem('hk_role', data.user.role || '');
+    localStorage.setItem('hk_user_name', data.user.full_name || data.user.username || '');
+    _showDashboard();
+  })
+  .catch(function(err) {
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+    errEl.textContent = err.message === 'server' ? 'Server error. Please try again.' : 'Invalid username or password.';
     errEl.style.display = 'block';
     document.getElementById('login-password').value = '';
     document.getElementById('login-password').focus();
-  }
+  });
 }
 
 function logout() {
-  localStorage.removeItem(_AUTH_KEY);
+  localStorage.removeItem('hk_token');
+  localStorage.removeItem('hk_role');
+  localStorage.removeItem('hk_user_name');
   document.getElementById('app-root').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('login-username').value = '';
@@ -2383,6 +2415,11 @@ function logout() {
   document.getElementById('login-error').style.display = 'none';
   document.getElementById('login-btn').textContent = 'Sign in';
   document.getElementById('login-btn').disabled = false;
+  // Restore any hidden nav items
+  SALES_HIDDEN_PAGES.forEach(function(page) {
+    var el = document.querySelector('.nav-item[data-page="' + page + '"]');
+    if (el) el.style.display = '';
+  });
 }
 
 // Script runs at the bottom of <body> — DOM is fully ready.
