@@ -2338,17 +2338,39 @@ async function loadLiveData() {
 // ═══════ AUTH ═══════
 var AUTH_API = API_URL + '/api/auth/login';
 
-// Nav items hidden for the "sales" role
-var SALES_HIDDEN_PAGES = ['leads','crm','appointments','analytics','settings'];
+// All nav pages except dashboard and onboarding are hidden for the "sales" role
+var SALES_HIDDEN_PAGES = ['analytics','clients','builder','chatbot','appointments','leads','voice','email','crm','sms','billing'];
 
 function _applyRoleVisibility() {
   var role = localStorage.getItem('hk_role') || '';
-  if (role === 'sales') {
-    SALES_HIDDEN_PAGES.forEach(function(page) {
-      var el = document.querySelector('.nav-item[data-page="' + page + '"]');
-      if (el) el.style.display = 'none';
-    });
+  if (role !== 'sales') return;
+
+  // Hide all nav items except dashboard and onboarding
+  SALES_HIDDEN_PAGES.forEach(function(page) {
+    var el = document.querySelector('.nav-item[data-page="' + page + '"]');
+    if (el) el.style.display = 'none';
+  });
+
+  // Also hide section labels that would be left hanging
+  document.querySelectorAll('.nav-section-label').forEach(function(label) {
+    label.style.display = 'none';
+  });
+
+  // Redirect to onboarding panel
+  document.querySelectorAll('.panel').forEach(function(p) {
+    p.style.display = 'none';
+    p.classList.remove('active');
+  });
+  var onboardingPanel = document.getElementById('panel-onboarding');
+  if (onboardingPanel) {
+    onboardingPanel.style.display = 'block';
+    onboardingPanel.classList.add('active');
   }
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var onboardingNav = document.querySelector('.nav-item[data-page="onboarding"]');
+  if (onboardingNav) onboardingNav.classList.add('active');
+  var titleEl = document.getElementById('page-title');
+  if (titleEl) titleEl.textContent = 'Onboarding';
 }
 
 function _showDashboard() {
@@ -2415,10 +2437,13 @@ function logout() {
   document.getElementById('login-error').style.display = 'none';
   document.getElementById('login-btn').textContent = 'Sign in';
   document.getElementById('login-btn').disabled = false;
-  // Restore any hidden nav items
+  // Restore any hidden nav items and section labels
   SALES_HIDDEN_PAGES.forEach(function(page) {
     var el = document.querySelector('.nav-item[data-page="' + page + '"]');
     if (el) el.style.display = '';
+  });
+  document.querySelectorAll('.nav-section-label').forEach(function(label) {
+    label.style.display = '';
   });
 }
 
