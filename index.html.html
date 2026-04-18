@@ -2338,17 +2338,18 @@ async function loadLiveData() {
 // ═══════ AUTH ═══════
 var AUTH_API = API_URL + '/api/auth/login';
 
-// All nav pages except dashboard and onboarding are hidden for the "sales" role
-var SALES_HIDDEN_PAGES = ['analytics','clients','builder','chatbot','appointments','leads','voice','email','crm','sms','billing'];
+// Sales role: only these pages are visible — everything else is hidden
+var SALES_ALLOWED_PAGES = ['dashboard', 'onboarding'];
 
 function _applyRoleVisibility() {
-  var role = localStorage.getItem('hk_role') || '';
+  var role = (localStorage.getItem('hk_role') || '').toLowerCase().trim();
   if (role !== 'sales') return;
 
-  // Hide all nav items except dashboard and onboarding
-  SALES_HIDDEN_PAGES.forEach(function(page) {
-    var el = document.querySelector('.nav-item[data-page="' + page + '"]');
-    if (el) el.style.display = 'none';
+  // Hide every nav item not in the allowed list (whitelist beats blacklist)
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(el) {
+    if (SALES_ALLOWED_PAGES.indexOf(el.getAttribute('data-page')) === -1) {
+      el.style.display = 'none';
+    }
   });
 
   // Also hide section labels that would be left hanging
@@ -2437,10 +2438,9 @@ function logout() {
   document.getElementById('login-error').style.display = 'none';
   document.getElementById('login-btn').textContent = 'Sign in';
   document.getElementById('login-btn').disabled = false;
-  // Restore any hidden nav items and section labels
-  SALES_HIDDEN_PAGES.forEach(function(page) {
-    var el = document.querySelector('.nav-item[data-page="' + page + '"]');
-    if (el) el.style.display = '';
+  // Restore all hidden nav items and section labels
+  document.querySelectorAll('.nav-item[data-page]').forEach(function(el) {
+    el.style.display = '';
   });
   document.querySelectorAll('.nav-section-label').forEach(function(label) {
     label.style.display = '';
