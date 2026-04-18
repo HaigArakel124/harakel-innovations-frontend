@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harakel — Client Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --surface2:#18181f; --surface3:#1e1e28;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#f0f0f5; --text2:#9090a8; --text3:#5a5a72;
+  --accent:#6c63ff; --accent2:#8b84ff; --accent-glow:rgba(108,99,255,0.18);
+  --green:#00d9a3; --green-dim:rgba(0,217,163,0.12);
+  --amber:#ffb547; --amber-dim:rgba(255,181,71,0.12);
+  --pink:#ff6b9d; --pink-dim:rgba(255,107,157,0.12);
+  --blue:#4da6ff; --blue-dim:rgba(77,166,255,0.12);
+  --radius:14px; --radius-sm:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;}
+.login-card{width:100%;max-width:400px;padding:40px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);}
+.login-logo{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;}
+.login-sub{font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:28px;}
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;}
+.form-group input{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color 0.15s;}
+.form-group input:focus{border-color:var(--accent);}
+.btn{padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.btn-primary{background:var(--accent);color:#fff;width:100%;padding:12px;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.error-msg{background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--pink);font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:16px;display:none;}
+
+/* ── DASHBOARD ── */
+#dashboard{display:none;min-height:100vh;}
+.topbar{padding:16px 28px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;}
+.topbar-left{display:flex;align-items:center;gap:14px;}
+.portal-logo{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;background:linear-gradient(135deg,var(--accent2),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.biz-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.topbar-divider{width:1px;height:20px;background:var(--border2);}
+.content{padding:28px;max-width:1100px;margin:0 auto;}
+.page-heading{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
+.page-sub{font-size:13px;color:var(--text3);margin-bottom:28px;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.card-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;}
+.stat-card.green{border-color:rgba(0,217,163,0.2);background:linear-gradient(135deg,var(--surface),rgba(0,217,163,0.04));}
+.stat-card.accent{border-color:rgba(108,99,255,0.2);background:linear-gradient(135deg,var(--surface),rgba(108,99,255,0.04));}
+.stat-card.amber{border-color:rgba(255,181,71,0.2);background:linear-gradient(135deg,var(--surface),rgba(255,181,71,0.04));}
+.stat-icon{font-size:18px;margin-bottom:10px;}
+.stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:2px;}
+.stat-label{font-size:12px;color:var(--text3);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+
+/* ── LEADS TABLE ── */
+.lead-row{display:grid;grid-template-columns:1fr 1fr 110px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:center;}
+.lead-row:last-child{border-bottom:none;}
+.lead-name{font-weight:500;}
+.lead-email{color:var(--text2);font-size:12px;}
+.lead-status{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.status-new{background:var(--blue-dim);color:var(--blue);}
+.status-hot{background:rgba(255,107,157,0.12);color:var(--pink);}
+.status-warm{background:var(--amber-dim);color:var(--amber);}
+.status-booked{background:var(--green-dim);color:var(--green);}
+
+/* ── APPOINTMENTS ── */
+.appt-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.appt-row:last-child{border-bottom:none;}
+.appt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.appt-time{font-size:11px;color:var(--text3);min-width:52px;}
+
+/* ── CHATBOT STATUS ── */
+.bot-status{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface2);border-radius:var(--radius-sm);}
+.bot-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.bot-dot.live{background:var(--green);box-shadow:0 0 8px var(--green);}
+.bot-dot.off{background:var(--text3);}
+
+/* ── EMPTY STATE ── */
+.empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center;}
+
+/* ── LOADING ── */
+.skeleton{background:var(--surface2);border-radius:6px;height:14px;animation:pulse 1.5s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:0.4;}50%{opacity:0.8;}}
+
+@media(max-width:680px){
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .grid-2{grid-template-columns:1fr;}
+  .lead-row{grid-template-columns:1fr 100px;}
+  .lead-email{display:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ LOGIN ═══════ -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Harakel</div>
+    <div class="login-sub">Client Portal</div>
+    <div class="error-msg" id="login-error"></div>
+    <form onsubmit="submitLogin(event)">
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="login-email" placeholder="you@yourbusiness.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••••" required autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" type="submit" id="login-btn" style="margin-top:8px;">Sign in</button>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════ DASHBOARD ═══════ -->
+<div id="dashboard">
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="portal-logo">Harakel</span>
+      <div class="topbar-divider"></div>
+      <span class="biz-name" id="dash-biz-name">Loading...</span>
+    </div>
+    <button class="btn btn-ghost" style="font-size:12px;" onclick="logout()">Sign out</button>
+  </header>
+
+  <div class="content">
+    <div class="page-heading" id="dash-heading">Welcome back</div>
+    <div class="page-sub">Here's what's happening with your business today.</div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card accent">
+        <div class="stat-icon">◉</div>
+        <div class="stat-value" id="stat-leads">—</div>
+        <div class="stat-label">Total leads</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">◷</div>
+        <div class="stat-value" id="stat-appts">—</div>
+        <div class="stat-label">Appointments</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon">◌</div>
+        <div class="stat-value" id="stat-bot">—</div>
+        <div class="stat-label">Chatbot status</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Recent Leads -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recent Leads</div>
+        </div>
+        <div id="leads-list"><div class="skeleton" style="margin-bottom:10px;"></div><div class="skeleton" style="width:70%;"></div></div>
+      </div>
+
+      <!-- Upcoming Appointments -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Upcoming Appointments</div>
+        </div>
+        <div id="appts-list"><div class="skeleton" style="margin-bottom:10px;"></div><div class="skeleton" style="width:60%;"></div></div>
+      </div>
+    </div>
+
+    <!-- Chatbot -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">AI Chatbot</div></div>
+      <div id="bot-status-wrap">
+        <div class="skeleton" style="height:46px;border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = 'https://web-production-608a8.up.railway.app';
+
+// ── JWT payload decoder (no signature verification — server does that) ──
+function _parseJwt(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  } catch(e) { return null; }
+}
+
+// ── Auth ────────────────────────────────────────────────────
+async function submitLogin(e) {
+  e.preventDefault();
+  var errEl = document.getElementById('login-error');
+  var btn   = document.getElementById('login-btn');
+  errEl.style.display = 'none';
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+
+  try {
+    var res = await fetch(API + '/api/client-auth/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email:    document.getElementById('login-email').value.trim(),
+        password: document.getElementById('login-password').value,
+      }),
+    });
+    if (res.status === 401) throw new Error('Invalid email or password.');
+    if (!res.ok) throw new Error('Server error — please try again.');
+    var data = await res.json();
+    localStorage.setItem('client_token', data.access_token);
+    showDashboard(data.client);
+  } catch(err) {
+    errEl.textContent = err.message;
+    errEl.style.display = 'block';
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+  }
+}
+
+function logout() {
+  localStorage.removeItem('client_token');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-password').value = '';
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-btn').textContent = 'Sign in';
+  document.getElementById('login-btn').disabled = false;
+}
+
+// ── Dashboard ────────────────────────────────────────────────
+function showDashboard(clientInfo) {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  var name = (clientInfo && clientInfo.business_name) || 'Your Business';
+  document.getElementById('dash-biz-name').textContent = name;
+  document.getElementById('dash-heading').textContent  = 'Welcome back, ' + name;
+  loadDashboardData(clientInfo.client_id, clientInfo);
+}
+
+async function loadDashboardData(clientId, clientInfo) {
+  // Fetch me (for modules/chatbot status) + leads + appointments in parallel
+  var [meRes, leadsRes, apptsRes] = await Promise.allSettled([
+    fetch(API + '/api/client-auth/me', {
+      headers: {'Authorization': 'Bearer ' + localStorage.getItem('client_token')},
+    }),
+    fetch(API + '/api/leads/' + clientId + '?limit=5'),
+    fetch(API + '/api/appointments/' + clientId),
+  ]);
+
+  // ── Leads ──
+  var leadsEl = document.getElementById('leads-list');
+  var statLeads = document.getElementById('stat-leads');
+  if (meRes.status === 'fulfilled' && meRes.value && meRes.value.status === 401) {
+    logout(); return;
+  }
+  if (leadsRes.status === 'fulfilled' && leadsRes.value.ok) {
+    var ld = await leadsRes.value.json();
+    var leads = ld.leads || [];
+    statLeads.textContent = ld.count !== undefined ? ld.count : leads.length;
+    if (leads.length === 0) {
+      leadsEl.innerHTML = '<div class="empty">No leads yet — your chatbot is ready to capture them.</div>';
+    } else {
+      leadsEl.innerHTML = leads.map(function(l) {
+        var statusCls = {new:'status-new',hot:'status-hot',warm:'status-warm',booked:'status-booked'}[l.status] || 'status-new';
+        return '<div class="lead-row">' +
+          '<div><div class="lead-name">' + (l.name || 'Unknown') + '</div><div class="lead-email">' + (l.email || '') + '</div></div>' +
+          '<div class="lead-email">' + (l.phone || '') + '</div>' +
+          '<div><span class="lead-status ' + statusCls + '">' + (l.status || 'new') + '</span></div>' +
+        '</div>';
+      }).join('');
+    }
+  } else {
+    leadsEl.innerHTML = '<div class="empty">Could not load leads.</div>';
+  }
+
+  // ── Appointments ──
+  var apptsEl  = document.getElementById('appts-list');
+  var statAppts = document.getElementById('stat-appts');
+  var dotColors = ['var(--green)','var(--accent)','var(--amber)','var(--pink)','var(--blue)'];
+  if (apptsRes.status === 'fulfilled' && apptsRes.value.ok) {
+    var ad = await apptsRes.value.json();
+    var appts = ad.appointments || [];
+    statAppts.textContent = ad.count !== undefined ? ad.count : appts.length;
+    var now = Date.now();
+    var upcoming = appts.filter(function(a) {
+      return a.scheduled_time && new Date(a.scheduled_time).getTime() >= now;
+    }).slice(0, 5);
+    if (upcoming.length === 0) {
+      apptsEl.innerHTML = '<div class="empty">No upcoming appointments.</div>';
+    } else {
+      apptsEl.innerHTML = upcoming.map(function(a, i) {
+        var d = new Date(a.scheduled_time);
+        var timeStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
+                      d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        return '<div class="appt-row">' +
+          '<div class="appt-dot" style="background:' + dotColors[i % dotColors.length] + '"></div>' +
+          '<div style="flex:1;">' +
+            '<div style="font-weight:500;">' + (a.customer_name || 'Appointment') + '</div>' +
+            '<div style="font-size:11px;color:var(--text3);">' + (a.appointment_type || 'Meeting') + '</div>' +
+          '</div>' +
+          '<div class="appt-time">' + timeStr + '</div>' +
+        '</div>';
+      }).join('');
+    }
+  } else {
+    apptsEl.innerHTML = '<div class="empty">Could not load appointments.</div>';
+  }
+
+  // ── Chatbot status ──
+  var botWrap = document.getElementById('bot-status-wrap');
+  var statBot = document.getElementById('stat-bot');
+  var chatbotActive = false;
+  if (meRes.status === 'fulfilled' && meRes.value.ok) {
+    var me = await meRes.value.json();
+    chatbotActive = !!(me.modules && me.modules.chatbot);
+  } else if (clientInfo && clientInfo.modules) {
+    chatbotActive = !!clientInfo.modules.chatbot;
+  }
+  statBot.textContent = chatbotActive ? 'Live' : 'Off';
+  botWrap.innerHTML = '<div class="bot-status">' +
+    '<div class="bot-dot ' + (chatbotActive ? 'live' : 'off') + '"></div>' +
+    '<div>' +
+      '<div style="font-size:13px;font-weight:500;">' + (chatbotActive ? 'Chatbot is live' : 'Chatbot is inactive') + '</div>' +
+      '<div style="font-size:11px;color:var(--text3);margin-top:2px;">' +
+        (chatbotActive ? 'Capturing leads 24/7 on your website' : 'Contact your account manager to activate') +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+// ── Init ─────────────────────────────────────────────────────
+(function init() {
+  var token = localStorage.getItem('client_token');
+  if (!token) return;
+  var payload = _parseJwt(token);
+  if (!payload || payload.exp * 1000 < Date.now()) {
+    localStorage.removeItem('client_token');
+    return;
+  }
+  showDashboard({
+    client_id:     payload.client_id,
+    business_name: payload.business_name,
+    email:         payload.email,
+  });
+})();
+</script>
+</body>
+</html>
