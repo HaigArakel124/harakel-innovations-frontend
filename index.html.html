@@ -397,7 +397,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
   <div class="sidebar-footer">
     <div class="client-badge" style="margin-bottom:10px;">
       <div class="client-avatar">H</div>
-      <div><div class="client-name">Harakel Innovations</div><div class="client-role">Admin</div></div>
+      <div><div class="client-name" id="sidebar-user-name">Harakel Innovations</div><div class="client-role" id="sidebar-user-role">Admin</div></div>
     </div>
     <button class="btn btn-ghost btn-sm" style="width:100%;font-size:12px;color:var(--text3);" onclick="logout()">Sign out</button>
   </div>
@@ -2377,6 +2377,17 @@ function _applyRoleVisibility() {
 function _showDashboard() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-root').style.display = 'flex';
+  // Populate sidebar user info from localStorage
+  var nameEl = document.getElementById('sidebar-user-name');
+  var roleEl = document.getElementById('sidebar-user-role');
+  if (nameEl) {
+    var userName = localStorage.getItem('hk_user_name') || 'Harakel Innovations';
+    nameEl.textContent = userName;
+  }
+  if (roleEl) {
+    var rawRole = localStorage.getItem('hk_role') || '';
+    roleEl.textContent = rawRole ? rawRole.charAt(0).toUpperCase() + rawRole.slice(1).toLowerCase() : 'Admin';
+  }
   _applyRoleVisibility();
   loadLiveData();
   _checkCheckoutReturn();
