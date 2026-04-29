@@ -744,19 +744,19 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <button class="btn btn-ghost btn-xs">Mobile</button>
         <div style="margin-left:auto;display:flex;gap:6px;">
           <button class="btn btn-ghost btn-xs" onclick="toast('Preview opened!')">Preview</button>
-          <button class="btn btn-primary btn-xs" onclick="toast('🎉 Site published!')">Publish</button>
+          <button class="btn btn-primary btn-xs" onclick="publishSite()">Publish</button>
         </div>
       </div>
       <div style="padding:16px;" id="canvas">
-        <div class="web-block selected" onclick="selBlock(this)">
+        <div class="web-block selected" data-block-type="hero" onclick="selBlock(this)">
           <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
           <div class="hero-block"><h2 id="hero-h">Your Business, Elevated</h2><p id="hero-p">We help local businesses grow with professional services you can trust.</p><span class="hero-cta" id="hero-cta">Get Started Today</span></div>
         </div>
-        <div class="web-block" onclick="selBlock(this)">
+        <div class="web-block" data-block-type="services" onclick="selBlock(this)">
           <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
           <div class="services-block"><h3>Our Services</h3><div class="services-grid"><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">🔧</div><h4>Consulting</h4><p>Expert advice tailored to your needs</p></div><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">📊</div><h4>Analytics</h4><p>Data-driven insights for growth</p></div><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">🤝</div><h4>Support</h4><p>24/7 dedicated client support</p></div></div></div>
         </div>
-        <div class="web-block" onclick="selBlock(this)">
+        <div class="web-block" data-block-type="contact" onclick="selBlock(this)">
           <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
           <div class="contact-block"><h3>Get In Touch</h3><div class="contact-form"><input placeholder="Your name"><input placeholder="Email address"><input placeholder="Phone number"><textarea placeholder="How can we help you?"></textarea><button>Send Message</button></div></div>
         </div>
@@ -774,8 +774,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div style="width:24px;height:24px;border-radius:6px;background:#ffb547;cursor:pointer;" onclick="setTheme('#ffb547')"></div>
         <div style="width:24px;height:24px;border-radius:6px;background:#4da6ff;cursor:pointer;" onclick="setTheme('#4da6ff')"></div>
       </div></div>
-      <div class="form-group"><label class="form-label">Business name</label><input class="form-input" style="font-size:12px;" placeholder="My Business" oninput="toast('Updated!')"></div>
-      <div class="form-group"><label class="form-label">Font style</label><select class="form-input" style="font-size:12px;" onchange="toast('Font updated!')"><option>Modern (Syne)</option><option>Classic (Serif)</option><option>Clean (Sans)</option></select></div>
+      <div class="form-group"><label class="form-label">Business name</label><input class="form-input" id="builder-business-name" style="font-size:12px;" placeholder="My Business"></div>
+      <div class="form-group"><label class="form-label">Font style</label><select class="form-input" id="builder-font" style="font-size:12px;"><option>Modern (Syne)</option><option>Classic (Serif)</option><option>Clean (Sans)</option></select></div>
       <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px;" onclick="toast('💾 Changes saved!')">Save changes</button>
     </div>
   </div>
@@ -1152,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function handleCTA() {
   const active = document.querySelector('.panel.active').id.replace('panel-','');
   if (active === 'onboarding') { toast('Progress saved as draft!'); return; }
-  if (active === 'builder') { toast('🎉 Site published!'); return; }
+  if (active === 'builder') { publishSite(); return; }
   if (active === 'chatbot') { toast('✅ Chatbot deployed!'); return; }
   if (active === 'appointments') { bookAppt(); return; }
   if (active === 'clients') { nav('onboarding',null); return; }
@@ -1739,6 +1739,7 @@ function addBlock(type) {
   const c = document.getElementById('canvas');
   const b = document.createElement('div');
   b.className = 'web-block';
+  b.setAttribute('data-block-type', type);
   b.onclick = function(){selBlock(this);};
   const acts = `<div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e" onclick="event.stopPropagation();this.closest('.web-block').remove()">✕</button></div>`;
   const t = {
@@ -1751,7 +1752,124 @@ function addBlock(type) {
   b.innerHTML = t[type] || t.hero;
   c.appendChild(b); selBlock(b); toast('Block added!');
 }
-function setTheme(color) { document.querySelectorAll('.hero-cta,.contact-form button').forEach(el=>el.style.background=color); toast('Theme color updated!'); }
+var BUILDER_THEME = '#6c63ff';
+function setTheme(color) { BUILDER_THEME = color; document.querySelectorAll('.hero-cta,.contact-form button').forEach(el=>el.style.background=color); toast('Theme color updated!'); }
+
+// Read the current builder canvas into a structured payload
+function collectBuilderData() {
+  var nameEl = document.getElementById('builder-business-name');
+  var fontEl = document.getElementById('builder-font');
+  var businessName = (nameEl && nameEl.value.trim()) || 'My Business';
+  var font = (fontEl && fontEl.value) || 'Modern (Syne)';
+
+  var blocks = [];
+  document.querySelectorAll('#canvas .web-block').forEach(function(el){
+    var type = el.getAttribute('data-block-type') || 'hero';
+    var block = { type: type };
+    var h = el.querySelector('h2, h3');
+    var p = el.querySelector('p');
+    var ctaEl = el.querySelector('.hero-cta');
+
+    if (type === 'hero') {
+      block.heading = h ? h.textContent.trim() : '';
+      block.subtext = p ? p.textContent.trim() : '';
+      block.cta     = ctaEl ? ctaEl.textContent.trim() : '';
+    } else if (type === 'cta') {
+      block.heading = h ? h.textContent.trim() : '';
+      block.subtext = p ? p.textContent.trim() : '';
+      block.button  = ctaEl ? ctaEl.textContent.trim() : '';
+    } else if (type === 'services' || type === 'testimonial') {
+      block.heading = h ? h.textContent.trim() : '';
+      block.items = [];
+      el.querySelectorAll('.service-card').forEach(function(card){
+        var iconEl  = card.querySelector('div[style*="font-size"]');
+        var titleEl = card.querySelector('h4');
+        var descEl  = card.querySelector('p');
+        var item = {};
+        var iconTxt = iconEl ? iconEl.textContent.trim() : '';
+        if (type === 'testimonial') {
+          item.stars  = (iconTxt.match(/⭐/g) || []).length || 5;
+          item.quote  = titleEl ? titleEl.textContent.trim().replace(/^"|"$/g,'') : '';
+          item.author = descEl  ? descEl.textContent.trim().replace(/^—\s*/,'') : '';
+        } else {
+          item.icon  = iconTxt || '⭐';
+          item.title = titleEl ? titleEl.textContent.trim() : '';
+          item.desc  = descEl  ? descEl.textContent.trim() : '';
+        }
+        block.items.push(item);
+      });
+    } else if (type === 'contact') {
+      block.heading = h ? h.textContent.trim() : 'Get In Touch';
+    }
+    blocks.push(block);
+  });
+
+  return {
+    business_name: businessName,
+    theme_color: BUILDER_THEME,
+    font: font,
+    blocks: blocks
+  };
+}
+
+function showPublishedModal(url) {
+  var existing = document.getElementById('publish-modal');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'publish-modal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,10,20,0.55);display:flex;align-items:center;justify-content:center;z-index:9999;';
+  overlay.innerHTML =
+    '<div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:26px;max-width:460px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,0.4);">'
+    + '<div style="font-size:36px;text-align:center;margin-bottom:8px;">🎉</div>'
+    + '<div style="font-family:Syne,sans-serif;font-weight:800;font-size:20px;text-align:center;margin-bottom:6px;">Your site is live!</div>'
+    + '<div style="font-size:12px;color:var(--text3);text-align:center;margin-bottom:18px;">Share this URL with anyone — it’s public.</div>'
+    + '<div style="display:flex;gap:6px;margin-bottom:14px;">'
+    +   '<input id="published-url" readonly value="' + url.replace(/"/g,'&quot;') + '" class="form-input" style="flex:1;font-size:12px;">'
+    +   '<button class="btn btn-ghost btn-sm" id="copy-url-btn">Copy</button>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;">'
+    +   '<a class="btn btn-primary btn-sm" style="flex:1;text-align:center;" href="' + url.replace(/"/g,'&quot;') + '" target="_blank" rel="noopener">Open site</a>'
+    +   '<button class="btn btn-ghost btn-sm" id="close-publish-modal" style="flex:1;">Close</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(overlay);
+  document.getElementById('copy-url-btn').onclick = function(){
+    var inp = document.getElementById('published-url');
+    inp.select(); inp.setSelectionRange(0, 9999);
+    try { navigator.clipboard.writeText(inp.value); toast('URL copied!'); }
+    catch(e) { document.execCommand && document.execCommand('copy'); toast('URL copied!'); }
+  };
+  document.getElementById('close-publish-modal').onclick = function(){ overlay.remove(); };
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.remove(); });
+}
+
+async function publishSite() {
+  var btns = document.querySelectorAll('.btn-primary[onclick*="publishSite"], #top-cta');
+  btns.forEach(function(b){ b.disabled = true; });
+  toast('Publishing your site...');
+  try {
+    var data = collectBuilderData();
+    var res = await fetch(API_URL + '/api/website/publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: CLIENT_ID,
+        website_data: data
+      })
+    });
+    if (!res.ok) {
+      var errText = '';
+      try { errText = (await res.json()).detail || ''; } catch(e) {}
+      throw new Error(errText || ('HTTP ' + res.status));
+    }
+    var json = await res.json();
+    showPublishedModal(json.url);
+  } catch (err) {
+    toast('Publish failed: ' + (err.message || err), 'error');
+  } finally {
+    btns.forEach(function(b){ b.disabled = false; });
+  }
+}
 
 // ═══════ CHATBOT ═══════
 // ═══════ REAL AI CHATBOT — Connected to Harakel Innovations Backend ═══════

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Loading site...</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root { --theme: #6c63ff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { font-family: 'DM Sans', system-ui, sans-serif; color: #222; background: #fff; line-height: 1.5; }
+  body.font-classic { font-family: 'Playfair Display', Georgia, serif; }
+  body.font-clean   { font-family: 'DM Sans', system-ui, sans-serif; }
+  body.font-modern  { font-family: 'DM Sans', system-ui, sans-serif; }
+  h1,h2,h3,h4 { font-family: 'Syne', sans-serif; font-weight: 800; line-height: 1.15; color: #111; }
+  body.font-classic h1, body.font-classic h2, body.font-classic h3, body.font-classic h4 { font-family: 'Playfair Display', Georgia, serif; }
+
+  .site-header { padding: 22px 32px; border-bottom: 1px solid #ececec; display: flex; align-items: center; justify-content: space-between; background: #fff; }
+  .site-brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; color: #111; }
+
+  .site-block { width: 100%; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+
+  /* Hero */
+  .b-hero { background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff; padding: 110px 28px; text-align: center; }
+  .b-hero h2 { font-size: 52px; margin-bottom: 18px; color: #fff; }
+  .b-hero p { font-size: 18px; opacity: 0.78; margin-bottom: 32px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .cta-btn { display: inline-block; padding: 14px 32px; background: var(--theme); color: #fff; border-radius: 10px; font-size: 15px; font-weight: 600; text-decoration: none; border: none; cursor: pointer; font-family: inherit; transition: transform 0.15s; }
+  .cta-btn:hover { transform: translateY(-2px); }
+
+  /* Services / Testimonials */
+  .b-services { padding: 80px 28px; background: #fff; }
+  .b-services h3 { font-size: 34px; margin-bottom: 36px; text-align: center; }
+  .services-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; max-width: 1080px; margin: 0 auto; }
+  .service-card { background: #f8f8fc; border-radius: 14px; padding: 28px; }
+  .service-icon { font-size: 28px; margin-bottom: 10px; }
+  .service-card h4 { font-size: 17px; margin-bottom: 6px; }
+  .service-card p { font-size: 14px; color: #666; }
+
+  /* Contact */
+  .b-contact { padding: 80px 28px; background: #fafafa; }
+  .b-contact h3 { font-size: 34px; margin-bottom: 28px; text-align: center; }
+  .contact-form { display: grid; gap: 12px; max-width: 520px; margin: 0 auto; }
+  .contact-form input, .contact-form textarea { padding: 13px 16px; border: 1px solid #e0e0e0; border-radius: 9px; font-size: 14px; font-family: inherit; background: #fff; color: #333; }
+  .contact-form textarea { min-height: 120px; resize: vertical; }
+  .contact-form button { padding: 14px; background: var(--theme); color: #fff; border: none; border-radius: 9px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit; }
+
+  /* CTA */
+  .b-cta { background: linear-gradient(135deg, #1a1a2e, #16213e); color: #fff; padding: 80px 28px; text-align: center; }
+  .b-cta h2 { font-size: 36px; color: #fff; margin-bottom: 14px; }
+  .b-cta p { opacity: 0.78; margin-bottom: 26px; }
+
+  /* Footer */
+  .site-footer { padding: 32px 28px; text-align: center; font-size: 13px; color: #777; border-top: 1px solid #ececec; }
+  .site-footer a { color: var(--theme); text-decoration: none; }
+
+  /* States */
+  .state { min-height: 60vh; display: flex; align-items: center; justify-content: center; padding: 40px 24px; text-align: center; }
+  .state-card { max-width: 480px; }
+  .state h1 { font-size: 28px; margin-bottom: 10px; }
+  .state p { color: #666; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #eee; border-top-color: var(--theme); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 720px) {
+    .services-grid { grid-template-columns: 1fr; }
+    .b-hero { padding: 80px 22px; }
+    .b-hero h2 { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="state"><div class="state-card"><div class="spinner"></div><p>Loading site...</p></div></div>
+</div>
+
+<script>
+const API_URL = 'https://web-production-608a8.up.railway.app';
+
+function getSlug() {
+  const path = window.location.pathname;
+  const m = path.match(/\/sites\/([^\/?#]+)/);
+  if (m) return decodeURIComponent(m[1]);
+  const params = new URLSearchParams(window.location.search);
+  return params.get('slug');
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderHero(b) {
+  return `
+    <section class="site-block b-hero">
+      <h2>${escapeHtml(b.heading || 'Your Business, Elevated')}</h2>
+      <p>${escapeHtml(b.subtext || '')}</p>
+      ${b.cta ? `<a class="cta-btn" href="#contact">${escapeHtml(b.cta)}</a>` : ''}
+    </section>`;
+}
+
+function renderServices(b) {
+  const items = Array.isArray(b.items) && b.items.length ? b.items : [
+    { icon: '⭐', title: 'Service 1', desc: 'Description here' },
+    { icon: '🚀', title: 'Service 2', desc: 'Description here' },
+    { icon: '💡', title: 'Service 3', desc: 'Description here' },
+  ];
+  const cards = items.map(it => `
+    <div class="service-card">
+      <div class="service-icon">${escapeHtml(it.icon || '⭐')}</div>
+      <h4>${escapeHtml(it.title || '')}</h4>
+      <p>${escapeHtml(it.desc || '')}</p>
+    </div>`).join('');
+  return `
+    <section class="site-block b-services">
+      <h3>${escapeHtml(b.heading || 'Our Services')}</h3>
+      <div class="services-grid">${cards}</div>
+    </section>`;
+}
+
+function renderTestimonial(b) {
+  const items = Array.isArray(b.items) && b.items.length ? b.items : [
+    { quote: 'Absolutely amazing!', author: 'Happy Customer' },
+    { quote: 'Best decision ever',  author: 'Business Owner' },
+    { quote: 'Highly recommend',    author: 'Satisfied Client' },
+  ];
+  const cards = items.map(it => {
+    const stars = '⭐'.repeat(Math.max(1, Math.min(5, it.stars || 5)));
+    return `
+      <div class="service-card">
+        <div class="service-icon">${stars}</div>
+        <h4>"${escapeHtml(it.quote || '')}"</h4>
+        <p>— ${escapeHtml(it.author || '')}</p>
+      </div>`;
+  }).join('');
+  return `
+    <section class="site-block b-services">
+      <h3>${escapeHtml(b.heading || 'What Clients Say')}</h3>
+      <div class="services-grid">${cards}</div>
+    </section>`;
+}
+
+function renderContact(b) {
+  return `
+    <section class="site-block b-contact" id="contact">
+      <h3>${escapeHtml(b.heading || 'Get In Touch')}</h3>
+      <form class="contact-form" onsubmit="event.preventDefault();this.querySelector('button').textContent='Thanks! We\\'ll be in touch.';this.querySelector('button').disabled=true;">
+        <input type="text" placeholder="Your name" required>
+        <input type="email" placeholder="Email address" required>
+        <input type="tel" placeholder="Phone number">
+        <textarea placeholder="How can we help you?"></textarea>
+        <button type="submit">Send Message</button>
+      </form>
+    </section>`;
+}
+
+function renderCta(b) {
+  return `
+    <section class="site-block b-cta">
+      <h2>${escapeHtml(b.heading || 'Ready to get started?')}</h2>
+      <p>${escapeHtml(b.subtext || 'Contact us today for a free consultation.')}</p>
+      ${b.button ? `<a class="cta-btn" href="#contact">${escapeHtml(b.button)}</a>` : ''}
+    </section>`;
+}
+
+const RENDERERS = {
+  hero: renderHero,
+  services: renderServices,
+  testimonial: renderTestimonial,
+  contact: renderContact,
+  cta: renderCta,
+};
+
+function applyFont(font) {
+  document.body.classList.remove('font-modern', 'font-classic', 'font-clean');
+  const f = (font || '').toLowerCase();
+  if (f.includes('classic') || f.includes('serif')) document.body.classList.add('font-classic');
+  else if (f.includes('clean') || f.includes('sans')) document.body.classList.add('font-clean');
+  else document.body.classList.add('font-modern');
+}
+
+function renderSite(site) {
+  const data = site.website_data || {};
+  const themeColor = data.theme_color || data.brand_color || '#6c63ff';
+  document.documentElement.style.setProperty('--theme', themeColor);
+  applyFont(data.font);
+
+  const businessName = data.business_name || 'My Business';
+  document.title = businessName;
+
+  const blocks = Array.isArray(data.blocks) ? data.blocks : [];
+  const renderedBlocks = blocks.map(b => {
+    const fn = RENDERERS[b.type];
+    return fn ? fn(b) : '';
+  }).join('');
+
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    <header class="site-header">
+      <div class="site-brand">${escapeHtml(businessName)}</div>
+    </header>
+    ${renderedBlocks || '<div class="state"><div class="state-card"><h1>This site is empty</h1><p>The owner hasn’t added any blocks yet.</p></div></div>'}
+    <footer class="site-footer">
+      &copy; ${new Date().getFullYear()} ${escapeHtml(businessName)} &middot;
+      Powered by <a href="https://harakel-innovations.com" target="_blank" rel="noopener">Harakel Innovations</a>
+    </footer>`;
+}
+
+function showError(title, message) {
+  document.title = title;
+  document.getElementById('root').innerHTML = `
+    <div class="state"><div class="state-card">
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(message)}</p>
+    </div></div>`;
+}
+
+(async function init() {
+  const slug = getSlug();
+  if (!slug) {
+    showError('Site not found', 'No site slug was provided in the URL.');
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/api/website/${encodeURIComponent(slug)}`);
+    if (res.status === 404) {
+      showError('Site not found', 'The site you’re looking for doesn’t exist or has been unpublished.');
+      return;
+    }
+    if (!res.ok) {
+      showError('Something went wrong', 'We couldn’t load this site. Please try again later.');
+      return;
+    }
+    const site = await res.json();
+    renderSite(site);
+  } catch (err) {
+    showError('Connection error', 'Unable to reach the server. Please check your connection.');
+  }
+})();
+</script>
+</body>
+</html>
