@@ -1843,17 +1843,53 @@ function showPublishedModal(url) {
   overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.remove(); });
 }
 
+function _decodeJwtPayload(token) {
+  try {
+    var parts = token.split('.');
+    if (parts.length < 2) return null;
+    var payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (payload.length % 4) payload += '=';
+    return JSON.parse(atob(payload));
+  } catch (e) { return null; }
+}
+
+async function getActiveClientId() {
+  var stored = localStorage.getItem('hk_client_id');
+  if (stored) return stored;
+
+  var token = localStorage.getItem('hk_token');
+  if (token) {
+    var p = _decodeJwtPayload(token);
+    var fromJwt = p && (p.client_id || p.clientId);
+    if (fromJwt) {
+      localStorage.setItem('hk_client_id', fromJwt);
+      return fromJwt;
+    }
+  }
+
+  var res = await fetch(API_URL + '/api/clients/');
+  if (!res.ok) throw new Error('Could not load client list');
+  var data = await res.json();
+  var first = (data.clients || [])[0];
+  if (!first || !first.id) {
+    throw new Error('No clients found — onboard a client before publishing');
+  }
+  localStorage.setItem('hk_client_id', first.id);
+  return first.id;
+}
+
 async function publishSite() {
   var btns = document.querySelectorAll('.btn-primary[onclick*="publishSite"], #top-cta');
   btns.forEach(function(b){ b.disabled = true; });
   toast('Publishing your site...');
   try {
+    var clientId = await getActiveClientId();
     var data = collectBuilderData();
     var res = await fetch(API_URL + '/api/website/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        client_id: CLIENT_ID,
+        client_id: clientId,
         website_data: data
       })
     });
