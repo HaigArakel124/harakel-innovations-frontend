@@ -1,6 +1,6 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/sites/:slug", "destination": "/sites.html" }
+    { "source": "/sites/:slug", "destination": "/sites" }
   ]
 }
