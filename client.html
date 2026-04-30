@@ -88,6 +88,42 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 /* ── EMPTY STATE ── */
 .empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center;}
 
+/* ── COMPETITOR INTEL ── */
+.search-wrap{position:relative;}
+.search-row{display:flex;gap:8px;}
+.search-row input{flex:1;padding:10px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none;}
+.search-row input:focus{border-color:var(--accent);}
+.search-row button{padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}
+.search-row button:disabled{opacity:0.5;cursor:not-allowed;}
+.search-results{margin-top:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);max-height:280px;overflow-y:auto;}
+.search-result{padding:11px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;cursor:pointer;transition:background 0.12s;}
+.search-result:last-child{border-bottom:none;}
+.search-result:hover{background:var(--surface3);}
+.search-result-info{flex:1;min-width:0;}
+.search-result-name{font-size:13px;font-weight:500;color:var(--text);}
+.search-result-meta{font-size:11px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.search-result-add{padding:5px 12px;background:var(--accent-glow);color:var(--accent2);border:1px solid rgba(108,99,255,0.35);border-radius:6px;font-size:11px;font-weight:600;}
+.comp-row{display:grid;grid-template-columns:1fr 70px 90px 30px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px;align-items:center;}
+.comp-row:last-child{border-bottom:none;}
+.comp-name{font-weight:500;}
+.comp-meta{font-size:11px;color:var(--text3);}
+.comp-rating{font-weight:600;}
+.comp-remove{background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1;padding:4px 6px;border-radius:4px;}
+.comp-remove:hover{color:var(--pink);background:rgba(255,107,157,0.08);}
+.cmp-table{width:100%;border-collapse:collapse;font-size:13px;}
+.cmp-table th{text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);padding:10px 12px;border-bottom:1px solid var(--border);}
+.cmp-table td{padding:12px;border-bottom:1px solid var(--border);}
+.cmp-table tr:last-child td{border-bottom:none;}
+.cmp-table tr.is-self{background:var(--accent-glow);}
+.cmp-table tr.is-self td:first-child{color:var(--accent2);font-weight:600;}
+.cmp-name-cell{display:flex;align-items:center;gap:8px;}
+.self-badge{font-size:9px;text-transform:uppercase;letter-spacing:0.5px;padding:2px 6px;background:var(--accent);color:#fff;border-radius:4px;font-weight:700;}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;margin-left:6px;padding:2px 6px;border-radius:4px;}
+.delta.up{color:var(--green);background:var(--green-dim);}
+.delta.down{color:var(--pink);background:rgba(255,107,157,0.12);}
+.delta.flat{color:var(--text3);background:var(--surface3);}
+.muted{color:var(--text3);}
+
 /* ── LOADING ── */
 .skeleton{background:var(--surface2);border-radius:6px;height:14px;animation:pulse 1.5s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:0.4;}50%{opacity:0.8;}}
@@ -181,6 +217,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="skeleton" style="height:46px;border-radius:8px;"></div>
       </div>
     </div>
+
+    <!-- Competitor Intel -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Competitor Intel</div>
+        <button class="btn btn-ghost" style="font-size:11px;padding:6px 12px;" onclick="refreshCompetitors()" id="comp-refresh-btn">Refresh data</button>
+      </div>
+
+      <div class="search-wrap" style="margin-bottom:18px;">
+        <div class="search-row">
+          <input id="comp-search-input" placeholder="Search a competitor by name or address..." onkeydown="if(event.key==='Enter')searchCompetitors()">
+          <button id="comp-search-btn" onclick="searchCompetitors()">Search</button>
+        </div>
+        <div id="comp-search-results"></div>
+      </div>
+
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:8px;">Tracked competitors</div>
+      <div id="comp-list">
+        <div class="empty">Loading...</div>
+      </div>
+
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin:22px 0 8px;">Side-by-side comparison</div>
+      <div id="comp-table-wrap" style="overflow-x:auto;">
+        <div class="empty">Loading...</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -246,6 +308,7 @@ function showDashboard(clientInfo) {
 }
 
 async function loadDashboardData(clientId, clientInfo) {
+  loadCompetitors(clientId);
   // Fetch me (for modules/chatbot status) + leads + appointments in parallel
   var [meRes, leadsRes, apptsRes] = await Promise.allSettled([
     fetch(API + '/api/client-auth/me', {
@@ -334,6 +397,197 @@ async function loadDashboardData(clientId, clientInfo) {
       '</div>' +
     '</div>' +
   '</div>';
+}
+
+// ── Competitor Intel ─────────────────────────────────────────
+var COMP_CLIENT_ID = null;
+
+function _esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function _fmtRating(r) { return (r == null) ? '—' : Number(r).toFixed(1); }
+function _fmtCount(n)  { return (n == null) ? '—' : Number(n).toLocaleString(); }
+
+function _delta(n, suffix) {
+  if (n == null) return '<span class="delta flat">—</span>';
+  if (n === 0) return '<span class="delta flat">±0' + (suffix || '') + '</span>';
+  if (n > 0) return '<span class="delta up">↑ ' + (Math.abs(n) % 1 === 0 ? n : n.toFixed(2)) + (suffix || '') + '</span>';
+  return '<span class="delta down">↓ ' + (Math.abs(n) % 1 === 0 ? Math.abs(n) : Math.abs(n).toFixed(2)) + (suffix || '') + '</span>';
+}
+
+async function searchCompetitors() {
+  var input = document.getElementById('comp-search-input');
+  var btn = document.getElementById('comp-search-btn');
+  var resultsEl = document.getElementById('comp-search-results');
+  var query = input.value.trim();
+  if (!query) return;
+  btn.disabled = true; btn.textContent = 'Searching...';
+  resultsEl.innerHTML = '';
+  try {
+    var res = await fetch(API + '/api/competitors/search', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({query: query}),
+    });
+    if (!res.ok) throw new Error('Search failed');
+    var data = await res.json();
+    if (!data.results || data.results.length === 0) {
+      resultsEl.innerHTML = '<div class="search-results"><div class="search-result"><div class="search-result-info"><div class="muted">No results found.</div></div></div></div>';
+      return;
+    }
+    resultsEl.innerHTML = '<div class="search-results">' + data.results.map(function(r){
+      var meta = [];
+      if (r.rating != null) meta.push('★ ' + _fmtRating(r.rating));
+      if (r.review_count != null) meta.push(_fmtCount(r.review_count) + ' reviews');
+      if (r.address) meta.push(r.address);
+      return '<div class="search-result" data-place-id="' + _esc(r.place_id) + '" data-name="' + _esc(r.name) + '">'
+        + '<div class="search-result-info">'
+        +   '<div class="search-result-name">' + _esc(r.name) + '</div>'
+        +   '<div class="search-result-meta">' + _esc(meta.join(' · ')) + '</div>'
+        + '</div>'
+        + '<div class="search-result-add">+ Add</div>'
+        + '</div>';
+    }).join('') + '</div>';
+    Array.prototype.forEach.call(resultsEl.querySelectorAll('.search-result[data-place-id]'), function(el){
+      el.addEventListener('click', function(){
+        addCompetitor(el.getAttribute('data-place-id'), el.getAttribute('data-name'));
+      });
+    });
+  } catch (e) {
+    resultsEl.innerHTML = '<div class="search-results"><div class="search-result"><div class="search-result-info"><div class="muted">Error: ' + _esc(e.message) + '</div></div></div></div>';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Search';
+  }
+}
+
+async function addCompetitor(placeId, name) {
+  if (!COMP_CLIENT_ID) return;
+  try {
+    var res = await fetch(API + '/api/competitors/', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        client_id: COMP_CLIENT_ID,
+        competitor_name: name,
+        google_place_id: placeId,
+      }),
+    });
+    if (!res.ok) {
+      var err = await res.json().catch(function(){return {};});
+      throw new Error(err.detail || 'Failed to add');
+    }
+    document.getElementById('comp-search-results').innerHTML = '';
+    document.getElementById('comp-search-input').value = '';
+    await loadCompetitors(COMP_CLIENT_ID);
+  } catch (e) {
+    alert('Could not add competitor: ' + e.message);
+  }
+}
+
+async function removeCompetitor(competitorId) {
+  if (!confirm('Stop tracking this competitor?')) return;
+  try {
+    await fetch(API + '/api/competitors/' + competitorId, {method: 'DELETE'});
+    await loadCompetitors(COMP_CLIENT_ID);
+  } catch (e) {
+    alert('Could not remove: ' + e.message);
+  }
+}
+
+async function refreshCompetitors() {
+  if (!COMP_CLIENT_ID) return;
+  var btn = document.getElementById('comp-refresh-btn');
+  btn.disabled = true; btn.textContent = 'Refreshing...';
+  try {
+    await fetch(API + '/api/competitors/refresh/' + COMP_CLIENT_ID, {method: 'POST'});
+    await loadCompetitors(COMP_CLIENT_ID);
+  } catch (e) {
+    alert('Refresh failed: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Refresh data';
+  }
+}
+
+function _renderCompList(competitors) {
+  var listEl = document.getElementById('comp-list');
+  if (!competitors || competitors.length === 0) {
+    listEl.innerHTML = '<div class="empty">No competitors yet — search above to add one.</div>';
+    return;
+  }
+  listEl.innerHTML = competitors.map(function(c){
+    return '<div class="comp-row">'
+      + '<div><div class="comp-name">' + _esc(c.name) + '</div>'
+      +   (c.last_fetched_at ? '<div class="comp-meta">Updated ' + _esc(new Date(c.last_fetched_at).toLocaleDateString()) + '</div>' : '<div class="comp-meta">Awaiting first refresh</div>')
+      + '</div>'
+      + '<div class="comp-rating">★ ' + _fmtRating(c.rating) + '</div>'
+      + '<div class="muted">' + _fmtCount(c.review_count) + ' reviews</div>'
+      + '<button class="comp-remove" title="Remove" onclick="removeCompetitor(\'' + _esc(c.competitor_id) + '\')">✕</button>'
+      + '</div>';
+  }).join('');
+}
+
+function _renderCompTable(report) {
+  var wrap = document.getElementById('comp-table-wrap');
+  var rows = (report.competitors || []).slice();
+  var hasAny = rows.length > 0 || (report.client && report.client.rating != null);
+  if (!hasAny) {
+    wrap.innerHTML = '<div class="empty">Add a competitor to see how you compare.</div>';
+    return;
+  }
+  var clientRow = report.client || {};
+  var allRows = [Object.assign({}, clientRow, {is_self: true})].concat(rows);
+  var tbody = allRows.map(function(r){
+    var nameCell = '<div class="cmp-name-cell">' + _esc(r.name || '—') + (r.is_self ? '<span class="self-badge">You</span>' : '') + '</div>';
+    var ratingCell = '<span class="comp-rating">★ ' + _fmtRating(r.rating) + '</span>' + _delta(r.rating_change);
+    var reviewCell = _fmtCount(r.review_count) + _delta(r.review_count_change);
+    return '<tr class="' + (r.is_self ? 'is-self' : '') + '">'
+      + '<td>' + nameCell + '</td>'
+      + '<td>' + ratingCell + '</td>'
+      + '<td>' + reviewCell + '</td>'
+      + '</tr>';
+  }).join('');
+  wrap.innerHTML = '<table class="cmp-table">'
+    + '<thead><tr><th>Business</th><th>Rating (Δ wk)</th><th>Reviews (Δ wk)</th></tr></thead>'
+    + '<tbody>' + tbody + '</tbody>'
+    + '</table>';
+}
+
+async function loadCompetitors(clientId) {
+  COMP_CLIENT_ID = clientId;
+  try {
+    var [listRes, reportRes] = await Promise.all([
+      fetch(API + '/api/competitors/' + clientId),
+      fetch(API + '/api/competitors/report/' + clientId),
+    ]);
+    if (listRes.ok) {
+      var listData = await listRes.json();
+      // map to the field names the table renderer expects
+      var enriched = (listData.competitors || []).map(function(c){
+        return {
+          competitor_id: c.id,
+          name: c.competitor_name,
+          rating: c.rating,
+          review_count: c.review_count,
+          last_fetched_at: c.last_fetched_at,
+        };
+      });
+      _renderCompList(enriched);
+    } else {
+      document.getElementById('comp-list').innerHTML = '<div class="empty">Could not load competitors.</div>';
+    }
+    if (reportRes.ok) {
+      var reportData = await reportRes.json();
+      _renderCompTable(reportData);
+    } else {
+      document.getElementById('comp-table-wrap').innerHTML = '<div class="empty">Could not load comparison.</div>';
+    }
+  } catch (e) {
+    document.getElementById('comp-list').innerHTML = '<div class="empty">Error loading competitor data.</div>';
+    document.getElementById('comp-table-wrap').innerHTML = '';
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────
