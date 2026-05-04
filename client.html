@@ -296,6 +296,29 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <script>
 var API = 'https://web-production-608a8.up.railway.app';
 
+// ── Auth headers + 401-aware fetch wrapper ───────────────────
+function authHeaders(extra) {
+  var token = localStorage.getItem('client_token') || '';
+  var h = { 'Authorization': 'Bearer ' + token };
+  if (extra) Object.keys(extra).forEach(function(k){ h[k] = extra[k]; });
+  return h;
+}
+
+async function authedFetch(url, opts) {
+  opts = opts || {};
+  opts.headers = opts.headers || {};
+  var auth = authHeaders();
+  Object.keys(auth).forEach(function(k){ opts.headers[k] = auth[k]; });
+  var res = await fetch(url, opts);
+  if (res.status === 401) {
+    localStorage.removeItem('client_token');
+    alert('Your session has expired. Please log in again.');
+    location.reload();
+    throw new Error('Unauthorized');
+  }
+  return res;
+}
+
 // ── JWT payload decoder (no signature verification — server does that) ──
 function _parseJwt(token) {
   try {
@@ -359,11 +382,9 @@ async function loadDashboardData(clientId, clientInfo) {
   loadCoachHistory(clientId);
   // Fetch me (for modules/chatbot status) + leads + appointments in parallel
   var [meRes, leadsRes, apptsRes] = await Promise.allSettled([
-    fetch(API + '/api/client-auth/me', {
-      headers: {'Authorization': 'Bearer ' + localStorage.getItem('client_token')},
-    }),
-    fetch(API + '/api/leads/' + clientId + '?limit=5'),
-    fetch(API + '/api/appointments/' + clientId),
+    authedFetch(API + '/api/client-auth/me'),
+    authedFetch(API + '/api/leads/' + clientId + '?limit=5'),
+    authedFetch(API + '/api/appointments/' + clientId),
   ]);
 
   // ── Leads ──
@@ -475,7 +496,7 @@ async function searchCompetitors() {
   btn.disabled = true; btn.textContent = 'Searching...';
   resultsEl.innerHTML = '';
   try {
-    var res = await fetch(API + '/api/competitors/search', {
+    var res = await authedFetch(API + '/api/competitors/search', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({query: query}),
@@ -514,7 +535,7 @@ async function searchCompetitors() {
 async function addCompetitor(placeId, name) {
   if (!COMP_CLIENT_ID) return;
   try {
-    var res = await fetch(API + '/api/competitors/', {
+    var res = await authedFetch(API + '/api/competitors/', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -538,7 +559,7 @@ async function addCompetitor(placeId, name) {
 async function removeCompetitor(competitorId) {
   if (!confirm('Stop tracking this competitor?')) return;
   try {
-    await fetch(API + '/api/competitors/' + competitorId, {method: 'DELETE'});
+    await authedFetch(API + '/api/competitors/' + competitorId, {method: 'DELETE'});
     await loadCompetitors(COMP_CLIENT_ID);
   } catch (e) {
     alert('Could not remove: ' + e.message);
@@ -550,7 +571,7 @@ async function refreshCompetitors() {
   var btn = document.getElementById('comp-refresh-btn');
   btn.disabled = true; btn.textContent = 'Refreshing...';
   try {
-    await fetch(API + '/api/competitors/refresh/' + COMP_CLIENT_ID, {method: 'POST'});
+    await authedFetch(API + '/api/competitors/refresh/' + COMP_CLIENT_ID, {method: 'POST'});
     await loadCompetitors(COMP_CLIENT_ID);
   } catch (e) {
     alert('Refresh failed: ' + e.message);
@@ -607,8 +628,8 @@ async function loadCompetitors(clientId) {
   COMP_CLIENT_ID = clientId;
   try {
     var [listRes, reportRes] = await Promise.all([
-      fetch(API + '/api/competitors/' + clientId),
-      fetch(API + '/api/competitors/report/' + clientId),
+      authedFetch(API + '/api/competitors/' + clientId),
+      authedFetch(API + '/api/competitors/report/' + clientId),
     ]);
     if (listRes.ok) {
       var listData = await listRes.json();
@@ -678,7 +699,7 @@ async function loadCoachHistory(clientId) {
   COACH_CLIENT_ID = clientId;
   var historyEl = document.getElementById('coach-history');
   try {
-    var res = await fetch(API + '/api/coach/history/' + clientId);
+    var res = await authedFetch(API + '/api/coach/history/' + clientId);
     if (!res.ok) throw new Error('history');
     var data = await res.json();
     var msgs = data.messages || [];
@@ -705,7 +726,7 @@ async function sendCoachMessage() {
   _coachSetBusy(true);
 
   try {
-    var res = await fetch(API + '/api/coach/chat', {
+    var res = await authedFetch(API + '/api/coach/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({client_id: COACH_CLIENT_ID, message: text}),
@@ -728,7 +749,7 @@ async function clearCoachHistory() {
   if (!COACH_CLIENT_ID) return;
   if (!confirm('Clear the entire chat history with your AI Coach?')) return;
   try {
-    await fetch(API + '/api/coach/history/' + COACH_CLIENT_ID, {method: 'DELETE'});
+    await authedFetch(API + '/api/coach/history/' + COACH_CLIENT_ID, {method: 'DELETE'});
     _coachShowEmpty("Chat cleared. Ask me anything to get started.");
   } catch (e) {
     alert('Could not clear history: ' + e.message);
