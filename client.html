@@ -178,6 +178,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .mc-text-flag{color:var(--text3);}
 .mc-text-flag.sent{color:var(--green);}
 .mc-text-flag.failed{color:var(--pink);}
+.mc-text-flag.skipped{color:var(--text2);font-style:italic;}
 .mc-chev{color:var(--text3);transition:transform 0.18s;flex-shrink:0;}
 .mc-row.expanded .mc-chev{transform:rotate(90deg);color:var(--accent2);}
 
@@ -1011,8 +1012,17 @@ function _renderMissedCalls(rows) {
 
 function _renderMcRow(r) {
   var statusCls = (r.call_status || '').replace(/[^a-z\-]/g, '');
-  var sentCls = r.auto_text_sent ? 'sent' : (r.conversation_id ? 'failed' : 'failed');
-  var sentTxt = r.auto_text_sent ? 'auto-text sent ✓' : 'auto-text failed ✗';
+  var sentCls, sentTxt;
+  if (r.auto_text_skipped_reason === 'existing_open_conversation') {
+    sentCls = 'skipped';
+    sentTxt = 'skipped — existing thread';
+  } else if (r.auto_text_sent) {
+    sentCls = 'sent';
+    sentTxt = 'auto-text sent ✓';
+  } else {
+    sentCls = 'failed';
+    sentTxt = 'auto-text failed ✗';
+  }
   var hasConvo = !!r.conversation_id;
   return '<div class="mc-row" data-mc-id="' + _esc(r.id) + '">'
     + '<div class="mc-row-head" data-mc-id="' + _esc(r.id) + '" data-convo-id="' + _esc(r.conversation_id || '') + '">'
