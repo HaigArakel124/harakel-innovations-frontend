@@ -152,11 +152,91 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .skeleton{background:var(--surface2);border-radius:6px;height:14px;animation:pulse 1.5s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:0.4;}50%{opacity:0.8;}}
 
+/* ── MISSED CALLS ── */
+.icon-btn{width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:1px solid var(--border2);border-radius:50%;color:var(--text2);cursor:pointer;transition:all 0.15s;padding:0;font-family:inherit;}
+.icon-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--accent);}
+.icon-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.icon-btn svg{width:14px;height:14px;}
+.icon-btn.spinning svg{animation:spin 0.9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.header-actions{display:flex;align-items:center;gap:8px;}
+
+.mc-list{display:flex;flex-direction:column;gap:2px;}
+.mc-row{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);overflow:hidden;transition:border-color 0.15s;}
+.mc-row.expanded{border-color:var(--border2);}
+.mc-row-head{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;transition:background 0.12s;}
+.mc-row-head:hover{background:var(--surface3);}
+.mc-row-main{flex:1;min-width:0;}
+.mc-line1{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.mc-phone{font-weight:600;font-size:13px;color:var(--text);}
+.mc-time{font-size:11px;color:var(--text3);}
+.mc-line2{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:11px;}
+.mc-status-pill{padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;background:var(--surface3);color:var(--text2);}
+.mc-status-pill.no-answer{background:var(--amber-dim);color:var(--amber);}
+.mc-status-pill.busy{background:var(--blue-dim);color:var(--blue);}
+.mc-status-pill.failed{background:rgba(255,107,157,0.12);color:var(--pink);}
+.mc-text-flag{color:var(--text3);}
+.mc-text-flag.sent{color:var(--green);}
+.mc-text-flag.failed{color:var(--pink);}
+.mc-chev{color:var(--text3);transition:transform 0.18s;flex-shrink:0;}
+.mc-row.expanded .mc-chev{transform:rotate(90deg);color:var(--accent2);}
+
+.mc-thread{border-top:1px solid var(--border);padding:14px;background:var(--surface);}
+.mc-thread-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.mc-convo-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:3px 8px;border-radius:20px;}
+.mc-convo-badge.open{background:var(--green-dim);color:var(--green);}
+.mc-convo-badge.resolved{background:var(--surface3);color:var(--text2);}
+.mc-convo-badge.expired{background:var(--surface3);color:var(--text3);}
+.mc-thread-spinner{display:flex;align-items:center;justify-content:center;gap:8px;padding:18px 0;color:var(--text3);font-size:12px;}
+.mc-spinner{width:14px;height:14px;border:2px solid var(--border2);border-top-color:var(--accent2);border-radius:50%;animation:spin 0.8s linear infinite;}
+.mc-msgs{display:flex;flex-direction:column;gap:8px;}
+.mc-msg{display:flex;}
+.mc-msg.outbound{justify-content:flex-end;}
+.mc-msg.inbound{justify-content:flex-start;}
+.mc-bubble-wrap{max-width:78%;display:flex;flex-direction:column;}
+.mc-msg.outbound .mc-bubble-wrap{align-items:flex-end;}
+.mc-msg.inbound .mc-bubble-wrap{align-items:flex-start;}
+.mc-bubble{padding:9px 13px;border-radius:14px;font-size:13px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;}
+.mc-bubble.outbound{background:var(--accent);color:#fff;border-bottom-right-radius:4px;}
+.mc-bubble.inbound{background:var(--surface2);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:4px;}
+.mc-bubble-time{font-size:10px;color:var(--text3);margin-top:3px;padding:0 4px;}
+.mc-thread-empty{text-align:center;color:var(--text3);font-size:12px;padding:14px 0;}
+.mc-error{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:rgba(255,107,157,0.06);border:1px solid rgba(255,107,157,0.25);border-radius:var(--radius-sm);font-size:12px;color:var(--text2);}
+.mc-error button{background:transparent;border:1px solid var(--border2);color:var(--text);padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;}
+.mc-error button:hover{background:var(--surface2);}
+
+/* ── MODAL ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.65);display:none;align-items:center;justify-content:center;z-index:200;padding:18px;backdrop-filter:blur(4px);}
+.modal-backdrop.open{display:flex;}
+.modal-card{width:100%;max-width:520px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:24px;box-shadow:0 24px 60px rgba(0,0,0,0.5);max-height:90vh;overflow-y:auto;}
+.modal-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:6px;}
+.modal-help{font-size:12px;color:var(--text3);line-height:1.5;margin-bottom:18px;}
+.modal-help code{background:var(--surface2);padding:1px 6px;border-radius:4px;font-family:inherit;color:var(--accent2);font-size:11px;}
+.modal-textarea{width:100%;min-height:96px;padding:11px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;line-height:1.5;outline:none;resize:vertical;transition:border-color 0.15s;}
+.modal-textarea:focus{border-color:var(--accent);}
+.modal-charcount{display:flex;justify-content:flex-end;font-size:11px;color:var(--text3);margin-top:6px;}
+.modal-charcount.warn{color:var(--amber);}
+.modal-charcount.err{color:var(--pink);}
+.modal-preview-label{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin:18px 0 8px;}
+.modal-preview{padding:11px 14px;background:var(--accent);color:#fff;border-radius:14px;border-bottom-left-radius:4px;font-size:13px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;max-width:78%;}
+.modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:22px;}
+.modal-reset{background:transparent;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:4px 0;}
+.modal-reset:hover{color:var(--text);}
+.modal-btns{display:flex;gap:8px;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 18px;font-size:13px;color:var(--text);box-shadow:0 12px 32px rgba(0,0,0,0.4);opacity:0;pointer-events:none;transition:opacity 0.2s,transform 0.2s;z-index:300;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{border-color:rgba(0,217,163,0.4);}
+.toast.error{border-color:rgba(255,107,157,0.4);}
+
 @media(max-width:680px){
   .stats-grid{grid-template-columns:1fr 1fr;}
   .grid-2{grid-template-columns:1fr;}
   .lead-row{grid-template-columns:1fr 100px;}
   .lead-email{display:none;}
+  .modal-card{padding:18px;}
+  .mc-bubble-wrap{max-width:88%;}
 }
 </style>
 </head>
@@ -290,8 +370,48 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <button class="coach-send" id="coach-send-btn" onclick="sendCoachMessage()">Send</button>
       </div>
     </div>
+
+    <!-- Missed Calls -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Missed Calls</div>
+        <div class="header-actions">
+          <button class="icon-btn" id="mc-refresh-btn" title="Refresh" onclick="refreshMissedCalls()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>
+          </button>
+          <button class="icon-btn" id="mc-settings-btn" title="Auto-text settings" onclick="openMcSettings()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div id="mc-list-wrap">
+        <div class="mc-thread-spinner"><div class="mc-spinner"></div>Loading missed calls...</div>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- ═══════ MISSED CALL SETTINGS MODAL ═══════ -->
+<div class="modal-backdrop" id="mc-modal" onclick="onMcModalBackdropClick(event)">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <div class="modal-title">Missed Call Auto-Text Settings</div>
+    <div class="modal-help">When a customer calls and you don't answer, we'll send them this text from your business number. Use <code>{business_name}</code> as a placeholder for your business name.</div>
+    <textarea id="mc-template-input" class="modal-textarea" rows="4" oninput="onMcTemplateInput()"></textarea>
+    <div class="modal-charcount" id="mc-charcount">0 / 320 characters</div>
+    <div class="modal-preview-label">Preview</div>
+    <div class="mc-msg inbound" style="margin-top:0;"><div class="mc-bubble-wrap"><div class="modal-preview" id="mc-preview"></div></div></div>
+    <div class="modal-actions">
+      <button class="modal-reset" onclick="resetMcTemplate()">Reset to default</button>
+      <div class="modal-btns">
+        <button class="btn btn-ghost" onclick="closeMcSettings()">Cancel</button>
+        <button class="btn btn-primary" id="mc-save-btn" style="width:auto;padding:10px 20px;" onclick="saveMcTemplate()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TOAST ═══════ -->
+<div class="toast" id="toast"></div>
 
 <script>
 var API = 'https://web-production-608a8.up.railway.app';
@@ -317,6 +437,26 @@ async function authedFetch(url, opts) {
     throw new Error('Unauthorized');
   }
   return res;
+}
+
+// ── Pull a human message out of a parsed error response body ──
+// Handles FastAPI's two shapes: {detail: "string"} and {detail: [{msg, loc, ...}]}.
+function extractErrorMessage(payload, fallback) {
+  if (!payload) return fallback;
+  var d = payload.detail;
+  if (typeof d === 'string') return d;
+  if (Array.isArray(d) && d.length > 0) {
+    var first = d[0];
+    if (first && typeof first.msg === 'string') {
+      // Prefix with the offending field name when available, e.g. "template: too long".
+      var loc = Array.isArray(first.loc) ? first.loc.filter(function(x){return x !== 'body';}) : [];
+      var field = loc.length ? loc[loc.length - 1] : null;
+      return field ? field + ': ' + first.msg : first.msg;
+    }
+    if (typeof first === 'string') return first;
+  }
+  if (typeof payload.message === 'string') return payload.message;
+  return fallback;
 }
 
 // ── JWT payload decoder (no signature verification — server does that) ──
@@ -380,6 +520,7 @@ function showDashboard(clientInfo) {
 async function loadDashboardData(clientId, clientInfo) {
   loadCompetitors(clientId);
   loadCoachHistory(clientId);
+  loadMissedCalls(clientId);
   // Fetch me (for modules/chatbot status) + leads + appointments in parallel
   var [meRes, leadsRes, apptsRes] = await Promise.allSettled([
     authedFetch(API + '/api/client-auth/me'),
@@ -765,6 +906,301 @@ document.addEventListener('DOMContentLoaded', function() {
       sendCoachMessage();
     }
   });
+});
+
+// ── Missed Calls ─────────────────────────────────────────────
+var MC_CLIENT_ID = null;
+var MC_BUSINESS_NAME = '';
+var MC_DEFAULT_TEMPLATE = "Hi! This is {business_name}. Sorry we missed your call — how can we help?";
+var MC_CURRENT_TEMPLATE = null;          // server value (null = use default)
+var MC_EXPANDED_ID = null;                // single missed_call_id currently expanded
+var MC_CONVO_CACHE = {};                  // conversation_id -> {conversation, messages}
+
+function _mcFmtPhone(p) {
+  if (!p) return '';
+  var s = String(p).replace(/[^\d+]/g, '');
+  // +1XXXXXXXXXX → +1 (XXX) XXX-XXXX
+  var m = s.match(/^\+1(\d{3})(\d{3})(\d{4})$/);
+  if (m) return '+1 (' + m[1] + ') ' + m[2] + '-' + m[3];
+  // +CC followed by digits → +CC X XXXX XXXX-ish
+  if (s.charAt(0) === '+') return s;
+  // bare 10-digit US
+  var m2 = s.match(/^(\d{3})(\d{3})(\d{4})$/);
+  if (m2) return '(' + m2[1] + ') ' + m2[2] + '-' + m2[3];
+  return s;
+}
+
+function _mcRelTime(iso) {
+  if (!iso) return '';
+  var t = new Date(iso).getTime();
+  if (isNaN(t)) return '';
+  var diff = Math.floor((Date.now() - t) / 1000);
+  if (diff < 5) return 'just now';
+  if (diff < 60) return diff + 's ago';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff / 86400) + 'd ago';
+  return new Date(iso).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+}
+
+function _mcFmtTime(iso) {
+  if (!iso) return '';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString('en-US', {hour: 'numeric', minute: '2-digit'});
+}
+
+function showToast(msg, kind) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (kind ? ' ' + kind : '');
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.className = 'toast' + (kind ? ' ' + kind : ''); }, 2400);
+}
+
+async function loadMissedCalls(clientId) {
+  MC_CLIENT_ID = clientId;
+  // Pull business name from cached client info if available — also used by the modal preview.
+  var biz = document.getElementById('dash-biz-name');
+  if (biz && biz.textContent && biz.textContent !== 'Loading...') MC_BUSINESS_NAME = biz.textContent;
+
+  var wrap = document.getElementById('mc-list-wrap');
+  wrap.innerHTML = '<div class="mc-thread-spinner"><div class="mc-spinner"></div>Loading missed calls...</div>';
+  try {
+    var res = await authedFetch(API + '/api/missed-calls/' + clientId + '?limit=20');
+    if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+    var data = await res.json();
+    _renderMissedCalls(data.missed_calls || []);
+  } catch (e) {
+    wrap.innerHTML = '<div class="mc-error"><span>Couldn\'t load missed calls — ' + _esc(e.message || 'try again') + '</span><button onclick="loadMissedCalls(MC_CLIENT_ID)">Retry</button></div>';
+  }
+}
+
+async function refreshMissedCalls() {
+  if (!MC_CLIENT_ID) return;
+  var btn = document.getElementById('mc-refresh-btn');
+  btn.classList.add('spinning');
+  btn.disabled = true;
+  // Invalidate the conversation cache so threads reload fresh.
+  MC_CONVO_CACHE = {};
+  try {
+    await loadMissedCalls(MC_CLIENT_ID);
+  } finally {
+    btn.classList.remove('spinning');
+    btn.disabled = false;
+  }
+}
+
+function _renderMissedCalls(rows) {
+  var wrap = document.getElementById('mc-list-wrap');
+  if (!rows || rows.length === 0) {
+    wrap.innerHTML = '<div class="empty">No missed calls yet. When a customer calls and you don\'t pick up, they\'ll be auto-texted and appear here.</div>';
+    return;
+  }
+  wrap.innerHTML = '<div class="mc-list">' + rows.map(_renderMcRow).join('') + '</div>';
+  // Attach click handlers (avoids inline onclicks with tricky escaping).
+  Array.prototype.forEach.call(wrap.querySelectorAll('.mc-row-head'), function(headEl) {
+    headEl.addEventListener('click', function() {
+      toggleMissedCall(headEl.getAttribute('data-mc-id'), headEl.getAttribute('data-convo-id'));
+    });
+  });
+}
+
+function _renderMcRow(r) {
+  var statusCls = (r.call_status || '').replace(/[^a-z\-]/g, '');
+  var sentCls = r.auto_text_sent ? 'sent' : (r.conversation_id ? 'failed' : 'failed');
+  var sentTxt = r.auto_text_sent ? 'auto-text sent ✓' : 'auto-text failed ✗';
+  var hasConvo = !!r.conversation_id;
+  return '<div class="mc-row" data-mc-id="' + _esc(r.id) + '">'
+    + '<div class="mc-row-head" data-mc-id="' + _esc(r.id) + '" data-convo-id="' + _esc(r.conversation_id || '') + '">'
+    +   '<div class="mc-row-main">'
+    +     '<div class="mc-line1">'
+    +       '<span class="mc-phone">' + _esc(_mcFmtPhone(r.caller_phone)) + '</span>'
+    +       '<span class="mc-time">' + _esc(_mcRelTime(r.created_at)) + '</span>'
+    +     '</div>'
+    +     '<div class="mc-line2">'
+    +       '<span class="mc-status-pill ' + _esc(statusCls) + '">' + _esc(r.call_status || 'missed') + '</span>'
+    +       '<span class="mc-text-flag ' + sentCls + '">' + sentTxt + '</span>'
+    +     '</div>'
+    +   '</div>'
+    +   (hasConvo
+        ? '<svg class="mc-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+        : '<span class="mc-time" style="font-style:italic;">no thread</span>')
+    + '</div>'
+    + '<div class="mc-thread-slot"></div>'
+  + '</div>';
+}
+
+async function toggleMissedCall(mcId, convoId) {
+  if (!convoId) return; // No conversation to show.
+  var rowEl = document.querySelector('.mc-row[data-mc-id="' + CSS.escape(mcId) + '"]');
+  if (!rowEl) return;
+
+  // Single-expanded model: collapse anything else first.
+  if (MC_EXPANDED_ID && MC_EXPANDED_ID !== mcId) {
+    var prev = document.querySelector('.mc-row[data-mc-id="' + CSS.escape(MC_EXPANDED_ID) + '"]');
+    if (prev) {
+      prev.classList.remove('expanded');
+      var prevSlot = prev.querySelector('.mc-thread-slot');
+      if (prevSlot) prevSlot.innerHTML = '';
+    }
+  }
+
+  if (MC_EXPANDED_ID === mcId) {
+    // Collapse the currently open one.
+    rowEl.classList.remove('expanded');
+    var slot = rowEl.querySelector('.mc-thread-slot');
+    if (slot) slot.innerHTML = '';
+    MC_EXPANDED_ID = null;
+    return;
+  }
+
+  rowEl.classList.add('expanded');
+  MC_EXPANDED_ID = mcId;
+  var slot = rowEl.querySelector('.mc-thread-slot');
+
+  if (MC_CONVO_CACHE[convoId]) {
+    slot.innerHTML = _renderMcThread(MC_CONVO_CACHE[convoId]);
+    return;
+  }
+
+  slot.innerHTML = '<div class="mc-thread"><div class="mc-thread-spinner"><div class="mc-spinner"></div>Loading conversation...</div></div>';
+  try {
+    var res = await authedFetch(API + '/api/missed-calls/conversation/' + convoId);
+    if (!res.ok) throw new Error('Request failed (' + res.status + ')');
+    var data = await res.json();
+    MC_CONVO_CACHE[convoId] = data;
+    // Make sure the user hasn't collapsed it during the await.
+    if (MC_EXPANDED_ID === mcId) slot.innerHTML = _renderMcThread(data);
+  } catch (e) {
+    slot.innerHTML = '<div class="mc-thread"><div class="mc-error"><span>Couldn\'t load conversation — ' + _esc(e.message || 'try again') + '</span><button data-retry-mc="' + _esc(mcId) + '" data-retry-convo="' + _esc(convoId) + '">Retry</button></div></div>';
+    var retryBtn = slot.querySelector('button[data-retry-mc]');
+    if (retryBtn) retryBtn.addEventListener('click', function() {
+      delete MC_CONVO_CACHE[convoId];
+      slot.innerHTML = '<div class="mc-thread"><div class="mc-thread-spinner"><div class="mc-spinner"></div>Loading conversation...</div></div>';
+      // Re-fetch without toggling expand/collapse state.
+      authedFetch(API + '/api/missed-calls/conversation/' + convoId).then(function(r) {
+        if (!r.ok) throw new Error('Request failed (' + r.status + ')');
+        return r.json();
+      }).then(function(d) {
+        MC_CONVO_CACHE[convoId] = d;
+        if (MC_EXPANDED_ID === mcId) slot.innerHTML = _renderMcThread(d);
+      }).catch(function(err) {
+        slot.innerHTML = '<div class="mc-thread"><div class="mc-error"><span>Still failing — ' + _esc(err.message || 'try again later') + '</span></div></div>';
+      });
+    });
+  }
+}
+
+function _renderMcThread(data) {
+  var convo = data.conversation || {};
+  var msgs = data.messages || [];
+  var status = (convo.status || 'open').toLowerCase();
+  var badgeCls = ({open:'open', resolved:'resolved', expired:'expired'}[status] || 'resolved');
+  var head = '<div class="mc-thread-head">'
+    + '<span class="mc-convo-badge ' + badgeCls + '">' + _esc(status) + '</span>'
+    + '<span class="mc-time">' + _esc(_mcFmtPhone(convo.customer_phone)) + '</span>'
+  + '</div>';
+
+  if (msgs.length === 0) {
+    return '<div class="mc-thread">' + head + '<div class="mc-thread-empty">No messages in this conversation yet.</div></div>';
+  }
+
+  var body = '<div class="mc-msgs">' + msgs.map(function(m) {
+    var dir = (m.direction === 'outbound') ? 'outbound' : 'inbound';
+    return '<div class="mc-msg ' + dir + '">'
+      + '<div class="mc-bubble-wrap">'
+      +   '<div class="mc-bubble ' + dir + '">' + _esc(m.body || '') + '</div>'
+      +   '<div class="mc-bubble-time">' + _esc(_mcFmtTime(m.created_at)) + '</div>'
+      + '</div>'
+    + '</div>';
+  }).join('') + '</div>';
+
+  return '<div class="mc-thread">' + head + body + '</div>';
+}
+
+// ── Settings modal ───────────────────────────────────────────
+async function openMcSettings() {
+  if (!MC_CLIENT_ID) return;
+  var modal = document.getElementById('mc-modal');
+  var input = document.getElementById('mc-template-input');
+  modal.classList.add('open');
+  input.placeholder = MC_DEFAULT_TEMPLATE;
+  input.value = '';
+  // Fetch the latest template + business name from the client record.
+  try {
+    var res = await authedFetch(API + '/api/clients/' + MC_CLIENT_ID);
+    if (res.ok) {
+      var c = await res.json();
+      MC_BUSINESS_NAME = c.business_name || MC_BUSINESS_NAME || 'us';
+      MC_CURRENT_TEMPLATE = c.missed_call_sms_template || null;
+      input.value = MC_CURRENT_TEMPLATE || '';
+    }
+  } catch (e) { /* preview will fall back to defaults */ }
+  onMcTemplateInput();
+  setTimeout(function() { input.focus(); }, 30);
+}
+
+function closeMcSettings() {
+  document.getElementById('mc-modal').classList.remove('open');
+}
+
+function onMcModalBackdropClick(e) {
+  if (e.target && e.target.id === 'mc-modal') closeMcSettings();
+}
+
+function onMcTemplateInput() {
+  var input = document.getElementById('mc-template-input');
+  var preview = document.getElementById('mc-preview');
+  var count = document.getElementById('mc-charcount');
+  var raw = input.value;
+  var effective = raw.trim() ? raw : MC_DEFAULT_TEMPLATE;
+  var biz = MC_BUSINESS_NAME || 'your business';
+  var rendered = effective.replace(/\{business_name\}/g, biz);
+  preview.textContent = rendered;
+  var len = rendered.length;
+  count.textContent = len + ' / 320 characters';
+  count.className = 'modal-charcount' + (len >= 320 ? ' err' : len >= 160 ? ' warn' : '');
+}
+
+function resetMcTemplate() {
+  if (!confirm('Are you sure? Your custom template will be replaced with the default.')) return;
+  document.getElementById('mc-template-input').value = '';
+  onMcTemplateInput();
+}
+
+async function saveMcTemplate() {
+  if (!MC_CLIENT_ID) return;
+  var btn = document.getElementById('mc-save-btn');
+  var input = document.getElementById('mc-template-input');
+  var val = input.value.trim();
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    var res = await authedFetch(API + '/api/missed-calls/template/' + MC_CLIENT_ID, {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({template: val || null}),
+    });
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return {}; });
+      throw new Error(extractErrorMessage(err, 'Save failed'));
+    }
+    var data = await res.json();
+    MC_CURRENT_TEMPLATE = data.missed_call_sms_template || null;
+    closeMcSettings();
+    showToast('Template saved', 'success');
+  } catch (e) {
+    showToast('Couldn\'t save: ' + (e.message || 'try again'), 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var modal = document.getElementById('mc-modal');
+    if (modal && modal.classList.contains('open')) closeMcSettings();
+  }
 });
 
 // ── Init ─────────────────────────────────────────────────────
