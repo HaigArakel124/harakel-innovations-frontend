@@ -217,6 +217,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .modal-charcount{display:flex;justify-content:flex-end;font-size:11px;color:var(--text3);margin-top:6px;}
 .modal-charcount.warn{color:var(--amber);}
 .modal-charcount.err{color:var(--pink);}
+.modal-charhint{display:none;font-size:11px;color:var(--pink);margin-top:4px;text-align:right;}
+.modal-charhint.show{display:block;}
 .modal-preview-label{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin:18px 0 8px;}
 .modal-preview{padding:11px 14px;background:var(--accent);color:#fff;border-radius:14px;border-bottom-left-radius:4px;font-size:13px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word;max-width:78%;}
 .modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:22px;}
@@ -398,6 +400,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="modal-help">When a customer calls and you don't answer, we'll send them this text from your business number. Use <code>{business_name}</code> as a placeholder for your business name.</div>
     <textarea id="mc-template-input" class="modal-textarea" rows="4" oninput="onMcTemplateInput()"></textarea>
     <div class="modal-charcount" id="mc-charcount">0 / 320 characters</div>
+    <div class="modal-charhint" id="mc-charhint">Save is disabled — please trim the message to 320 characters or fewer.</div>
     <div class="modal-preview-label">Preview</div>
     <div class="mc-msg inbound" style="margin-top:0;"><div class="mc-bubble-wrap"><div class="modal-preview" id="mc-preview"></div></div></div>
     <div class="modal-actions">
@@ -1153,14 +1156,20 @@ function onMcTemplateInput() {
   var input = document.getElementById('mc-template-input');
   var preview = document.getElementById('mc-preview');
   var count = document.getElementById('mc-charcount');
+  var hint = document.getElementById('mc-charhint');
+  var saveBtn = document.getElementById('mc-save-btn');
   var raw = input.value;
   var effective = raw.trim() ? raw : MC_DEFAULT_TEMPLATE;
   var biz = MC_BUSINESS_NAME || 'your business';
   var rendered = effective.replace(/\{business_name\}/g, biz);
   preview.textContent = rendered;
   var len = rendered.length;
+  var over = len > 320;
   count.textContent = len + ' / 320 characters';
-  count.className = 'modal-charcount' + (len >= 320 ? ' err' : len >= 160 ? ' warn' : '');
+  count.className = 'modal-charcount' + (over ? ' err' : len >= 160 ? ' warn' : '');
+  hint.className = 'modal-charhint' + (over ? ' show' : '');
+  saveBtn.disabled = over;
+  saveBtn.title = over ? 'Message is over the 320-character limit' : '';
 }
 
 function resetMcTemplate() {
@@ -1174,6 +1183,13 @@ async function saveMcTemplate() {
   var btn = document.getElementById('mc-save-btn');
   var input = document.getElementById('mc-template-input');
   var val = input.value.trim();
+  // Mirror the visual gate — final defense against bypass via devtools.
+  var biz = MC_BUSINESS_NAME || 'your business';
+  var renderedLen = (val ? val : MC_DEFAULT_TEMPLATE).replace(/\{business_name\}/g, biz).length;
+  if (renderedLen > 320) {
+    showToast('Message is over the 320-character limit', 'error');
+    return;
+  }
   btn.disabled = true; btn.textContent = 'Saving...';
   try {
     var res = await authedFetch(API + '/api/missed-calls/template/' + MC_CLIENT_ID, {
