@@ -166,6 +166,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .mc-row.expanded{border-color:var(--border2);}
 .mc-row-head{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;transition:background 0.12s;}
 .mc-row-head:hover{background:var(--surface3);}
+.mc-row.no-thread .mc-row-head{cursor:default;opacity:0.7;}
+.mc-row.no-thread .mc-row-head:hover{background:transparent;}
 .mc-row-main{flex:1;min-width:0;}
 .mc-line1{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .mc-phone{font-weight:600;font-size:13px;color:var(--text);}
@@ -1024,7 +1026,7 @@ function _renderMcRow(r) {
     sentTxt = 'auto-text failed ✗';
   }
   var hasConvo = !!r.conversation_id;
-  return '<div class="mc-row" data-mc-id="' + _esc(r.id) + '">'
+  return '<div class="mc-row' + (hasConvo ? '' : ' no-thread') + '" data-mc-id="' + _esc(r.id) + '">'
     + '<div class="mc-row-head" data-mc-id="' + _esc(r.id) + '" data-convo-id="' + _esc(r.conversation_id || '') + '">'
     +   '<div class="mc-row-main">'
     +     '<div class="mc-line1">'
