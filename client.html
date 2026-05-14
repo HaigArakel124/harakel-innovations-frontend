@@ -693,7 +693,7 @@ async function addCompetitor(placeId, name) {
     });
     if (!res.ok) {
       var err = await res.json().catch(function(){return {};});
-      throw new Error(err.detail || 'Failed to add');
+      throw new Error(extractErrorMessage(err, 'Failed to add'));
     }
     document.getElementById('comp-search-results').innerHTML = '';
     document.getElementById('comp-search-input').value = '';
@@ -880,7 +880,7 @@ async function sendCoachMessage() {
     });
     if (!res.ok) {
       var err = await res.json().catch(function() { return {}; });
-      throw new Error(err.detail || 'Request failed');
+      throw new Error(extractErrorMessage(err, 'Request failed'));
     }
     var data = await res.json();
     _coachAppendMessage('assistant', data.reply || '(no response)');
