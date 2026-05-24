@@ -635,6 +635,7 @@ function _delta(n, suffix) {
 }
 
 async function searchCompetitors() {
+  if (!COMP_CLIENT_ID) return;
   var input = document.getElementById('comp-search-input');
   var btn = document.getElementById('comp-search-btn');
   var resultsEl = document.getElementById('comp-search-results');
@@ -646,7 +647,7 @@ async function searchCompetitors() {
     var res = await authedFetch(API + '/api/competitors/search', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({query: query}),
+      body: JSON.stringify({client_id: COMP_CLIENT_ID, query: query}),
     });
     if (!res.ok) throw new Error('Search failed');
     var data = await res.json();
