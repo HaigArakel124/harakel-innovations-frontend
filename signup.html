@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Get Started — Harakel Innovations</title>
+<meta name="description" content="Set up your AI automation account in a few quick steps.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --surface2:#18181f; --surface3:#1e1e28;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#f0f0f5; --text2:#9090a8; --text3:#5a5a72;
+  --accent:#6c63ff; --accent2:#8b84ff; --accent-glow:rgba(108,99,255,0.15);
+  --green:#00d9a3; --green-dim:rgba(0,217,163,0.12); --pink:#ff6b9d;
+  --radius:14px; --radius-sm:8px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── Nav (from pricing.html) ── */
+nav{display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:64px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#00d9a3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;}
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:14px;transition:color .15s;}
+.nav-links a:hover{color:var(--text);}
+.nav-cta{padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;text-decoration:none;}
+
+/* ── Layout ── */
+.signup-wrap{max-width:560px;margin:0 auto;padding:48px 24px 80px;}
+.signup-head{text-align:center;margin-bottom:26px;}
+.signup-head h1{font-family:'Syne',sans-serif;font-size:clamp(26px,4vw,38px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:10px;}
+.signup-head p{font-size:14px;color:var(--text2);line-height:1.6;}
+
+/* ── Progress ── */
+.progress{margin-bottom:20px;}
+.progress-label-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--text3);margin-bottom:8px;}
+.progress-title{font-weight:500;color:var(--text2);}
+.progress-bar{height:6px;background:var(--surface2);border-radius:20px;overflow:hidden;}
+.progress-fill{height:100%;width:25%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:20px;transition:width .3s ease;}
+
+/* ── Card ── */
+.signup-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:28px 26px;}
+.error-msg{background:rgba(255,107,157,0.1);border:1px solid rgba(255,107,157,0.3);color:var(--pink);font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:18px;display:none;line-height:1.5;}
+.step{display:none;}
+.step.active{display:block;animation:fade .25s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+.step-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px;}
+.step-sub{font-size:13px;color:var(--text3);margin-bottom:20px;line-height:1.5;}
+
+/* ── Fields (from client.html) ── */
+.form-group{margin-bottom:16px;}
+.form-group label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;}
+.form-group label .opt{color:var(--text3);font-weight:400;}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 14px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:'DM Sans',sans-serif;outline:none;transition:border-color .15s;}
+.form-group textarea{resize:vertical;min-height:72px;line-height:1.5;}
+.form-group select{appearance:none;cursor:pointer;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+
+/* ── Plan options ── */
+.plan-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
+.plan-option{position:relative;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius);padding:18px;cursor:pointer;transition:border-color .15s,background .15s;}
+.plan-option:hover{border-color:var(--accent2);}
+.plan-option.selected{border-color:var(--accent);background:linear-gradient(180deg,var(--accent-glow),var(--surface2));}
+.plan-option .po-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px;}
+.plan-option.selected .po-name{color:var(--accent2);}
+.plan-option .po-price{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;line-height:1;}
+.plan-option .po-price span{font-size:13px;font-weight:400;color:var(--text3);}
+.plan-option .po-desc{font-size:11px;color:var(--text2);margin-top:8px;line-height:1.4;}
+.plan-option .po-check{position:absolute;top:14px;right:14px;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent;}
+.plan-option.selected .po-check{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+/* ── Review ── */
+.review{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:6px;}
+.review-row{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--border);}
+.review-row:last-child{border-bottom:none;}
+.review-row span{color:var(--text3);}
+.review-row strong{font-weight:500;text-align:right;word-break:break-word;}
+.review-empty{font-size:12px;color:var(--text3);padding:4px 0;}
+
+/* ── Buttons (from client.html) ── */
+.step-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:24px;}
+.step-actions .right{display:flex;align-items:center;gap:10px;}
+.btn{padding:11px 22px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.skip-link{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:4px;}
+.skip-link:hover{color:var(--text2);}
+
+@media (max-width:600px){
+  nav{padding:0 20px;}
+  .nav-links{display:none;}
+  .signup-wrap{padding:32px 16px 64px;}
+  .signup-card{padding:22px 18px;}
+  .plan-options{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">Harakel Innovations</a>
+  <ul class="nav-links">
+    <li><a href="/">Dashboard</a></li>
+    <li><a href="/pricing">Pricing</a></li>
+    <li><a href="mailto:andrewarakel146@gmail.com">Contact</a></li>
+  </ul>
+  <a href="/pricing" class="nav-cta">View plans</a>
+</nav>
+
+<section class="signup-wrap">
+  <div class="signup-head">
+    <h1>Let's set up your account</h1>
+    <p>A few quick details and you'll be ready to go. No password needed — we'll email you one.</p>
+  </div>
+
+  <div class="progress">
+    <div class="progress-label-row">
+      <span id="progress-label">Step 1 of 4</span>
+      <span class="progress-title" id="progress-title">Your business</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <div class="signup-card">
+    <div class="error-msg" id="form-error"></div>
+
+    <!-- Step 1 -->
+    <div class="step active" data-step="1">
+      <div class="step-title">Your business</div>
+      <div class="step-sub">Tell us about the business you're setting up.</div>
+      <div class="form-group">
+        <label>Business name</label>
+        <input type="text" id="business_name" placeholder="e.g. Glow Hair Studio" autocomplete="organization">
+      </div>
+      <div class="form-group">
+        <label>Industry <span class="opt">(optional)</span></label>
+        <select id="industry">
+          <option value="">Select an industry…</option>
+          <option>Hair &amp; Beauty Salon</option>
+          <option>Barbershop</option>
+          <option>Spa &amp; Wellness</option>
+          <option>Nail Salon</option>
+          <option>Med Spa / Aesthetics</option>
+          <option>Fitness &amp; Personal Training</option>
+          <option>Dental</option>
+          <option>Home Services</option>
+          <option>Automotive</option>
+          <option>Restaurant / Food</option>
+          <option>Professional Services</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step" data-step="2">
+      <div class="step-title">About you</div>
+      <div class="step-sub">We'll use this to create your login and send your welcome email.</div>
+      <div class="form-group">
+        <label>Your name</label>
+        <input type="text" id="owner_name" placeholder="e.g. Jordan Smith" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>Email address</label>
+        <input type="email" id="email" placeholder="you@yourbusiness.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Phone <span class="opt">(optional)</span></label>
+        <input type="tel" id="owner_phone" placeholder="(555) 123-4567" autocomplete="tel">
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step" data-step="3">
+      <div class="step-title">Business details</div>
+      <div class="step-sub">All optional — these help us tailor your AI, but you can add them later from your dashboard.</div>
+      <div class="form-group">
+        <label>Address <span class="opt">(optional)</span></label>
+        <input type="text" id="address" placeholder="123 Main St, City, State">
+      </div>
+      <div class="form-group">
+        <label>Website <span class="opt">(optional)</span></label>
+        <input type="text" id="website" placeholder="https://yourbusiness.com">
+      </div>
+      <div class="form-group">
+        <label>Business hours <span class="opt">(optional)</span></label>
+        <textarea id="business_hours" placeholder="Mon–Fri 9am–6pm, Sat 10am–4pm"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Services <span class="opt">(optional)</span></label>
+        <textarea id="services" placeholder="Haircuts, coloring, styling, treatments…"></textarea>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step" data-step="4">
+      <div class="step-title">Choose your plan</div>
+      <div class="step-sub">You can change or cancel anytime. Payment is handled securely by Stripe.</div>
+      <div class="plan-options">
+        <div class="plan-option" data-plan="starter" onclick="selectPlan('starter')">
+          <div class="po-check">✓</div>
+          <div class="po-name">Starter</div>
+          <div class="po-price">$397<span>/mo</span></div>
+          <div class="po-desc">Chatbot, lead capture, CRM &amp; appointments.</div>
+        </div>
+        <div class="plan-option" data-plan="pro" onclick="selectPlan('pro')">
+          <div class="po-check">✓</div>
+          <div class="po-name">Pro</div>
+          <div class="po-price">$997<span>/mo</span></div>
+          <div class="po-desc">Everything in Starter + Email AI, Voice AI &amp; more.</div>
+        </div>
+      </div>
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:8px;">Review</div>
+      <div class="review" id="review"></div>
+    </div>
+
+    <!-- Actions -->
+    <div class="step-actions">
+      <button class="btn btn-ghost" id="back-btn" type="button" onclick="goBack()" style="visibility:hidden;">Back</button>
+      <div class="right">
+        <button class="skip-link" id="skip-btn" type="button" onclick="goNext()" style="display:none;">Skip for now</button>
+        <button class="btn btn-primary" id="next-btn" type="button" onclick="goNext()">Continue</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+var API = 'https://web-production-608a8.up.railway.app';
+var TOTAL_STEPS = 4;
+var currentStep = 1;
+var SELECTED_PLAN = null;
+
+function val(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
+function escapeHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function showError(msg){ var e=document.getElementById('form-error'); e.innerHTML=msg; e.style.display='block'; }
+function clearError(){ var e=document.getElementById('form-error'); e.style.display='none'; e.textContent=''; }
+function fail(msg, focusId){ showError(msg); if(focusId){var el=document.getElementById(focusId); if(el) el.focus();} return false; }
+
+function extractErrorMessage(payload, fallback){
+  if(!payload) return fallback;
+  var d=payload.detail;
+  if(typeof d==='string') return d;
+  if(Array.isArray(d)&&d.length){
+    var f=d[0];
+    if(f&&typeof f.msg==='string'){
+      var loc=Array.isArray(f.loc)?f.loc.filter(function(x){return x!=='body';}):[];
+      var field=loc.length?loc[loc.length-1]:null;
+      return field?field+': '+f.msg:f.msg;
+    }
+    if(typeof f==='string') return f;
+  }
+  if(typeof payload.message==='string') return payload.message;
+  return fallback;
+}
+
+function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+function phoneSane(v){ return (v.match(/\d/g)||[]).length >= 7; }
+
+function validateStep(n){
+  clearError();
+  if(n===1){
+    if(!val('business_name')) return fail('Please enter your business name.', 'business_name');
+  }
+  if(n===2){
+    if(!val('owner_name')) return fail('Please enter your name.', 'owner_name');
+    if(!val('email')) return fail('Please enter your email address.', 'email');
+    if(!isEmail(val('email'))) return fail('Please enter a valid email address.', 'email');
+    if(val('owner_phone') && !phoneSane(val('owner_phone'))) return fail('That phone number looks too short — please check it.', 'owner_phone');
+  }
+  if(n===4){
+    if(!SELECTED_PLAN) return fail('Please choose a plan to continue.');
+  }
+  return true;
+}
+
+function goToStep(n){
+  currentStep=n;
+  var steps=document.querySelectorAll('.step');
+  Array.prototype.forEach.call(steps, function(s){ s.classList.toggle('active', +s.getAttribute('data-step')===n); });
+  document.getElementById('progress-fill').style.width=(n/TOTAL_STEPS*100)+'%';
+  document.getElementById('progress-label').textContent='Step '+n+' of '+TOTAL_STEPS;
+  document.getElementById('progress-title').textContent=({1:'Your business',2:'About you',3:'Business details',4:'Plan & confirm'})[n];
+  document.getElementById('back-btn').style.visibility=(n===1)?'hidden':'visible';
+  document.getElementById('skip-btn').style.display=(n===3)?'inline-flex':'none';
+  document.getElementById('next-btn').textContent=(n===4)?'Continue to payment':'Continue';
+  if(n===4) renderReview();
+  clearError();
+  window.scrollTo(0,0);
+}
+function goNext(){ if(!validateStep(currentStep)) return; if(currentStep===TOTAL_STEPS){ submitSignup(); return; } goToStep(currentStep+1); }
+function goBack(){ if(currentStep>1) goToStep(currentStep-1); }
+
+function selectPlan(plan){
+  SELECTED_PLAN=plan;
+  Array.prototype.forEach.call(document.querySelectorAll('.plan-option'), function(c){
+    c.classList.toggle('selected', c.getAttribute('data-plan')===plan);
+  });
+}
+
+function renderReview(){
+  var rows=[['Business',val('business_name')],['Industry',val('industry')],['Name',val('owner_name')],['Email',val('email')],['Phone',val('owner_phone')]]
+    .filter(function(r){ return r[1]; });
+  var html=rows.map(function(r){ return '<div class="review-row"><span>'+r[0]+'</span><strong>'+escapeHtml(r[1])+'</strong></div>'; }).join('');
+  document.getElementById('review').innerHTML = html || '<div class="review-empty">Go back to add your details.</div>';
+}
+
+async function submitSignup(){
+  if(!validateStep(4)) return;
+  var btn=document.getElementById('next-btn');
+  btn.disabled=true; btn.textContent='Starting checkout...';
+  var body={
+    plan:SELECTED_PLAN,
+    business_name:val('business_name'),
+    owner_name:val('owner_name'),
+    email:val('email'),
+    owner_phone:val('owner_phone')||null,
+    industry:val('industry')||null,
+    address:val('address')||null,
+    website:val('website')||null,
+    business_hours:val('business_hours')||null,
+    services:val('services')||null,
+    success_url:'https://www.harakel-innovations.com/client?welcome=true',
+    cancel_url:'https://www.harakel-innovations.com/pricing',
+  };
+  try{
+    var res=await fetch(API+'/api/billing/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){
+      var err=await res.json().catch(function(){return {};});
+      if(res.status===409){
+        showError('An account with this email already exists. <a href="#" onclick="goToStep(2);document.getElementById(\'email\').focus();return false;" style="color:var(--accent2);text-decoration:underline;">Use a different email</a>');
+        btn.disabled=false; btn.textContent='Continue to payment'; return;
+      }
+      throw new Error(extractErrorMessage(err,'Something went wrong. Please try again.'));
+    }
+    var data=await res.json();
+    if(!data.checkout_url) throw new Error('Could not start checkout. Please try again.');
+    window.location.href=data.checkout_url;
+  }catch(e){
+    showError(e.message||'Something went wrong. Please try again.');
+    btn.disabled=false; btn.textContent='Continue to payment';
+  }
+}
+
+(function init(){
+  var p=(new URLSearchParams(location.search).get('plan')||'').toLowerCase();
+  if(p==='starter'||p==='pro') selectPlan(p);
+  goToStep(1);
+})();
+</script>
+</body>
+</html>
