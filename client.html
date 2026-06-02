@@ -275,7 +275,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="topbar-divider"></div>
       <span class="biz-name" id="dash-biz-name">Loading...</span>
     </div>
-    <button class="btn btn-ghost" style="font-size:12px;" onclick="logout()">Sign out</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="btn btn-ghost" style="font-size:12px;" onclick="openPwChangeModal(false)">Change password</button>
+      <button class="btn btn-ghost" style="font-size:12px;" onclick="logout()">Sign out</button>
+    </div>
   </header>
 
   <div class="content">
@@ -416,6 +419,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </div>
 </div>
 
+<!-- ═══════ FORCED PASSWORD CHANGE MODAL ═══════ -->
+<div class="modal-backdrop" id="pw-change-modal" onclick="onPwModalBackdropClick(event)">
+  <div class="modal-card" onclick="event.stopPropagation()" style="max-width:420px;">
+    <div class="modal-title">Change your password</div>
+    <div class="modal-help" id="pw-help">For your security, please set a new password before continuing.</div>
+    <div class="error-msg" id="pw-error"></div>
+    <form onsubmit="submitPwChange(event)">
+      <div class="form-group">
+        <label>Current password</label>
+        <input type="password" id="pw-current" autocomplete="current-password" required>
+      </div>
+      <div class="form-group">
+        <label>New password</label>
+        <input type="password" id="pw-new" autocomplete="new-password" placeholder="At least 8 characters, 1 letter, 1 number" required>
+      </div>
+      <div class="form-group">
+        <label>Confirm new password</label>
+        <input type="password" id="pw-confirm" autocomplete="new-password" required>
+      </div>
+      <div class="modal-actions" style="justify-content:flex-end;">
+        <div class="modal-btns">
+          <button class="btn btn-ghost" type="button" id="pw-cancel-btn" onclick="closePwChangeModal()" style="display:none;">Cancel</button>
+          <button class="btn btn-primary" type="submit" id="pw-submit-btn" style="width:auto;padding:10px 20px;">Change password</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ═══════ TOAST ═══════ -->
 <div class="toast" id="toast"></div>
 
@@ -494,7 +526,7 @@ async function submitLogin(e) {
     if (!res.ok) throw new Error('Server error — please try again.');
     var data = await res.json();
     localStorage.setItem('client_token', data.access_token);
-    showDashboard(data.client);
+    showDashboard(data.client, data.must_change_password);
   } catch(err) {
     errEl.textContent = err.message;
     errEl.style.display = 'block';
@@ -514,13 +546,23 @@ function logout() {
 }
 
 // ── Dashboard ────────────────────────────────────────────────
-function showDashboard(clientInfo) {
+function showDashboard(clientInfo, mustChangePassword) {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('dashboard').style.display = 'block';
   var name = (clientInfo && clientInfo.business_name) || 'Your Business';
   document.getElementById('dash-biz-name').textContent = name;
   document.getElementById('dash-heading').textContent  = 'Welcome back, ' + name;
+
+  // Email for the change-password request — JWT on restore, login input on fresh login.
+  var loginEmailEl = document.getElementById('login-email');
+  PW_CLIENT_EMAIL = (clientInfo && clientInfo.email)
+    || (loginEmailEl ? loginEmailEl.value.trim() : '')
+    || PW_CLIENT_EMAIL;
+
   loadDashboardData(clientInfo.client_id, clientInfo);
+
+  // Single chokepoint: forced password change gates BOTH entry paths.
+  if (mustChangePassword) openPwChangeModal(true);
 }
 
 async function loadDashboardData(clientId, clientInfo) {
@@ -1229,8 +1271,99 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     var modal = document.getElementById('mc-modal');
     if (modal && modal.classList.contains('open')) closeMcSettings();
+    var pw = document.getElementById('pw-change-modal');
+    if (pw && pw.classList.contains('open') && !PW_FORCED) closePwChangeModal();
   }
 });
+
+// ── Forced password change ───────────────────────────────────
+var PW_CLIENT_EMAIL = '';   // set in showDashboard from client info / JWT
+var PW_FORCED = false;      // true = non-dismissible (must change before continuing)
+
+function openPwChangeModal(forced) {
+  PW_FORCED = !!forced;
+  document.getElementById('pw-error').style.display = 'none';
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  document.getElementById('pw-cancel-btn').style.display = PW_FORCED ? 'none' : 'inline-flex';
+  document.getElementById('pw-help').textContent = PW_FORCED
+    ? 'For your security, please set a new password before continuing.'
+    : 'Update the password you use to sign in.';
+  var btn = document.getElementById('pw-submit-btn');
+  btn.disabled = false; btn.textContent = 'Change password';
+  document.getElementById('pw-change-modal').classList.add('open');
+  setTimeout(function(){ document.getElementById('pw-current').focus(); }, 30);
+}
+
+function closePwChangeModal() {
+  document.getElementById('pw-change-modal').classList.remove('open');
+  PW_FORCED = false;
+}
+
+// Only closes on a voluntary (non-forced) open.
+function onPwModalBackdropClick(e) {
+  if (PW_FORCED) return;
+  if (e.target && e.target.id === 'pw-change-modal') closePwChangeModal();
+}
+
+function _showPwError(msg) {
+  var el = document.getElementById('pw-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function submitPwChange(e) {
+  e.preventDefault();
+  document.getElementById('pw-error').style.display = 'none';
+  var current = document.getElementById('pw-current').value;
+  var next    = document.getElementById('pw-new').value;
+  var confirm = document.getElementById('pw-confirm').value;
+
+  // Client-side validation mirroring the backend policy — do NOT call the API if any fails.
+  if (next.length < 8 || !/[A-Za-z]/.test(next) || !/\d/.test(next)) {
+    _showPwError('New password must be at least 8 characters and include a letter and a number.');
+    return;
+  }
+  if (next !== confirm) {
+    _showPwError('New password and confirmation do not match.');
+    return;
+  }
+  if (next === current) {
+    _showPwError('New password must be different from your current password.');
+    return;
+  }
+  _doPwChange(current, next);
+}
+
+async function _doPwChange(current, next) {
+  var btn = document.getElementById('pw-submit-btn');
+  btn.disabled = true; btn.textContent = 'Changing...';
+  try {
+    // Plain fetch (not authedFetch): here 401 means "wrong current password",
+    // which we surface in-modal — not a session-expiry reload.
+    var res = await fetch(API + '/api/client-auth/change-password', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        email:        PW_CLIENT_EMAIL,
+        old_password: current,
+        new_password: next,
+      }),
+    });
+    if (!res.ok) {
+      var err = await res.json().catch(function(){ return {}; });
+      throw new Error(extractErrorMessage(err, 'Could not change password. Please try again.'));
+    }
+    var data = await res.json();
+    localStorage.setItem('client_token', data.access_token);   // same key submitLogin uses
+    closePwChangeModal();
+    showToast('Password changed', 'success');
+  } catch (e) {
+    _showPwError(e.message || 'Could not change password. Please try again.');
+    btn.disabled = false; btn.textContent = 'Change password';   // keep modal open, re-enable
+  }
+}
 
 // ── Init ─────────────────────────────────────────────────────
 (function init() {
@@ -1245,7 +1378,7 @@ document.addEventListener('keydown', function(e) {
     client_id:     payload.client_id,
     business_name: payload.business_name,
     email:         payload.email,
-  });
+  }, !!payload.must_change_password);   // reload path reads the flag straight from the token
 })();
 </script>
 </body>
