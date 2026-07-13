@@ -1853,19 +1853,13 @@ function _decodeJwtPayload(token) {
   } catch (e) { return null; }
 }
 
-async function getActiveClientId() {
-  var stored = localStorage.getItem('hk_client_id');
-  if (stored) return stored;
+// Single source of truth for the active client id: the first client from /api/clients/.
+// loadLiveData() sets this on dashboard load; flows that run earlier (e.g. Website Builder
+// publish) derive it on demand here. No stale localStorage cache, no hardcoded id.
+window.CURRENT_CLIENT_ID = window.CURRENT_CLIENT_ID || null;
 
-  var token = localStorage.getItem('hk_token');
-  if (token) {
-    var p = _decodeJwtPayload(token);
-    var fromJwt = p && (p.client_id || p.clientId);
-    if (fromJwt) {
-      localStorage.setItem('hk_client_id', fromJwt);
-      return fromJwt;
-    }
-  }
+async function getActiveClientId() {
+  if (window.CURRENT_CLIENT_ID) return window.CURRENT_CLIENT_ID;
 
   var res = await authFetch(API_URL + '/api/clients/');
   if (!res.ok) throw new Error('Could not load client list');
@@ -1874,7 +1868,7 @@ async function getActiveClientId() {
   if (!first || !first.id) {
     throw new Error('No clients found — onboard a client before publishing');
   }
-  localStorage.setItem('hk_client_id', first.id);
+  window.CURRENT_CLIENT_ID = first.id;
   return first.id;
 }
 
@@ -2262,6 +2256,10 @@ var _sourceBadge = { chatbot:'source-chatbot">◎ Chatbot', form:'source-form">�
 function _updateDashboardLeads(leads) {
   var el = document.getElementById('dash-leads-list');
   if (!el) return;
+  if (!leads || leads.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0;">No leads yet.</div>';
+    return;
+  }
   var html = leads.slice(0, 4).map(function(l, i) {
     var cp = _colorPairs[i % _colorPairs.length];
     var status = l.status || 'new';
@@ -2363,25 +2361,31 @@ function _updateClientPortal(clientsList) {
   _updateClientSidebar(first);
 }
 
-// Hard-coded real client ID from Supabase
-var REAL_CLIENT_ID = '0499cf98-24f7-402d-9bf2-fcf605d23789';
+// Every dashboard data card/list starts resolved in a zero-state so nothing can hang on
+// "Loading..." — real values overwrite these once the fetches return (or if a fetch fails).
+function _setDashboardZeroStates() {
+  var zero = {
+    'stat-leads-count': '0', 'stat-leads-change': 'No leads yet',
+    'stat-appts-count': '0', 'stat-appts-change': 'None scheduled',
+    'leads-new-count': '0', 'leads-hot-count': '0', 'leads-booked-count': '0'
+  };
+  Object.keys(zero).forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = zero[id]; });
+  _updateDashboardLeads([]);
+  _updateLeadsTable([]);
+  _updateDashboardAppts([]);
+}
 
 async function loadLiveData() {
   try {
     var _anCd = null, _anLeads = [], _anLs = null, _anApptCount = 0, _anAppts = [];
 
-    // Run all fetches in parallel
-    var results = await Promise.allSettled([
-      authFetch(API_URL + '/api/clients/'),
-      authFetch(API_URL + '/api/leads/' + REAL_CLIENT_ID + '?limit=20'),
-      authFetch(API_URL + '/api/leads/stats/' + REAL_CLIENT_ID),
-      authFetch(API_URL + '/api/appointments/' + REAL_CLIENT_ID),
-    ]);
+    _setDashboardZeroStates();
 
-    // ── Clients ──────────────────────────────────────────────
-    var clientsRes = results[0];
-    if (clientsRes.status === 'fulfilled' && clientsRes.value.ok) {
-      var cd = await clientsRes.value.json();
+    // ── Clients first — the single derivation of the active client id ──
+    var clientsRes = await authFetch(API_URL + '/api/clients/');
+    if (!clientsRes.ok) throw new Error('clients fetch HTTP ' + clientsRes.status);
+    {
+      var cd = await clientsRes.json();
 
       var clientsCountEl = document.getElementById('stat-clients-count');
       if (clientsCountEl && cd.active !== undefined) {
@@ -2403,8 +2407,19 @@ async function loadLiveData() {
       _anCd = cd;
     }
 
+    // ── Derive active client id, then load its data (sequenced AFTER clients resolves) ──
+    var _first = ((_anCd && _anCd.clients) || [])[0];
+    window.CURRENT_CLIENT_ID = (_first && _first.id) ? _first.id : null;
+
+    if (window.CURRENT_CLIENT_ID) {
+      var results = await Promise.allSettled([
+        authFetch(API_URL + '/api/leads/'        + window.CURRENT_CLIENT_ID + '?limit=20'),
+        authFetch(API_URL + '/api/leads/stats/'  + window.CURRENT_CLIENT_ID),
+        authFetch(API_URL + '/api/appointments/' + window.CURRENT_CLIENT_ID),
+      ]);
+
     // ── Leads ────────────────────────────────────────────────
-    var leadsRes = results[1];
+    var leadsRes = results[0];
     if (leadsRes.status === 'fulfilled' && leadsRes.value.ok) {
       var ld = await leadsRes.value.json();
       var leads = ld.leads || [];
@@ -2438,10 +2453,15 @@ async function loadLiveData() {
       if (newChg) newChg.textContent = newCount + ' of ' + total + ' total';
       if (hotChg) hotChg.textContent = hotCount + (warmCount ? ' hot · ' + warmCount + ' warm' : ' hot leads');
       if (bookedChg) bookedChg.textContent = bookedCount + ' appointment' + (bookedCount !== 1 ? 's' : '') + ' set';
+
+      var statLeadsChg = document.getElementById('stat-leads-change');
+      if (statLeadsChg) statLeadsChg.textContent = newCount + ' new · ' + hotCount + ' hot';
+    } else if (leadsRes.status === 'rejected' || (leadsRes.value && !leadsRes.value.ok)) {
+      console.error('[Harakel] leads load failed:', leadsRes.reason || (leadsRes.value && leadsRes.value.status));
     }
 
     // ── Lead stats (API returns { total, by_status: {new, hot, ...}, by_source: {...} }) ──
-    var statsRes = results[2];
+    var statsRes = results[1];
     if (statsRes.status === 'fulfilled' && statsRes.value.ok) {
       var ls = await statsRes.value.json();
       var byStatus = ls.by_status || {};
@@ -2462,7 +2482,7 @@ async function loadLiveData() {
     }
 
     // ── Appointments ─────────────────────────────────────────
-    var apptsRes = results[3];
+    var apptsRes = results[2];
     if (apptsRes.status === 'fulfilled' && apptsRes.value.ok) {
       var ad = await apptsRes.value.json();
       var appts = ad.appointments || [];
@@ -2478,14 +2498,22 @@ async function loadLiveData() {
       var todayStr = new Date().toISOString().split('T')[0];
       var todayAppts = appts.filter(function(a) { return a.scheduled_time && a.scheduled_time.startsWith(todayStr); });
       _updateDashboardAppts(todayAppts.length > 0 ? todayAppts : appts);
+
+      var statApptsChg = document.getElementById('stat-appts-change');
+      if (statApptsChg) statApptsChg.textContent = todayAppts.length + ' today';
+    } else if (apptsRes.status === 'rejected' || (apptsRes.value && !apptsRes.value.ok)) {
+      console.error('[Harakel] appointments load failed:', apptsRes.reason || (apptsRes.value && apptsRes.value.status));
     }
+    } // end if (window.CURRENT_CLIENT_ID) — no clients means the zero-states above simply stand
 
     _updateAnalytics(_anCd, _anLeads, _anLs, _anApptCount);
     _updateCRM(_anLeads, _anLs);
     _updateAppointments(_anAppts);
 
   } catch (e) {
+    // Surface failures instead of swallowing them silently — the zero-states keep the UI usable.
     console.error('[Harakel] loadLiveData error:', e);
+    if (typeof toast === 'function') toast('Could not load live dashboard data.', 'error');
   }
 }
 
