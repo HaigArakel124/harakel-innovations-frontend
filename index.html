@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<script>
+document.documentElement.classList.add('js');
+const HERO_MODE = 'hybrid'; /* 'hybrid' | 'procedural' — flip to 'procedural' for the original all-canvas hero (no photo) */
+if (HERO_MODE === 'procedural') document.documentElement.classList.add('hero-procedural');
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harakel Innovations — Your AI Front Desk</title>
+<meta name="description" content="Harakel answers your missed calls, captures every lead, and books appointments 24/7 — AI chatbot, voice AI, missed-call text-back, CRM, SMS & reviews. Setup included, month-to-month.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.harakel-innovations.com/">
+<meta property="og:title" content="Harakel Innovations — Your AI Front Desk">
+<meta property="og:description" content="Your AI front desk. Never miss another customer. Calls answered, leads captured, appointments booked — 24/7.">
+<meta name="twitter:card" content="summary">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#111118; --surface2:#18181f; --surface3:#1e1e28;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.13);
+  --text:#f0f0f5; --text2:#9090a8; --text3:#5a5a72;
+  --accent:#6c63ff; --accent2:#8b84ff; --accent-glow:rgba(108,99,255,0.18);
+  --green:#00d9a3; --green-dim:rgba(0,217,163,0.12);
+  --amber:#ffb547; --amber-dim:rgba(255,181,71,0.12);
+  --pink:#ff6b9d; --pink-dim:rgba(255,107,157,0.12);
+  --blue:#4da6ff; --blue-dim:rgba(77,166,255,0.12);
+  --radius:14px; --radius-sm:8px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+@media (prefers-reduced-motion: no-preference){ html{scroll-behavior:smooth;} }
+a:focus-visible,button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;border-radius:4px;}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px;}
+.section{padding:112px 0;}
+section[id]{scroll-margin-top:84px;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 22px;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;text-decoration:none;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 6px 24px rgba(108,99,255,.35);}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-lg{padding:14px 28px;font-size:15px;border-radius:12px;}
+.btn-sm{padding:8px 16px;font-size:13px;min-height:40px;}
+
+/* ── Nav ── */
+.nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:0 48px;height:64px;background:rgba(10,10,15,.92);border-bottom:1px solid var(--border);}
+@supports (backdrop-filter: blur(14px)) or (-webkit-backdrop-filter: blur(14px)){
+  .nav{background:rgba(10,10,15,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);}
+}
+.nav-logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#00d9a3);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;flex-shrink:0;}
+.nav-links{display:flex;gap:32px;list-style:none;}
+.nav-links a{color:var(--text2);text-decoration:none;font-size:14px;transition:color .15s;padding:8px 0;}
+.nav-links a:hover{color:var(--text);}
+.nav-ctas{display:flex;gap:10px;align-items:center;}
+
+/* ── Hero ── */
+.hero{position:relative;overflow:hidden;display:flex;align-items:center;min-height:88vh;padding:88px 0 72px;}
+.hero-bg{position:absolute;inset:0;z-index:0;pointer-events:none;}
+/* galaxy aurora — canvas (sprite-stamped spiral nebula, see script); CSS fallback if canvas/JS unavailable */
+#aurora-canvas{position:absolute;inset:0;width:100%;height:100%;}
+.hero-fallback{position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 68% 45%,rgba(108,99,255,.38) 0%,rgba(67,56,224,.18) 45%,transparent 70%),radial-gradient(ellipse 45% 40% at 30% 65%,rgba(0,217,163,.22) 0%,transparent 65%),radial-gradient(ellipse 50% 45% at 85% 70%,rgba(77,166,255,.16) 0%,transparent 65%);}
+.hero-bg.canvas-on .hero-fallback{display:none;}
+/* photo layer (hybrid mode) — real Spitzer/Carina shot, pre-cropped so the bright core sits at ~70% x.
+   CSS-only: renders even if JS never runs. Oversized 2% so the Ken Burns drift never reveals an edge. */
+.hero-photo{position:absolute;inset:-2%;background:url('assets/nebula.jpg') center 45%/cover no-repeat;filter:brightness(.5) saturate(.8) hue-rotate(-30deg) contrast(1.05);}
+.hero-photo::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,10,15,.5),rgba(10,10,15,.42)),radial-gradient(ellipse 70% 60% at 70% 45%,rgba(108,99,255,.14),transparent 70%);}
+@media (prefers-reduced-motion: no-preference){
+  .hero-photo{animation:kenburns 60s ease-in-out infinite alternate;will-change:transform;}
+}
+@keyframes kenburns{from{transform:scale(1);}to{transform:scale(1.05);}}
+/* hybrid mode (default, incl. no-JS): photo supplies texture + stars — trim the procedural layers */
+html:not(.hero-procedural) .hero-fallback{display:none;}
+html:not(.hero-procedural) .stars-b,html:not(.hero-procedural) .stars-c{display:none;}
+/* procedural mode: original all-canvas hero, photo off */
+html.hero-procedural .hero-photo{display:none;}
+@media (max-width:980px){
+  .hero-photo{background-image:url('assets/nebula-mobile.jpg');background-position:32% 45%;}
+}
+/* starfield — three layers, staggered twinkle */
+.stars{position:absolute;top:0;left:0;width:2px;height:2px;border-radius:50%;background:transparent;}
+.stars-a{box-shadow:90px 120px rgba(240,240,255,.8),260px 60px rgba(200,210,255,.6),420px 300px rgba(240,240,255,.7),610px 90px rgba(190,255,235,.55),760px 240px rgba(240,240,255,.75),940px 140px rgba(210,205,255,.6),1120px 320px rgba(240,240,255,.7),1300px 80px rgba(200,210,255,.55),1480px 260px rgba(240,240,255,.65),180px 420px rgba(240,240,255,.5),880px 460px rgba(190,255,235,.5),1380px 440px rgba(210,205,255,.55);animation:twinkle 3.4s ease-in-out infinite;}
+.stars-b{width:1px;height:1px;box-shadow:150px 200px rgba(240,240,255,.7),330px 140px rgba(210,205,255,.55),520px 80px rgba(240,240,255,.6),700px 360px rgba(200,210,255,.5),850px 60px rgba(240,240,255,.7),1040px 220px rgba(190,255,235,.5),1210px 100px rgba(240,240,255,.6),1420px 340px rgba(210,205,255,.5),240px 320px rgba(240,240,255,.55),960px 420px rgba(240,240,255,.5),560px 470px rgba(200,210,255,.45),1330px 180px rgba(240,240,255,.6);animation:twinkle 5.1s ease-in-out infinite .9s;}
+.stars-c{width:1px;height:1px;box-shadow:60px 60px rgba(240,240,255,.5),380px 380px rgba(210,205,255,.45),640px 180px rgba(240,240,255,.55),790px 420px rgba(190,255,235,.4),1000px 60px rgba(240,240,255,.5),1170px 400px rgba(200,210,255,.45),1360px 280px rgba(240,240,255,.5),470px 240px rgba(240,240,255,.45),1500px 120px rgba(210,205,255,.5),120px 350px rgba(240,240,255,.4),720px 130px rgba(240,240,255,.45),1260px 460px rgba(190,255,235,.4);animation:twinkle 7.3s ease-in-out infinite 2.1s;}
+@keyframes twinkle{0%,100%{opacity:.45;}50%{opacity:1;}}
+/* scrim — keeps headline contrast over the brighter sky */
+.hero-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(10,10,15,.75) 0%,rgba(10,10,15,.35) 35%,transparent 62%),linear-gradient(180deg,transparent 55%,var(--bg) 100%);}
+/* hybrid: stronger left scrim — headline must sit on effectively solid dark over the photo */
+html:not(.hero-procedural) .hero-bg::after{background:linear-gradient(90deg,rgba(10,10,15,.88) 0%,rgba(10,10,15,.55) 35%,transparent 66%),linear-gradient(180deg,transparent 55%,var(--bg) 100%);}
+@media (max-width:980px){
+  /* stacked hero: text spans full width — scrim goes top-down instead of left-right */
+  html:not(.hero-procedural) .hero-bg::after{background:linear-gradient(180deg,rgba(10,10,15,.82) 0%,rgba(10,10,15,.55) 42%,rgba(10,10,15,.3) 62%,var(--bg) 100%);}
+}
+.hero-inner{position:relative;z-index:1;display:grid;grid-template-columns:1.1fr .9fr;gap:64px;align-items:center;width:100%;}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(108,99,255,.15);border:1px solid rgba(108,99,255,.3);color:var(--accent2);font-size:12px;font-weight:500;padding:6px 14px;border-radius:20px;margin-bottom:22px;}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(40px,6.5vw,74px);font-weight:800;line-height:1.05;letter-spacing:-2px;margin-bottom:20px;}
+.hero h1 .grad{background:linear-gradient(135deg,#6c63ff,#00d9a3);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-sub{font-size:16px;color:var(--text2);line-height:1.7;max-width:520px;margin-bottom:30px;}
+.hero-ctas{display:flex;gap:12px;flex-wrap:wrap;}
+.hero-trust{margin-top:20px;font-size:13px;color:var(--text3);}
+
+/* ── Phone mock ── */
+.phone-wrap{display:flex;justify-content:center;position:relative;}
+.phone{width:300px;border-radius:36px;background:#0d0d14;border:1px solid var(--border2);box-shadow:0 24px 80px rgba(0,0,0,.55),0 0 60px rgba(108,99,255,.12);padding:12px;animation:float 7s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-7px);}}
+.phone-screen{background:var(--surface);border-radius:26px;padding:14px;min-height:470px;display:flex;flex-direction:column;overflow:hidden;}
+.phone-notch{width:84px;height:18px;border-radius:9px;background:#000;margin:0 auto 14px;flex-shrink:0;}
+.phone-stage{display:flex;flex-direction:column;gap:10px;flex:1;transition:opacity .6s ease;}
+.phone-stage.fade{opacity:0;}
+.call-banner{background:var(--surface3);border:1px solid var(--border2);border-radius:14px;padding:11px 13px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.call-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;background:var(--pink-dim);color:var(--pink);}
+.call-banner.incoming .call-icon{background:var(--green-dim);color:var(--green);}
+.call-banner.incoming .call-icon::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--green);animation:pulse 1.4s ease-out infinite;}
+@keyframes pulse{from{transform:scale(1);opacity:.8;}to{transform:scale(1.9);opacity:0;}}
+.call-title{font-size:13px;font-weight:600;}
+.call-banner:not(.incoming) .call-title{color:var(--pink);}
+.call-num{font-size:11px;color:var(--text3);margin-top:1px;}
+.sms-thread{display:flex;flex-direction:column;gap:9px;padding-top:4px;}
+.sms-msg{max-width:86%;padding:10px 13px;border-radius:14px;font-size:13px;line-height:1.55;}
+.sms-msg.out{background:var(--accent);color:#fff;border-radius:16px 16px 4px 16px;align-self:flex-end;}
+.sms-msg.in{background:var(--surface3);color:var(--text);border-radius:16px 16px 16px 4px;align-self:flex-start;}
+.sms-msg.first{min-height:96px;}
+.booked-chip{align-self:center;background:var(--green-dim);color:var(--green);border:1px solid rgba(0,217,163,.25);font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;margin-top:4px;}
+.typing-msg{display:none;align-self:flex-end;background:var(--accent);border-radius:16px 16px 4px 16px;padding:12px 14px;}
+.typing-msg.show{display:inline-flex;gap:4px;align-items:center;}
+.tdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.75);animation:tblink 1.1s ease-in-out infinite;}
+.tdot:nth-child(2){animation-delay:.18s;} .tdot:nth-child(3){animation-delay:.36s;}
+@keyframes tblink{0%,60%,100%{opacity:.35;transform:translateY(0);}30%{opacity:1;transform:translateY(-3px);}}
+/* animated mode: bubbles hidden until stepped in */
+html.js .phone.anim .sms-msg,html.js .phone.anim .booked-chip{opacity:0;transform:translateY(8px) scale(.97);transition:opacity .35s ease-out,transform .35s ease-out;}
+html.js .phone.anim .sms-msg.show,html.js .phone.anim .booked-chip.show{opacity:1;transform:none;}
+html.js .phone.anim .typing-msg{transition:none;}
+
+/* ── Industry strip ── */
+.industries{border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:40px 0;background:var(--surface);}
+.ind-label{text-align:center;font-size:14px;color:var(--text2);margin-bottom:22px;padding:0 24px;}
+.marquee{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);}
+.marquee-track{display:flex;width:max-content;animation:scroll 60s linear infinite;}
+.marquee:hover .marquee-track{animation-play-state:paused;}
+.marquee-group{display:flex;align-items:center;gap:28px;padding-right:28px;}
+.ind-item{font-size:14px;color:var(--text3);white-space:nowrap;letter-spacing:.3px;}
+.ind-sep{color:rgba(108,99,255,.45);font-size:10px;}
+@keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+
+/* ── Section headings ── */
+.kicker{font-size:12px;text-transform:uppercase;letter-spacing:2px;color:var(--accent2);font-weight:500;margin-bottom:14px;}
+.section-head{text-align:center;max-width:640px;margin:0 auto 56px;}
+.section-head h2,.h2{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,44px);font-weight:800;letter-spacing:-1px;line-height:1.15;}
+.section-head p{font-size:15px;color:var(--text2);line-height:1.7;margin-top:14px;}
+
+/* ── Problem strip ── */
+.problems{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;}
+.problem{position:relative;padding-top:22px;}
+.problem::before{content:'';position:absolute;top:0;left:0;width:36px;height:2px;background:linear-gradient(90deg,var(--accent),var(--green));}
+.problem h3{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;line-height:1.3;margin-bottom:10px;}
+.problem p{font-size:14px;color:var(--text2);line-height:1.7;}
+
+/* ── Features ── */
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.feature-card{background:rgba(255,255,255,.03);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--border);border-radius:18px;padding:28px 26px;transition:transform .2s,border-color .2s,box-shadow .2s;}
+.feature-card:hover{transform:translateY(-2px);border-color:rgba(108,99,255,.35);box-shadow:0 8px 40px var(--accent-glow);}
+.feature-icon{width:44px;height:44px;border-radius:12px;background:var(--accent-glow);color:var(--accent2);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+.feature-card h3{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:8px;}
+.feature-card p{font-size:13.5px;color:var(--text2);line-height:1.65;}
+
+/* ── How it works ── */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px;max-width:1000px;margin:0 auto;position:relative;}
+.steps::before{content:'';position:absolute;top:24px;left:10%;right:10%;height:2px;background:linear-gradient(90deg,var(--accent),var(--green));opacity:.35;}
+.step-num{width:48px;height:48px;border-radius:50%;background:var(--surface);border:1px solid rgba(108,99,255,.4);color:var(--accent2);font-family:'Syne',sans-serif;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;margin-bottom:18px;position:relative;z-index:1;box-shadow:0 0 0 8px var(--bg);flex-shrink:0;}
+.step h3{font-family:'Syne',sans-serif;font-size:17px;font-weight:700;margin-bottom:8px;}
+.step p{font-size:14px;color:var(--text2);line-height:1.7;}
+
+/* ── Testimonials (ships disabled — see commented section in body) ── */
+.quote-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+.quote-card{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:18px;padding:26px;}
+.quote-text{font-size:14px;line-height:1.7;margin-bottom:16px;}
+.quote-name{font-size:13px;font-weight:600;}
+.quote-biz{font-size:12px;color:var(--text3);margin-top:2px;}
+
+/* ── Pricing teaser ── */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1060px;margin:0 auto;align-items:stretch;}
+.price-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:30px 26px;display:flex;flex-direction:column;position:relative;transition:border-color .2s,transform .2s;}
+.price-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.price-card.featured{border-color:var(--accent);background:linear-gradient(180deg,rgba(108,99,255,.07) 0%,var(--surface) 60%);box-shadow:0 12px 48px rgba(108,99,255,.15);}
+.price-card.featured:hover{border-color:var(--accent2);}
+.featured-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--accent),#8b84ff);color:#fff;font-size:11px;font-weight:600;letter-spacing:.5px;padding:4px 14px;border-radius:20px;white-space:nowrap;}
+.price-plan{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.price-card.featured .price-plan{color:var(--accent2);}
+.price-amount{font-family:'Syne',sans-serif;font-weight:800;line-height:1;margin-bottom:22px;}
+.price-amount .amount{font-size:44px;}
+.price-amount .period{font-size:14px;font-weight:400;color:var(--text3);}
+.price-amount .custom-label{font-size:30px;}
+.price-features{list-style:none;margin-bottom:28px;flex:1;}
+.price-features li{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--text2);padding:5px 0;line-height:1.4;}
+.price-features li .check{width:16px;height:16px;border-radius:50%;background:var(--green-dim);color:var(--green);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.price-card.featured .price-features li .check{background:var(--accent-glow);color:var(--accent2);}
+.price-card .btn{width:100%;}
+.pricing-more{text-align:center;margin-top:30px;}
+.pricing-more a{font-size:14px;color:var(--accent2);text-decoration:none;}
+.pricing-more a:hover{text-decoration:underline;}
+
+/* ── FAQ ── */
+.faq{max-width:680px;margin:0 auto;}
+.faq-item{border-bottom:1px solid var(--border);}
+.faq-item h3{margin:0;}
+.faq-q{width:100%;background:none;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;text-align:left;padding:20px 0;display:flex;justify-content:space-between;align-items:center;gap:16px;cursor:pointer;min-height:44px;}
+.faq-q .fi{color:var(--text3);font-size:20px;line-height:1;flex-shrink:0;transition:transform .2s;}
+.faq-item.open .faq-q .fi{transform:rotate(45deg);}
+.faq-a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .25s ease;}
+.faq-item.open .faq-a{grid-template-rows:1fr;}
+.faq-a-inner{overflow:hidden;}
+.faq-a-inner p{font-size:14px;color:var(--text2);line-height:1.7;padding-bottom:20px;max-width:60ch;}
+
+/* ── Final CTA band ── */
+.cta-band{position:relative;border-radius:24px;padding:72px 32px;text-align:center;background:var(--surface);border:1px solid rgba(108,99,255,.25);overflow:hidden;}
+.cta-band::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(108,99,255,.18),transparent 60%),radial-gradient(ellipse at 85% 100%,rgba(0,217,163,.08),transparent 50%);pointer-events:none;}
+.cta-band h2{font-family:'Syne',sans-serif;font-size:clamp(28px,4vw,42px);font-weight:800;letter-spacing:-1px;position:relative;}
+.cta-band p{font-size:15px;color:var(--text2);margin:14px 0 30px;position:relative;}
+.cta-band .hero-ctas{justify-content:center;position:relative;}
+
+/* ── Footer ── */
+footer{border-top:1px solid var(--border);padding:56px 0 32px;background:var(--surface);}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:44px;}
+.footer-logo{font-family:'Syne',sans-serif;font-size:17px;font-weight:800;background:linear-gradient(135deg,#6c63ff,#00d9a3);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+.footer-tag{font-size:13px;color:var(--text3);line-height:1.6;margin-top:10px;max-width:280px;}
+.footer-col h4{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);font-weight:600;margin-bottom:14px;}
+.footer-col a{display:block;font-size:13px;color:var(--text2);text-decoration:none;padding:5px 0;transition:color .15s;}
+.footer-col a:hover{color:var(--text);}
+.footer-bottom{border-top:1px solid var(--border);padding-top:24px;font-size:12px;color:var(--text3);}
+
+/* ── Scroll reveal (armed by JS via html.motion-ok only after a reduced-motion check; content always visible otherwise) ── */
+html.motion-ok .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease-out,transform .6s ease-out;transition-delay:var(--d,0s);}
+html.motion-ok .reveal.in{opacity:1;transform:none;}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important;}
+  .marquee{-webkit-mask-image:none;mask-image:none;}
+  .marquee-track{width:auto;}
+  .marquee-group{flex-wrap:wrap;justify-content:center;padding:0 24px;row-gap:12px;}
+  .marquee-group[aria-hidden="true"]{display:none;}
+}
+
+/* ── Responsive ── */
+@media (max-width:1024px){
+  .features-grid{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:980px){
+  .hero{min-height:0;padding:64px 0 56px;}
+  .hero-inner{grid-template-columns:1fr;gap:56px;text-align:center;}
+  .hero-sub{margin-left:auto;margin-right:auto;}
+  .hero-ctas{justify-content:center;}
+}
+@media (max-width:960px){
+  .pricing-grid{grid-template-columns:1fr;max-width:440px;}
+  .price-card.featured{order:-1;}
+}
+@media (max-width:860px){
+  .problems{grid-template-columns:1fr;gap:36px;}
+  .steps{grid-template-columns:1fr;gap:36px;}
+  .steps::before{top:0;bottom:0;left:23px;right:auto;width:2px;height:auto;background:linear-gradient(180deg,var(--accent),var(--green));}
+  .step{display:flex;gap:18px;align-items:flex-start;}
+  .step-num{margin-bottom:0;}
+}
+@media (max-width:720px){
+  .nav{padding:0 20px;}
+  .nav-links{display:none;}
+  .section{padding:72px 0;}
+  .features-grid{grid-template-columns:1fr;}
+  .footer-grid{grid-template-columns:1fr 1fr;gap:32px;}
+  .wrap{padding:0 20px;}
+}
+@media (max-width:480px){
+  .footer-grid{grid-template-columns:1fr;}
+  .nav-ctas .btn-sm{padding:8px 12px;}
+}
+</style>
+</head>
+<body>
+<!-- Book-a-call target: mailto:andrew@harakel-innovations.com — used for every Book-a-call CTA on this page. Single string; search-and-replace when a scheduler (Calendly etc.) exists. -->
+
+<!-- ═══════ NAV ═══════ -->
+<nav class="nav">
+  <a href="/" class="nav-logo">Harakel Innovations</a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="/pricing">Pricing</a></li>
+  </ul>
+  <div class="nav-ctas">
+    <a href="mailto:andrew@harakel-innovations.com" class="btn btn-primary btn-sm">Book a call</a>
+    <a href="/signup" class="btn btn-ghost btn-sm">Get started</a>
+  </div>
+</nav>
+
+<!-- ═══════ HERO ═══════ -->
+<header class="hero">
+  <div class="hero-bg" aria-hidden="true">
+    <div class="hero-photo"></div>
+    <div class="stars stars-a"></div>
+    <div class="stars stars-b"></div>
+    <div class="stars stars-c"></div>
+    <div class="hero-fallback"></div>
+    <canvas id="aurora-canvas"></canvas>
+  </div>
+  <div class="wrap hero-inner">
+    <div>
+      <div class="hero-badge">✦ AI business automation</div>
+      <h1>Your AI front desk.<br><span class="grad">Never miss another customer.</span></h1>
+      <p class="hero-sub">Harakel answers your missed calls, captures every lead, and books appointments 24/7 — so your business keeps growing even when nobody can pick up the phone.</p>
+      <div class="hero-ctas">
+        <a href="mailto:andrew@harakel-innovations.com" class="btn btn-primary btn-lg">Book a call</a>
+        <a href="/signup" class="btn btn-ghost btn-lg">Get started</a>
+      </div>
+      <div class="hero-trust">Month-to-month · Setup included · Cancel anytime</div>
+    </div>
+    <div class="phone-wrap" aria-hidden="true">
+      <div class="phone" id="phone-demo">
+        <div class="phone-screen">
+          <div class="phone-notch"></div>
+          <div class="phone-stage" id="phone-stage">
+            <div class="call-banner" id="call-banner">
+              <div class="call-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </div>
+              <div><div class="call-title" id="call-title">Missed call</div><div class="call-num">(555) 014-2391</div></div>
+            </div>
+            <div class="sms-thread">
+              <div class="sms-msg out first" id="msg1"><span id="msg1-text">Hi! Sorry we missed your call — this is the AI assistant for Your Business. Want me to book you a time? I can get you in this week.</span></div>
+              <div class="typing-msg" id="typing" aria-hidden="true"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
+              <div class="sms-msg in" id="msg2">Yes — tomorrow afternoon?</div>
+              <div class="sms-msg out" id="msg3">Done — you're booked for 2:30 PM tomorrow. See you then!</div>
+              <div class="booked-chip" id="booked-chip">✓ Appointment booked</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ═══════ INDUSTRY BREADTH STRIP ═══════ -->
+<section class="industries">
+  <div class="ind-label">Built for businesses that run on appointments and customers</div>
+  <div class="marquee">
+    <div class="marquee-track">
+      <div class="marquee-group">
+        <span class="ind-item">Hair &amp; Beauty Salons</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Barbershops</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Spas &amp; Wellness</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Nail Studios</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Med Spas &amp; Aesthetics</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Dental Offices</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Fitness &amp; Personal Training</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Home Services</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Automotive</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Restaurants</span><span class="ind-sep" aria-hidden="true">✦</span>
+        <span class="ind-item">Professional Services</span><span class="ind-sep" aria-hidden="true">✦</span>
+      </div>
+      <div class="marquee-group" aria-hidden="true">
+        <span class="ind-item">Hair &amp; Beauty Salons</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Barbershops</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Spas &amp; Wellness</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Nail Studios</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Med Spas &amp; Aesthetics</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Dental Offices</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Fitness &amp; Personal Training</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Home Services</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Automotive</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Restaurants</span><span class="ind-sep">✦</span>
+        <span class="ind-item">Professional Services</span><span class="ind-sep">✦</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PROBLEM STRIP ═══════ -->
+<section class="section">
+  <div class="wrap">
+    <div class="kicker reveal">Sound familiar?</div>
+    <div class="problems">
+      <div class="problem reveal" style="--d:0s;">
+        <h3>The phone rings while your hands are full.</h3>
+        <p>Every missed call is a customer choosing between you and whoever answers first.</p>
+      </div>
+      <div class="problem reveal" style="--d:.08s;">
+        <h3>Leads go cold after hours.</h3>
+        <p>People reach out at 9 PM. By the time you reply in the morning, they've moved on.</p>
+      </div>
+      <div class="problem reveal" style="--d:.16s;">
+        <h3>Follow-ups fall through the cracks.</h3>
+        <p>No-shows, unanswered messages, reviews never asked for — not because you don't care, but because you're busy running the place.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FEATURES ═══════ -->
+<section class="section" id="features" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Everything your front desk does — automated</h2>
+      <p>One platform that answers, books, follows up, and remembers. Tailored to your business during onboarding.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal" style="--d:0s;">
+        <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        <h3>AI Chatbot</h3>
+        <p>Lives on your website, answering questions and capturing leads 24/7. Visitors get instant answers; you get their name, number, and what they want.</p>
+      </div>
+      <div class="feature-card reveal" style="--d:.06s;">
+        <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><line x1="17" y1="1" x2="23" y2="7"/><line x1="23" y1="1" x2="17" y2="7"/></svg></div>
+        <h3>Missed-Call Text-Back</h3>
+        <p>When a call goes unanswered, your AI texts the caller back within seconds — so the conversation, and the booking, never goes cold.</p>
+      </div>
+      <div class="feature-card reveal" style="--d:.12s;">
+        <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg></div>
+        <h3>Smart Appointments</h3>
+        <p>Customers book straight into your calendar, and reminders go out automatically. Fewer back-and-forths, fewer no-shows.</p>
+      </div>
+      <div class="feature-card reveal" style="--d:.18s;">
+        <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <h3>Built-in CRM</h3>
+        <p>Every customer, conversation, and lead in one place — with a pipeline that tracks each one from first hello to booked.</p>
+      </div>
+      <div class="feature-card reveal" style="--d:.24s;">
+        <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M15.05 5A5 5 0 0 1 19 8.95"/><path d="M15.05 1A9 9 0 0 1 23 8.94"/></svg></div>
+        <h3>Voice AI Receptionist</h3>
+        <p>An AI that answers the phone when you can't — politely, accurately, and ready to take the booking.</p>
+      </div>
+      <div class="feature-card reveal" style="--d:.3s;">
+        <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
+        <h3>SMS &amp; Reviews</h3>
+        <p>Follow-ups and review requests sent automatically after appointments — so happy customers turn into public proof.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ HOW IT WORKS ═══════ -->
+<section class="section" id="how" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Up and running without lifting a finger</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal" style="--d:0s;">
+        <div class="step-num">1</div>
+        <div><h3>Book a call or sign up online.</h3><p>Tell us about your business — what you do, your hours, your services.</p></div>
+      </div>
+      <div class="step reveal" style="--d:.08s;">
+        <div class="step-num">2</div>
+        <div><h3>We tailor your AI to you.</h3><p>We handle the entire setup. Your AI learns your services, prices, and tone — no technical work on your end.</p></div>
+      </div>
+      <div class="step reveal" style="--d:.16s;">
+        <div class="step-num">3</div>
+        <div><h3>Your AI gets to work.</h3><p>Answering, capturing, and booking — around the clock, from day one.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS: enable when real quotes exist
+<section class="section" id="testimonials" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>What owners are saying</h2>
+    </div>
+    <div class="quote-grid">
+      <div class="quote-card reveal">
+        <p class="quote-text">"Quote goes here."</p>
+        <div class="quote-name">Name</div>
+        <div class="quote-biz">Business, City</div>
+      </div>
+      <div class="quote-card reveal">
+        <p class="quote-text">"Quote goes here."</p>
+        <div class="quote-name">Name</div>
+        <div class="quote-biz">Business, City</div>
+      </div>
+      <div class="quote-card reveal">
+        <p class="quote-text">"Quote goes here."</p>
+        <div class="quote-name">Name</div>
+        <div class="quote-biz">Business, City</div>
+      </div>
+    </div>
+  </div>
+</section>
+-->
+<!-- /TESTIMONIALS -->
+
+<!-- ═══════ PRICING TEASER ═══════ -->
+<section class="section" id="pricing" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Simple, honest pricing</h2>
+      <p>Month-to-month. Setup and onboarding included. Cancel anytime.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card reveal" style="--d:0s;">
+        <div class="price-plan">Starter</div>
+        <div class="price-amount"><span class="amount">$397</span><span class="period">/mo</span></div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> AI chatbot</li>
+          <li><span class="check">✓</span> Lead capture</li>
+          <li><span class="check">✓</span> CRM &amp; appointments</li>
+          <li><span class="check">✓</span> Competitor research tool</li>
+        </ul>
+        <a href="/signup?plan=starter" class="btn btn-ghost">Get started</a>
+      </div>
+      <div class="price-card featured reveal" style="--d:.08s;">
+        <div class="featured-badge">Built around your business</div>
+        <div class="price-plan">Custom</div>
+        <div class="price-amount"><span class="custom-label">Custom</span></div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Only the modules you need — nothing you don't</li>
+          <li><span class="check">✓</span> Dedicated setup &amp; onboarding</li>
+          <li><span class="check">✓</span> Priced around your business, not a tier</li>
+        </ul>
+        <a href="mailto:andrew@harakel-innovations.com" class="btn btn-primary">Book a call</a>
+      </div>
+      <div class="price-card reveal" style="--d:.16s;">
+        <div class="price-plan">Pro</div>
+        <div class="price-amount"><span class="amount">$997</span><span class="period">/mo</span></div>
+        <ul class="price-features">
+          <li><span class="check">✓</span> Everything in Starter</li>
+          <li><span class="check">✓</span> Voice AI receptionist</li>
+          <li><span class="check">✓</span> SMS &amp; review automation</li>
+          <li><span class="check">✓</span> Email automation</li>
+          <li><span class="check">✓</span> AI business coach</li>
+        </ul>
+        <a href="/signup?plan=pro" class="btn btn-ghost">Get started</a>
+      </div>
+    </div>
+    <div class="pricing-more reveal"><a href="/pricing">See full pricing →</a></div>
+  </div>
+</section>
+
+<!-- ═══════ FAQ ═══════ -->
+<section class="section" id="faq" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Questions, answered</h2>
+    </div>
+    <div class="faq reveal">
+      <div class="faq-item">
+        <h3><button class="faq-q" aria-expanded="false" aria-controls="faq-a1">Do I need technical skills?<span class="fi" aria-hidden="true">+</span></button></h3>
+        <div class="faq-a" id="faq-a1"><div class="faq-a-inner"><p>No. We set everything up for you — the AI, the booking flow, the website widget. If you can answer a few questions about your business, you're set.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <h3><button class="faq-q" aria-expanded="false" aria-controls="faq-a2">How fast is setup?<span class="fi" aria-hidden="true">+</span></button></h3>
+        <div class="faq-a" id="faq-a2"><div class="faq-a-inner"><p>Most businesses are live within a few days of signing up. We handle onboarding — you just send us your business details.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <h3><button class="faq-q" aria-expanded="false" aria-controls="faq-a3">Can I cancel anytime?<span class="fi" aria-hidden="true">+</span></button></h3>
+        <div class="faq-a" id="faq-a3"><div class="faq-a-inner"><p>Yes. Everything is month-to-month with no contracts. Cancel whenever you like.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <h3><button class="faq-q" aria-expanded="false" aria-controls="faq-a4">Will the AI sound like my business?<span class="fi" aria-hidden="true">+</span></button></h3>
+        <div class="faq-a" id="faq-a4"><div class="faq-a-inner"><p>Yes. During onboarding it learns your services, hours, prices, and tone — and you can refine how it responds anytime.</p></div></div>
+      </div>
+      <div class="faq-item">
+        <h3><button class="faq-q" aria-expanded="false" aria-controls="faq-a5">What if I want something custom?<span class="fi" aria-hidden="true">+</span></button></h3>
+        <div class="faq-a" id="faq-a5"><div class="faq-a-inner"><p>Book a call. We'll put together a plan around the exact modules you need — nothing you don't.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FINAL CTA ═══════ -->
+<section class="section" style="padding-top:0;">
+  <div class="wrap">
+    <div class="cta-band reveal">
+      <h2>Ready to stop missing customers?</h2>
+      <p>Book a call and see exactly what your AI front desk would handle for you.</p>
+      <div class="hero-ctas">
+        <a href="mailto:andrew@harakel-innovations.com" class="btn btn-primary btn-lg">Book a call</a>
+        <a href="/signup" class="btn btn-ghost btn-lg">Get started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ FOOTER ═══════ -->
+<footer>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo">Harakel Innovations</div>
+        <p class="footer-tag">AI business automation — calls answered, leads captured, appointments booked.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/signup">Get started</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="mailto:andrew@harakel-innovations.com">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Account</h4>
+        <a href="/client">Client login</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Harakel Innovations. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  'use strict';
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Scroll reveal ── */
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    document.documentElement.classList.add('motion-ok'); // arm reveals only when JS runs and motion is OK
+    var revealIO = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if (en.isIntersecting && en.intersectionRatio >= 0.14) { en.target.classList.add('in'); }
+        else if (!en.isIntersecting) { en.target.classList.remove('in'); }
+        /* 0–15% visible: dead zone — no change in either direction (anti-flicker hysteresis) */
+      });
+    }, { threshold: [0, 0.15] });
+    document.querySelectorAll('.reveal').forEach(function(el){ revealIO.observe(el); });
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
+  }
+
+  /* ── FAQ accordion ── */
+  document.querySelectorAll('.faq-q').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var item = btn.closest('.faq-item');
+      var open = item.classList.toggle('open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+
+  /* ── Aurora galaxy: sprite-stamped spiral nebula on canvas ── */
+  (function(){
+    var canvas = document.getElementById('aurora-canvas');
+    if (!canvas || !canvas.getContext) return; // CSS .hero-fallback stays visible
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var heroBg = canvas.parentElement;
+    heroBg.classList.add('canvas-on');
+    /* hybrid: the photo provides texture, canvas provides motion — halve cloud alpha so they blend */
+    var CLOUD_ALPHA = document.documentElement.classList.contains('hero-procedural') ? 1 : 0.5;
+
+    /* lumpy soft cloud sprites — pre-rendered once, reused every frame */
+    function makeSprite(r, g, b, lumps){
+      var s = 256, c = document.createElement('canvas');
+      c.width = s; c.height = s;
+      var x = c.getContext('2d');
+      x.globalCompositeOperation = 'lighter';
+      for (var i = 0; i < lumps.length; i++){
+        var L = lumps[i]; /* [cx, cy, radius, alpha] as fractions of sprite */
+        var grad = x.createRadialGradient(L[0]*s, L[1]*s, 0, L[0]*s, L[1]*s, L[2]*s);
+        grad.addColorStop(0, 'rgba('+r+','+g+','+b+','+L[3]+')');
+        grad.addColorStop(0.55, 'rgba('+r+','+g+','+b+','+(L[3]*0.35)+')');
+        grad.addColorStop(1, 'rgba('+r+','+g+','+b+',0)');
+        x.fillStyle = grad;
+        x.fillRect(0, 0, s, s);
+      }
+      return c;
+    }
+    var SPR = [
+      makeSprite(108,99,255, [[.45,.5,.42,.5],[.62,.4,.3,.35],[.38,.62,.26,.3]]),   /* violet A */
+      makeSprite(108,99,255, [[.5,.45,.4,.45],[.34,.56,.3,.35],[.6,.6,.24,.3]]),    /* violet B */
+      makeSprite(0,217,163,  [[.5,.5,.4,.4],[.64,.42,.28,.3],[.36,.58,.26,.28]]),   /* green A */
+      makeSprite(0,217,163,  [[.46,.52,.42,.36],[.58,.38,.3,.3],[.4,.66,.22,.26]]), /* green B */
+      makeSprite(67,56,224,  [[.5,.5,.45,.42],[.36,.44,.3,.3],[.62,.58,.28,.3]]),   /* indigo */
+      makeSprite(77,166,255, [[.5,.5,.4,.3],[.6,.44,.28,.24],[.4,.6,.24,.22]])      /* blue accent */
+    ];
+    var CORE = makeSprite(140,120,255, [[.5,.5,.48,.55],[.5,.5,.22,.5]]);
+
+    /* puffs seeded along two spiral arms around an off-center galactic core */
+    var puffs = [];
+    for (var arm = 0; arm < 2; arm++){
+      for (var i = 0; i < 9; i++){
+        var f = i / 8;
+        puffs.push({
+          spr: SPR[(arm * 3 + i) % SPR.length],
+          dist: 0.12 + f * 0.55,                    /* orbit radius (fraction of field) */
+          ang0: arm * Math.PI + f * 2.4,            /* spiral: angle advances along arm */
+          size: 0.55 - f * 0.22,                    /* bigger puffs near the core */
+          rotW: 0.05 + (i % 3) * 0.013,             /* sprite tumble speed */
+          e1r: 0.02 + (i % 4) * 0.008,  e1w: 0.041 + i * 0.0067, e1p: i * 1.7 + arm,
+          e2r: 0.012 + ((i + arm) % 3) * 0.007, e2w: 0.073 + i * 0.0091, e2p: i * 2.3,
+          sw: 0.113 + (i % 5) * 0.0083, sp: i * 0.9 + arm * 2.1,  /* scale breathing */
+          aw: 0.057 + (i % 4) * 0.011,  ap: i * 1.3,              /* alpha breathing */
+          a0: 0.5 + (i % 3) * 0.12
+        });
+      }
+    }
+
+    var W = 0, H = 0, CX = 0, CY = 0, FIELD = 0;
+    function resize(){
+      var r = heroBg.getBoundingClientRect();
+      W = Math.min(Math.round(r.width * 0.45) || 1, 760);   /* capped backing buffer; */
+      H = Math.min(Math.round(r.height * 0.45) || 1, 420);  /* CSS upscale blur = free glow */
+      canvas.width = W; canvas.height = H;
+      CX = W * 0.68; CY = H * 0.45;
+      FIELD = Math.max(W, H);
+    }
+
+    function draw(t){
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = 1;
+      ctx.clearRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      var cs = FIELD * 0.5 * (1 + 0.06 * Math.sin(t * 0.09));
+      ctx.globalAlpha = 0.5 * CLOUD_ALPHA;
+      ctx.drawImage(CORE, CX - cs / 2, CY - cs / 2, cs, cs);
+      for (var i = 0; i < puffs.length; i++){
+        var p = puffs[i];
+        var ang = p.ang0 + t * 0.05 / (0.6 + p.dist * 2.2);  /* differential rotation: inner shears faster */
+        var rad = p.dist * FIELD;
+        var px = CX + Math.cos(ang) * rad * 1.15 + (Math.cos(p.e1w * t + p.e1p) * p.e1r + Math.cos(p.e2w * t + p.e2p) * p.e2r) * FIELD;
+        var py = CY + Math.sin(ang) * rad * 0.7  + (Math.sin(p.e1w * t + p.e1p) * p.e1r + Math.sin(p.e2w * t + p.e2p) * p.e2r) * FIELD;
+        var sc = p.size * FIELD * (1 + 0.25 * Math.sin(p.sw * t + p.sp));
+        ctx.globalAlpha = Math.max(0, p.a0 + 0.2 * Math.sin(p.aw * t + p.ap)) * CLOUD_ALPHA;
+        ctx.translate(px, py);
+        ctx.rotate(p.rotW * t + p.ang0);
+        ctx.drawImage(p.spr, -sc / 2, -sc / 2, sc, sc);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+      }
+    }
+
+    var rafId = 0, heroVisible = true, tabVisible = !document.hidden, t0 = performance.now(), rsT = 0;
+    function frame(now){
+      rafId = 0;
+      draw((now - t0) / 1000);
+      if (heroVisible && tabVisible) rafId = requestAnimationFrame(frame);
+    }
+    function play(){ if (!rafId && heroVisible && tabVisible) rafId = requestAnimationFrame(frame); }
+    function stop(){ if (rafId) { cancelAnimationFrame(rafId); rafId = 0; } }
+
+    resize();
+
+    if (reduceMotion) { /* one frozen moment, mid-swirl — no loop, no observers */
+      draw(40);
+      window.addEventListener('resize', function(){
+        clearTimeout(rsT); rsT = setTimeout(function(){ resize(); draw(40); }, 150);
+      });
+      return;
+    }
+
+    window.addEventListener('resize', function(){
+      clearTimeout(rsT);
+      rsT = setTimeout(function(){ resize(); if (!rafId) draw((performance.now() - t0) / 1000); }, 150);
+    });
+    document.addEventListener('visibilitychange', function(){
+      tabVisible = !document.hidden;
+      if (tabVisible) play(); else stop();
+    });
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function(entries){
+        heroVisible = entries[0].isIntersecting;
+        if (heroVisible) play(); else stop();
+      }, { threshold: 0 }).observe(heroBg);
+    }
+    play();
+  })();
+
+  /* ── Phone demo: missed-call text-back loop ── */
+  var phone = document.getElementById('phone-demo');
+  if (!phone || reduceMotion || !('IntersectionObserver' in window)) return; // static final state stays
+
+  var stage = document.getElementById('phone-stage');
+  var banner = document.getElementById('call-banner');
+  var callTitle = document.getElementById('call-title');
+  var msg1 = document.getElementById('msg1');
+  var msg1Text = document.getElementById('msg1-text');
+  var msg2 = document.getElementById('msg2');
+  var msg3 = document.getElementById('msg3');
+  var chip = document.getElementById('booked-chip');
+  var typing = document.getElementById('typing');
+  var FULL = msg1Text.textContent;
+
+  var timers = [], typeTimer = null, running = false;
+  function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+  function clearAll(){
+    timers.forEach(clearTimeout); timers = [];
+    if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+  }
+  function resetState(){
+    phone.classList.add('anim');
+    stage.classList.remove('fade');
+    banner.classList.add('incoming');
+    callTitle.textContent = 'Incoming call';
+    [msg1, msg2, msg3, chip].forEach(function(el){ el.classList.remove('show'); });
+    typing.classList.remove('show');
+    msg1Text.textContent = '';
+  }
+  function showFinal(){
+    stage.classList.remove('fade');
+    banner.classList.remove('incoming');
+    callTitle.textContent = 'Missed call';
+    msg1Text.textContent = FULL;
+    typing.classList.remove('show');
+    [msg1, msg2, msg3, chip].forEach(function(el){ el.classList.add('show'); });
+  }
+  function cycle(){
+    resetState();
+    later(function(){
+      banner.classList.remove('incoming');
+      callTitle.textContent = 'Missed call';
+    }, 2500);
+    later(function(){ typing.classList.add('show'); }, 3300);
+    later(function(){
+      typing.classList.remove('show');
+      msg1.classList.add('show');
+      var i = 0;
+      typeTimer = setInterval(function(){
+        i++;
+        msg1Text.textContent = FULL.slice(0, i);
+        if (i >= FULL.length) { clearInterval(typeTimer); typeTimer = null; }
+      }, 26);
+    }, 4400);
+    later(function(){ msg2.classList.add('show'); }, 9200);
+    later(function(){ msg3.classList.add('show'); }, 10800);
+    later(function(){ chip.classList.add('show'); }, 11800);
+    later(function(){ stage.classList.add('fade'); }, 15400);
+    later(function(){ if (running) cycle(); }, 16200);
+  }
+  var phoneIO = new IntersectionObserver(function(entries){
+    var visible = entries[0].isIntersecting;
+    if (visible && !running) { running = true; cycle(); }
+    else if (!visible && running) { running = false; clearAll(); showFinal(); }
+  }, { threshold: 0.3 });
+  phoneIO.observe(phone);
+})();
+</script>
+</body>
+</html>

@@ -3,3 +3,6 @@
 .env.local
 .DS_Store
 node_modules/
+
+# Full-res source image — web-optimized crops (nebula.jpg, nebula-mobile.jpg) are committed instead
+assets/nebula-original.jpg
