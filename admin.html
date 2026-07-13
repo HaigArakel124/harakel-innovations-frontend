@@ -556,8 +556,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     </div>
     <div class="card" style="position:sticky;top:90px;align-self:start;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <div class="client-logo" id="d-logo" style="width:38px;height:38px;font-size:12px;font-weight:800;background:linear-gradient(135deg,#ff6b9d,#ffb547);">BB</div>
-        <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="d-name">Bloom Beauty Co.</div><div style="font-size:11px;color:var(--text3);" id="d-url">bloombeautyco.com</div></div>
+        <div class="client-logo" id="d-logo" style="width:38px;height:38px;font-size:12px;font-weight:800;background:var(--surface3);">—</div>
+        <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="d-name">No client selected</div><div style="font-size:11px;color:var(--text3);" id="d-url"></div></div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
         <button class="btn btn-primary btn-sm" onclick="toast('Opening client dashboard!')">Dashboard</button>
@@ -598,7 +598,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div class="wiz-step active" id="ws1">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Tell us about the business</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">This info will configure all AI tools automatically.</div>
-        <div class="grid-2"><div class="form-group"><label class="form-label">Business name *</label><input class="form-input" id="biz-name" placeholder="e.g. Bloom Beauty Co."></div><div class="form-group"><label class="form-label">Owner name *</label><input class="form-input" id="wiz-owner" placeholder="e.g. Sarah Thompson"></div></div>
+        <div class="grid-2"><div class="form-group"><label class="form-label">Business name *</label><input class="form-input" id="biz-name" placeholder="e.g. your business name"></div><div class="form-group"><label class="form-label">Owner name *</label><input class="form-input" id="wiz-owner" placeholder="e.g. owner's full name"></div></div>
         <div class="grid-2"><div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="wiz-phone" placeholder="(555) 000-0000"></div><div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="wiz-email" placeholder="owner@business.com"></div></div>
         <div class="form-group"><label class="form-label">Business address</label><input class="form-input" id="wiz-address" placeholder="123 Main St, City, State"></div>
         <div class="grid-2"><div class="form-group"><label class="form-label">Website (if existing)</label><input class="form-input" id="wiz-website" placeholder="www.yourbusiness.com"></div><div class="form-group"><label class="form-label">Business hours</label><input class="form-input" id="wiz-hours" placeholder="Mon–Fri 9am–6pm"></div></div>
@@ -639,7 +639,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div class="wiz-step" id="ws4">
         <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:6px;">Set up their branding</div>
         <div style="color:var(--text2);font-size:13px;margin-bottom:20px;">Applied across their website, chatbot, and all client-facing tools.</div>
-        <div class="form-group"><label class="form-label">Brand display name</label><input class="form-input" id="wiz-brand-display" placeholder="e.g. Bloom Beauty Assistant"></div>
+        <div class="form-group"><label class="form-label">Brand display name</label><input class="form-input" id="wiz-brand-display" placeholder="e.g. your brand's assistant name"></div>
         <div class="form-group"><label class="form-label">AI assistant name</label><input class="form-input" id="wiz-bot-name" placeholder="e.g. Aria, Nova, Luna..."></div>
         <div class="form-group"><label class="form-label">Brand color</label><div style="display:flex;gap:8px;margin-top:6px;">
           <div style="width:30px;height:30px;border-radius:7px;background:#6c63ff;cursor:pointer;border:2px solid white;" onclick="document.getElementById('wiz-brand-color').value='#6c63ff';toast('Color selected!')"></div>
@@ -649,7 +649,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
           <div style="width:30px;height:30px;border-radius:7px;background:#4da6ff;cursor:pointer;" onclick="document.getElementById('wiz-brand-color').value='#4da6ff';toast('Color selected!')"></div>
           <input type="color" id="wiz-brand-color" value="#6c63ff" style="width:30px;height:30px;border-radius:7px;border:1px solid var(--border2);cursor:pointer;padding:2px;background:var(--surface2);">
         </div></div>
-        <div class="form-group"><label class="form-label">Chatbot greeting message</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. Hi! I'm Aria from Bloom Beauty. How can I help you today?"></textarea></div>
+        <div class="form-group"><label class="form-label">Chatbot greeting message</label><textarea class="form-input" style="min-height:60px;" placeholder="e.g. Hi! I'm your assistant. How can I help you today?"></textarea></div>
       </div>
       <!-- Step 5 — Plan & Pay -->
       <div class="wiz-step" id="ws5">
@@ -819,8 +819,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div class="chat-preview">
         <div class="chat-preview-header">
           <div style="width:34px;height:34px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;">🤖</div>
-          <div style="margin-left:2px;"><div style="font-weight:600;font-size:13px;" id="bot-name-disp">Aria</div><div style="font-size:10px;opacity:0.8;">Online · Replies instantly</div></div>
-          <div style="width:8px;height:8px;background:var(--green);border-radius:50%;margin-left:auto;"></div>
+          <div style="margin-left:2px;"><div style="font-weight:600;font-size:13px;" id="bot-name-disp">Aria</div></div>
+          <!-- Removed static "Online · Replies instantly" sub-label and green status dot: they asserted a live online status with no real health check behind them. Re-add when a real bot health/status endpoint exists. -->
+
         </div>
         <div class="chat-messages" id="chat-msgs">
           <div class="chat-msg bot"><div style="width:26px;height:26px;border-radius:50%;background:var(--accent-glow);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">🤖</div><div><div class="msg-bubble" id="greeting-disp">👋 Hi there! I'm Aria, your virtual assistant. How can I help you today?</div><div style="font-size:10px;color:var(--text3);margin-top:3px;">Just now</div></div></div>
@@ -940,6 +941,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 
 <!-- ═══════ EMAIL AI ═══════ -->
 <div class="panel" id="panel-email">
+  <div class="section-heading">Email AI</div>
+  <div class="section-sub">Not available yet — no email data to show.</div>
+  <div class="card" style="text-align:center;padding:48px 24px;color:var(--text3);">Email AI isn't available yet. Inbox, replies, auto-responders and templates will work once an email backend is connected. Nothing here is fabricated.</div>
+  <!-- EMAIL AI PAGE (disabled): entirely mock — fabricated inbox (names, bodies, timestamps) and AI reply draft. The auto-responder toggles and Templates list were dead decoration: loadTpl only injected hardcoded client-side strings, toggles were classList-only, nothing saved or loaded, and there is no /api/email endpoint. Re-enable when real email endpoints exist (inbox, send, template config). Do not render fabricated data. Original design preserved inert below. -->
+  <template id="disabled-email-page">
   <div style="display:grid;grid-template-columns:220px 1fr 220px;height:calc(100vh - 120px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
     <div style="border-right:1px solid var(--border);padding:14px;overflow-y:auto;">
       <input class="form-input" placeholder="Search inbox..." style="font-size:12px;padding:7px 10px;margin-bottom:10px;">
@@ -990,6 +996,7 @@ Warm regards,
       <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="toast('Template editor opened!')">+ Create template</button>
     </div>
   </div>
+  </template>
 </div>
 
 <!-- ═══════ CRM ═══════ -->
@@ -1053,6 +1060,11 @@ Warm regards,
 
 <!-- ═══════ SMS & REVIEWS ═══════ -->
 <div class="panel" id="panel-sms">
+  <div class="section-heading">SMS &amp; Reviews</div>
+  <div class="section-sub">Not available yet — no SMS or review data to show.</div>
+  <div class="card" style="text-align:center;padding:48px 24px;color:var(--text3);">SMS &amp; Reviews isn't available yet. Sequences, templates and review requests will work once an SMS/reviews backend is connected. Nothing here is fabricated.</div>
+  <!-- SMS & REVIEWS PAGE (disabled): fabricated stats (rating, reviews, click rate) and a fake preview conversation. The SMS sequences toggles and Message templates looked like config but were dead decoration: "Save & activate" only toasted, nothing saved or loaded, and there is no /api/sms endpoint. Re-enable when real SMS/reviews endpoints exist (sequence + template config, send, review tracking). Do not render fabricated data. Original design preserved inert below. -->
+  <template id="disabled-sms-page">
   <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
     <div class="stat-card amber"><div class="stat-icon">⭐</div><div class="stat-value">4.8</div><div class="stat-label">Avg Google rating</div><div class="stat-change up">Across all clients</div></div>
     <div class="stat-card green"><div class="stat-icon">📱</div><div class="stat-value">47</div><div class="stat-label">Reviews generated</div><div class="stat-change up">↑ 38% this month</div></div>
@@ -1095,6 +1107,7 @@ Warm regards,
       </div>
     </div>
   </div>
+  </template>
 </div>
 
 <!-- ═══════ BILLING ═══════ -->
@@ -1450,11 +1463,10 @@ function _updateCRM(leads, ls) {
 }
 
 // ═══════ CLIENT PORTAL ═══════
-const clients = {
-  bloom:   {logo:'BB',name:'Bloom Beauty Co.',  url:'bloombeautyco.com',  grad:'linear-gradient(135deg,#ff6b9d,#ffb547)'},
-  techpro: {logo:'TP',name:'TechPro Solutions', url:'techprosolutions.com',grad:'linear-gradient(135deg,#6c63ff,#4da6ff)'},
-  lee:     {logo:'LC',name:"Lee's Chiropractic",url:'leeschiro.com',       grad:'linear-gradient(135deg,#00d9a3,#4da6ff)'},
-};
+// Client detail is populated from real /api/clients data (window._apiClients). This legacy
+// demo map (Bloom / TechPro / Lee) was emptied so no fabricated client can ever render;
+// selectClient() falls through to the real _apiClients lookup.
+const clients = {};
 var _selectedClientId = null;
 function selectClient(el, id) {
   document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
