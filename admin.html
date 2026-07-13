@@ -379,16 +379,16 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
     <div class="nav-item active" data-page="dashboard"><span class="icon">◈</span><span>Dashboard</span></div>
     <div class="nav-item" data-page="analytics"><span class="icon">◎</span><span>Analytics</span></div>
     <div class="nav-section-label">Clients</div>
-    <div class="nav-item" data-page="clients"><span class="icon">◉</span><span>Client Portal</span><span class="nav-badge">3</span></div>
+    <div class="nav-item" data-page="clients"><span class="icon">◉</span><span>Client Portal</span></div>
     <div class="nav-item" data-page="onboarding"><span class="icon">⬡</span><span>Onboarding</span></div>
     <div class="nav-section-label">Tools</div>
     <div class="nav-item" data-page="builder"><span class="icon">⊞</span><span>Website Builder</span></div>
-    <div class="nav-item" data-page="chatbot"><span class="icon">◌</span><span>AI Chatbot</span><span class="nav-badge" style="background:var(--green);color:#000">Live</span></div>
-    <div class="nav-item" data-page="appointments"><span class="icon">◷</span><span>Appointments</span><span class="nav-badge">4</span></div>
-    <div class="nav-item" data-page="leads"><span class="icon">◉</span><span>Leads</span><span class="nav-badge">12</span></div>
+    <div class="nav-item" data-page="chatbot"><span class="icon">◌</span><span>AI Chatbot</span></div>
+    <div class="nav-item" data-page="appointments"><span class="icon">◷</span><span>Appointments</span><span class="nav-badge" id="nav-badge-appts" style="display:none">0</span></div>
+    <div class="nav-item" data-page="leads"><span class="icon">◉</span><span>Leads</span><span class="nav-badge" id="nav-badge-leads" style="display:none">0</span></div>
     <div class="nav-section-label">Automation</div>
     <div class="nav-item" data-page="voice"><span class="icon">☏</span><span>Voice AI</span></div>
-    <div class="nav-item" data-page="email"><span class="icon">◫</span><span>Email AI</span><span class="nav-badge">5</span></div>
+    <div class="nav-item" data-page="email"><span class="icon">◫</span><span>Email AI</span></div>
     <div class="nav-item" data-page="crm"><span class="icon">◧</span><span>CRM</span></div>
     <div class="nav-item" data-page="sms"><span class="icon">✉</span><span>SMS & Reviews</span></div>
     <div class="nav-section-label">Business</div>
@@ -443,17 +443,21 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <!-- ═══════ DASHBOARD ═══════ -->
 <div class="panel active" id="panel-dashboard">
   <div style="margin-bottom:20px;"><div class="section-heading">Good morning ☀️</div><div class="section-sub">Here's what's happening across your clients today.</div></div>
-  <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
     <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="stat-leads-count">—</div><div class="stat-label">New leads</div><div class="stat-change up" id="stat-leads-change">Loading...</div></div>
     <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="stat-appts-count">—</div><div class="stat-label">Appointments today</div><div class="stat-change up" id="stat-appts-change">Loading...</div></div>
+    <!-- CHATBOT UPTIME CARD (disabled): re-enable when a real bot health/monitoring endpoint exists. Do not display a fabricated "All bots running" status.
     <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">—</div><div class="stat-label">Chatbot uptime</div><div class="stat-change up">All bots running</div></div>
+    -->
+    <!-- PIPELINE VALUE CARD (disabled): re-enable when a real pipeline dollar-value endpoint exists. Do not display a fabricated "$3.2K this week".
     <div class="stat-card pink"><div class="stat-icon">◧</div><div class="stat-value">—</div><div class="stat-label">Pipeline value</div><div class="stat-change up">↑ $3.2K this week</div></div>
+    -->
     <div class="stat-card blue"><div class="stat-icon">⬡</div><div class="stat-value" id="stat-clients-count">—</div><div class="stat-label">Active clients</div><div class="stat-change up" id="stat-clients-change">Loading...</div></div>
   </div>
   <div class="grid-2" style="margin-bottom:18px;">
     <div class="quick-action-btn" onclick="window.nav('onboarding',null)"><div style="font-size:20px;margin-bottom:5px;">⬡</div><div style="font-size:13px;font-weight:500;">Onboard new client</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">Set up website, chatbot & automations</div></div>
-    <div class="quick-action-btn" onclick="window.nav('leads',null)"><div style="font-size:20px;margin-bottom:5px;">◉</div><div style="font-size:13px;font-weight:500;">View all leads</div><div style="font-size:11px;color:var(--text3);margin-top:2px;" id="qlink-leads-desc">12 new leads need attention</div></div>
-    <div class="quick-action-btn" onclick="window.nav('appointments',null)"><div style="font-size:20px;margin-bottom:5px;">◷</div><div style="font-size:13px;font-weight:500;">Today's appointments</div><div style="font-size:11px;color:var(--text3);margin-top:2px;" id="qlink-appts-desc">4 bookings scheduled</div></div>
+    <div class="quick-action-btn" onclick="window.nav('leads',null)"><div style="font-size:20px;margin-bottom:5px;">◉</div><div style="font-size:13px;font-weight:500;">View all leads</div><div style="font-size:11px;color:var(--text3);margin-top:2px;" id="qlink-leads-desc">0 new leads need attention</div></div>
+    <div class="quick-action-btn" onclick="window.nav('appointments',null)"><div style="font-size:20px;margin-bottom:5px;">◷</div><div style="font-size:13px;font-weight:500;">Today's appointments</div><div style="font-size:11px;color:var(--text3);margin-top:2px;" id="qlink-appts-desc">0 bookings scheduled</div></div>
     <div class="quick-action-btn" onclick="window.nav('analytics',null)"><div style="font-size:20px;margin-bottom:5px;">◎</div><div style="font-size:13px;font-weight:500;">View analytics</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">See performance across all clients</div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 300px;gap:18px;">
@@ -463,6 +467,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div id="dash-leads-list"><div style="font-size:12px;color:var(--text3);padding:12px 0;">Loading live data...</div>
         </div>
       </div>
+      <!-- LIVE ACTIVITY FEED (disabled): every entry (names, timestamps) was fabricated. Re-enable when a real activity/events endpoint exists — or rebuild it honestly from real recent leads + appointments (both already fetched). Do not render fabricated activity. Original design preserved inert in the template below. -->
+      <template id="disabled-activity-feed">
       <div class="card">
         <div class="card-header"><div class="card-title">Live activity feed</div><span class="lead-status status-active">● Live</span></div>
         <div class="activity-item"><div class="activity-icon" style="background:var(--green-dim);color:var(--green)">◎</div><div style="flex:1;font-size:12px;">Chatbot captured lead <strong>Maria Rodriguez</strong> on Bloom Beauty Co. website</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">2m</div></div>
@@ -471,6 +477,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div class="activity-item"><div class="activity-icon" style="background:var(--pink-dim);color:var(--pink)">☏</div><div style="flex:1;font-size:12px;">Voice AI answered call — appointment booked</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">1h</div></div>
         <div class="activity-item"><div class="activity-icon" style="background:var(--blue-dim);color:var(--blue)">⭐</div><div style="flex:1;font-size:12px;">Review request sent to <strong>Sarah Thompson</strong> after appointment</div><div style="font-size:10px;color:var(--text3);flex-shrink:0;">2h</div></div>
       </div>
+      </template>
     </div>
     <div class="flex-col">
       <div class="card">
@@ -480,10 +487,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       </div>
       <div class="card">
         <div class="card-header"><div class="card-title">Monthly revenue</div></div>
-        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;" id="dash-mrr">$4,200</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;" id="dash-mrr-sub">March 2026 · 3 active subscriptions</div>
-        <div class="progress-bar" style="margin-bottom:6px;"><div class="progress-fill" style="width:70%;background:var(--accent);"></div></div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:14px;">70% to $6,000 monthly goal</div>
+        <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:-1px;margin-bottom:4px;" id="dash-mrr">$0</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px;" id="dash-mrr-sub">No active subscriptions yet</div>
+        <!-- REVENUE GOAL PROGRESS BAR (removed): the "$6,000 monthly goal" and its 70% fill were invented. Re-enable when a real revenue-goal setting exists. Do not display a fabricated goal. -->
         <button class="btn btn-primary btn-sm" style="width:100%;" onclick="window.nav('onboarding',null)">+ Onboard next client</button>
       </div>
     </div>
@@ -493,6 +499,10 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 <!-- ═══════ ANALYTICS ═══════ -->
 <div class="panel" id="panel-analytics">
   <div class="section-heading">Analytics</div>
+  <div class="section-sub">Not available yet — there's no analytics data to show.</div>
+  <div class="card" style="text-align:center;padding:48px 24px;color:var(--text3);">This page isn't available yet. It will show real performance data once reporting endpoints exist. Nothing here is fabricated.</div>
+  <!-- ANALYTICS PAGE (disabled): re-enable when real reporting endpoints exist (leads over time, MRR history, lead source breakdown). NOTE: the an-* stat cards were wired to real /api/clients + /api/leads data; the charts and donut used hardcoded values. Do not render fabricated data. Original design preserved inert below. -->
+  <template id="disabled-analytics-page">
   <div class="section-sub">Track ROI and results across all your clients.</div>
   <div class="stats-grid" style="grid-template-columns:repeat(5,1fr);">
     <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="an-leads">—</div><div class="stat-label">Leads captured</div><div class="stat-change up" id="an-leads-chg">Loading...</div></div>
@@ -533,6 +543,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div style="display:flex;justify-content:space-between;padding:9px 0;font-size:13px;"><span>Monthly revenue</span><span id="an-perf-mrr" style="font-weight:600;color:var(--green);">—</span></div>
     </div>
   </div>
+  </template>
 </div>
 
 <!-- ═══════ CLIENT PORTAL ═══════ -->
@@ -853,11 +864,13 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 
 <!-- ═══════ LEADS ═══════ -->
 <div class="panel" id="panel-leads">
-  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+  <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
     <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="leads-new-count">—</div><div class="stat-label">New this week</div><div class="stat-change up" id="leads-new-change">—</div></div>
     <div class="stat-card pink"><div class="stat-icon">🔥</div><div class="stat-value" id="leads-hot-count">—</div><div class="stat-label">Hot leads</div><div class="stat-change up" id="leads-hot-change">—</div></div>
     <div class="stat-card green"><div class="stat-icon">◷</div><div class="stat-value" id="leads-booked-count">—</div><div class="stat-label">Booked</div><div class="stat-change up" id="leads-booked-change">—</div></div>
+    <!-- CHATBOT CAPTURE RATE CARD (disabled): re-enable when a backend endpoint exists that computes capture rate (needs visitor/session analytics we do not collect). Do not display a fabricated "45% / +4pts".
     <div class="stat-card amber"><div class="stat-icon">◎</div><div class="stat-value">45%</div><div class="stat-label">Chatbot capture rate</div><div class="stat-change up">↑ 4pts this month</div></div>
+    -->
   </div>
   <div style="display:flex;gap:8px;margin-bottom:16px;">
     <input class="form-input" placeholder="Search leads..." style="flex:1;">
@@ -874,6 +887,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 
 <!-- ═══════ VOICE AI ═══════ -->
 <div class="panel" id="panel-voice">
+  <div class="section-heading">Voice AI</div>
+  <div class="section-sub">Not available yet — no call data to show.</div>
+  <div class="card" style="text-align:center;padding:48px 24px;color:var(--text3);">Voice AI isn't available yet. This page will activate when the voice backend is connected. Nothing here is fabricated.</div>
+  <!-- VOICE AI PAGE (disabled): mock UI with fabricated calls (names, numbers, durations). Re-enable when a real voice/telephony backend exists. Do not render fabricated call data. Original design preserved inert below. -->
+  <template id="disabled-voice-page">
   <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;">
     <div class="flex-col">
       <div class="config-section">
@@ -917,6 +935,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       </div>
     </div>
   </div>
+  </template>
 </div>
 
 <!-- ═══════ EMAIL AI ═══════ -->
@@ -975,6 +994,11 @@ Warm regards,
 
 <!-- ═══════ CRM ═══════ -->
 <div class="panel" id="panel-crm">
+  <div class="section-heading">CRM</div>
+  <div class="section-sub">Not available yet — no contact data to show.</div>
+  <div class="card" style="text-align:center;padding:48px 24px;color:var(--text3);">The CRM isn't available yet. Pipeline and contacts will appear once CRM endpoints exist. Nothing here is fabricated.</div>
+  <!-- CRM PAGE (disabled): mixed real and mock — the pipeline board was wired to real leads, but the response rate and contact-detail card were fabricated. Re-enable when real CRM endpoints exist (contacts, deal values, activity). Do not render fabricated data. Original design preserved inert below. -->
+  <template id="disabled-crm-page">
   <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
     <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value" id="crm-stat-contacts">—</div><div class="stat-label">Total contacts</div><div class="stat-change up" id="crm-stat-contacts-chg">Loading...</div></div>
     <div class="stat-card green"><div class="stat-icon">◈</div><div class="stat-value" id="crm-stat-pipeline">—</div><div class="stat-label">Pipeline value</div><div class="stat-change up" id="crm-stat-pipeline-chg">Loading...</div></div>
@@ -1024,6 +1048,7 @@ Warm regards,
       </div>
     </div>
   </div>
+  </template>
 </div>
 
 <!-- ═══════ SMS & REVIEWS ═══════ -->
@@ -1074,6 +1099,11 @@ Warm regards,
 
 <!-- ═══════ BILLING ═══════ -->
 <div class="panel" id="panel-billing">
+  <div class="section-heading">Billing</div>
+  <div class="section-sub">Not available yet — no billing data to show.</div>
+  <div class="card" style="text-align:center;padding:48px 24px;color:var(--text3);">Billing isn't available yet. Real invoices and subscriptions will appear once billing endpoints exist. Nothing here is fabricated.</div>
+  <!-- BILLING PAGE (disabled): fabricated MRR, invoices, plan cards and revenue goal. Re-enable when real billing endpoints exist (Stripe invoices/subscriptions). Do not render fabricated financials. Original design preserved inert below. -->
+  <template id="disabled-billing-page">
   <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
     <div class="stat-card green"><div class="stat-icon">💰</div><div class="stat-value">$4,200</div><div class="stat-label">MRR (Mar 2026)</div><div class="stat-change up">↑ $1,000 vs Feb</div></div>
     <div class="stat-card purple"><div class="stat-icon">◉</div><div class="stat-value">3</div><div class="stat-label">Paying clients</div><div class="stat-change up">1 trial converting</div></div>
@@ -1113,6 +1143,7 @@ Warm regards,
       </div>
     </div>
   </div>
+  </template>
 </div>
 
   </div><!-- /content -->
@@ -2367,9 +2398,13 @@ function _setDashboardZeroStates() {
   var zero = {
     'stat-leads-count': '0', 'stat-leads-change': 'No leads yet',
     'stat-appts-count': '0', 'stat-appts-change': 'None scheduled',
-    'leads-new-count': '0', 'leads-hot-count': '0', 'leads-booked-count': '0'
+    'leads-new-count': '0', 'leads-hot-count': '0', 'leads-booked-count': '0',
+    'qlink-leads-desc': '0 new leads need attention',
+    'qlink-appts-desc': '0 bookings scheduled'
   };
   Object.keys(zero).forEach(function(id) { var el = document.getElementById(id); if (el) el.textContent = zero[id]; });
+  // Sidebar count badges: hidden until there is a real, non-zero count
+  ['nav-badge-leads', 'nav-badge-appts'].forEach(function(id) { var b = document.getElementById(id); if (b) b.style.display = 'none'; });
   _updateDashboardLeads([]);
   _updateLeadsTable([]);
   _updateDashboardAppts([]);
@@ -2430,6 +2465,9 @@ async function loadLiveData() {
       if (statLeads) statLeads.textContent = total;
       var qlLeads = document.getElementById('qlink-leads-desc');
       if (qlLeads) qlLeads.textContent = total + ' lead' + (total !== 1 ? 's' : '') + ' need attention';
+
+      var nbLeads = document.getElementById('nav-badge-leads');
+      if (nbLeads) { nbLeads.textContent = total; nbLeads.style.display = total > 0 ? '' : 'none'; }
 
       _anLeads = leads;
       _updateDashboardLeads(leads);
@@ -2492,6 +2530,9 @@ async function loadLiveData() {
       if (statAppts) statAppts.textContent = apptCount;
       var qlAppts = document.getElementById('qlink-appts-desc');
       if (qlAppts) qlAppts.textContent = apptCount + ' booking' + (apptCount !== 1 ? 's' : '') + ' scheduled';
+
+      var nbAppts = document.getElementById('nav-badge-appts');
+      if (nbAppts) { nbAppts.textContent = apptCount; nbAppts.style.display = apptCount > 0 ? '' : 'none'; }
 
       _anApptCount = apptCount;
       _anAppts = appts;
