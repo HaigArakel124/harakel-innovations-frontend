@@ -28,6 +28,7 @@
 
   var botName    = cfg.bot_name    || 'Aria';
   var brandColor = cfg.brand_color || '#6c63ff';
+  var greeting   = '';   // set from the client's public config; falls back to the default in init()
   var isOpen     = false;
   var leadCaptured = false;
 
@@ -287,8 +288,8 @@
       '</div></div>';
     msgs.appendChild(typingDiv);
 
-    /* Greeting */
-    appendMsg('Hi! I\'m ' + botName + '. How can I help you today?', 'bot');
+    /* Greeting — the client's configured greeting when set, else the default */
+    appendMsg(greeting || ('Hi! I\'m ' + botName + '. How can I help you today?'), 'bot');
 
     /* Events */
     document.getElementById('hk-bubble').addEventListener('click', function () {
@@ -310,7 +311,7 @@
     });
   }
 
-  /* ── Bootstrap: fetch client config, then init ───────────────────────────── */
+  /* ── Bootstrap: fetch this client's public config, then init ─────────────── */
   function bootstrap() {
     if (!CLIENT_ID) {
       console.warn('[HarakelChatbot] No client_id set in window.HarakelChatbot — widget will use defaults.');
@@ -318,17 +319,31 @@
       return;
     }
 
-    fetch(API_URL + '/api/clients/')
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        var match = (data.clients || []).filter(function (c) { return c.id === CLIENT_ID; })[0];
-        if (match) {
-          if (match.bot_name    && !cfg.bot_name)    botName    = match.bot_name;
-          if (match.brand_color && !cfg.brand_color) brandColor = match.brand_color;
-        }
+    // Public, unauthenticated, single-client config. Inline cfg.* always wins.
+    // init() runs from .finally(), so the widget renders once with final branding
+    // (no restyle flash) — but that also means a hung request would mean no widget
+    // at all, hence the abort timeout below.
+    var ctrl  = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 4000);
+
+    fetch(API_URL + '/public/clients/' + encodeURIComponent(CLIENT_ID) + '/public-config',
+          ctrl ? { signal: ctrl.signal } : undefined)
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
       })
-      .catch(function () { /* silently fall back to defaults */ })
-      .finally(function () { init(); });
+      .then(function (data) {
+        if (!data) return;
+        if (data.bot_name         && !cfg.bot_name)    botName    = data.bot_name;
+        if (data.brand_color      && !cfg.brand_color) brandColor = data.brand_color;
+        if (data.chatbot_greeting)                     greeting   = data.chatbot_greeting;
+      })
+      .catch(function (e) {
+        // Never block rendering: generic branding beats no widget. Warn so this
+        // can't fail silently the way the old admin-only /api/clients/ call did.
+        console.warn('[HarakelChatbot] Could not load public config, using defaults:', e && e.message);
+      })
+      .finally(function () { clearTimeout(timer); init(); });
   }
 
   if (document.readyState === 'loading') {
