@@ -26,8 +26,10 @@
   var API_URL   = (cfg.api_url || (_scriptEl && _scriptEl.getAttribute('data-api-url')) || 'https://web-production-608a8.up.railway.app').replace(/\/$/, '');
   var SESSION_ID  = 'hk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
+  var DEFAULT_COLOR = '#6c63ff';
+
   var botName    = cfg.bot_name    || 'Aria';
-  var brandColor = cfg.brand_color || '#6c63ff';
+  var brandColor = cfg.brand_color || DEFAULT_COLOR;
   var greeting   = '';   // set from the client's public config; falls back to the default in init()
   var isOpen     = false;
   var leadCaptured = false;
@@ -41,6 +43,16 @@
 
   function timeNow() {
     return new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  // brandColor is interpolated raw into a stylesheet that we inject into the
+  // HOST page's <head>, and it arrives from the API (or inline config), so it is
+  // not ours to trust. Anything other than a bare hex literal could close the
+  // declaration and inject arbitrary CSS into a customer's site — which can
+  // exfiltrate other forms' field values via attribute selectors + url().
+  // Validated at the point of use so every source is covered by one check.
+  function safeColor(c) {
+    return /^#[0-9a-fA-F]{3,8}$/.test(c) ? c : DEFAULT_COLOR;
   }
 
   /* ── Styles ──────────────────────────────────────────────────────────────── */
@@ -117,7 +129,8 @@
       '#hk-footer{padding:10px 12px;border-top:1px solid rgba(255,255,255,.07);',
       'display:flex;gap:8px;align-items:flex-end;flex-shrink:0;background:#18181f;}',
       '#hk-input{flex:1;background:#1e1e28;border:1px solid rgba(255,255,255,.09);',
-      'border-radius:10px;padding:9px 12px;color:#f0f0f5;font-size:13px;',
+      /* font-size must stay >=16px: iOS Safari zooms the page on focus below that */
+      'border-radius:10px;padding:9px 12px;color:#f0f0f5;font-size:16px;',
       'font-family:inherit;outline:none;transition:border-color .15s;',
       'resize:none;line-height:1.4;max-height:80px;overflow-y:auto;}',
       '#hk-input:focus{border-color:COLOR66;}',
@@ -137,7 +150,7 @@
       '@media(max-width:420px){',
       '#hk-widget{width:calc(100vw - 16px);right:8px;bottom:80px;}',
       '#hk-bubble{right:16px;bottom:16px;}}',
-    ].join('').replace(/COLOR/g, color);
+    ].join('').replace(/COLOR/g, safeColor(color));
   }
 
   /* ── Build DOM ───────────────────────────────────────────────────────────── */
@@ -155,6 +168,13 @@
     widget.id = 'hk-widget';
     widget.setAttribute('role', 'dialog');
     widget.setAttribute('aria-label', 'Chat with ' + botName);
+    /* Session-replay opt-out. Hotjar / Clarity / FullStory record DOM mutations
+       and input values by default, and this panel carries visitor names, emails,
+       phone numbers and reasons for contact. Mask the whole panel, not just the
+       input, since the transcript is rendered into #hk-messages. */
+    widget.setAttribute('data-hj-suppress', '');
+    widget.setAttribute('data-clarity-mask', 'true');
+    widget.setAttribute('data-fs-exclude', 'true');
     widget.innerHTML =
       '<div id="hk-header">' +
         '<div id="hk-avatar">🤖</div>' +
@@ -168,7 +188,8 @@
       '</div>' +
       '<div id="hk-messages" role="log" aria-live="polite" aria-atomic="false"></div>' +
       '<div id="hk-footer">' +
-        '<textarea id="hk-input" rows="1" placeholder="Type a message..." aria-label="Chat message"></textarea>' +
+        '<textarea id="hk-input" rows="1" placeholder="Type a message..." aria-label="Chat message" ' +
+          'data-hj-suppress data-clarity-mask="true" data-fs-exclude="true"></textarea>' +
         '<button id="hk-send" aria-label="Send">' +
           '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
         '</button>' +
@@ -220,7 +241,7 @@
     appendMsg(text, 'user');
     showTyping(true);
 
-    fetch(API_URL + '/api/chatbot/message', {
+    fetch(API_URL + '/widget/chatbot/message', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
