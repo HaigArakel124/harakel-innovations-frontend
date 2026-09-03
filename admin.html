@@ -339,6 +339,12 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 .embed-copy-btn:hover{background:#8b84ff;}
 .embed-close-btn{position:absolute;top:16px;right:16px;width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .embed-close-btn:hover{background:var(--surface3);color:var(--text);}
+/* Password-reset result modal. The value is read aloud over the phone, so the type has to
+   disambiguate O/0 and l/1/I — monospace, large, and widely letter-spaced. */
+.pwreset-block{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:20px 16px;margin-bottom:14px;text-align:center;}
+.pwreset-value{font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:26px;font-weight:600;letter-spacing:4px;color:var(--green);word-break:break-all;line-height:1.5;user-select:all;}
+.pwreset-warn{border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.55;margin-bottom:12px;background:var(--amber-dim);border:1px solid rgba(255,181,71,0.35);color:var(--amber);}
+.pwreset-warn-strong{background:var(--pink-dim);border:1px solid rgba(255,107,157,0.35);color:var(--pink);}
 </style>
 </head>
 <body>
@@ -563,6 +569,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <button class="btn btn-primary btn-sm" onclick="toast('Opening client dashboard!')">Dashboard</button>
         <button class="btn btn-ghost btn-sm" onclick="toast('Login link sent!')">Send link</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--accent2);" onclick="showEmbedModalForSelected()">⟨/⟩ Embed</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--pink);" onclick="confirmResetClientPassword()">Reset password</button>
       </div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Active modules</div>
       <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle on" id="toggle-website_builder" onclick="this.classList.toggle('on')"></div></div>
@@ -1521,6 +1528,109 @@ function copyEmbedCode() {
     document.body.removeChild(ta);
     btn.textContent = '✓ Copied!';
     setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+  }
+}
+
+// ═══════ CLIENT PASSWORD RESET ═══════
+// The backend returns the plaintext temp password EXACTLY once and stores it nowhere.
+// It therefore lives in exactly two places here — this variable and the modal's text node —
+// and both are wiped in closeResetPwModal(). It is never persisted, never logged, and
+// never placed in a URL. Do not add an email option: the endpoint deliberately does not
+// email, and neither does this UI.
+var _resetPwValue = '';
+
+function confirmResetClientPassword() {
+  var id = _selectedClientId;
+  if (!id) { toast('No client selected.', 'error'); return; }
+  var c = (window._apiClients && window._apiClients[id]) || clients[id];
+  var name = (c && (c.business_name || c.name)) || 'this client';
+
+  // Hard gate. The reset invalidates the client's current password the instant it fires,
+  // so this must not be reachable by a single misclick. Escape cancels, which is the safe
+  // direction — the opposite of the result modal below.
+  var ok = confirm(
+    'Reset the portal password for ' + name + '?\n\n' +
+    'Their current password stops working immediately.\n' +
+    'The new password is shown only once — copy it before closing.'
+  );
+  if (!ok) return;
+  _doResetClientPassword(id);
+}
+
+async function _doResetClientPassword(clientId) {
+  try {
+    var res = await authFetch(API_URL + '/api/clients/' + clientId + '/reset-password', { method: 'POST' });
+    if (!res.ok) { await _handleResetPwError(res); return; }
+    var data = await res.json();
+    showResetPwModal(data);
+  } catch (e) {
+    // Intentionally does not log the error object: the success body of this endpoint
+    // carries a plaintext credential and must never reach the console.
+    toast('Could not reset the password. Please try again.', 'error');
+  }
+}
+
+async function _handleResetPwError(res) {
+  if (res.status === 401) return;   // authFetch already logged us out; no second message
+  var detail = '';
+  try { detail = (await res.json()).detail || ''; } catch (e) {}   // same shape publishSite() reads
+  if (res.status === 403) {
+    toast('Your account does not have permission to reset client passwords.', 'error');
+  } else if (res.status === 404) {
+    toast('No portal user exists for this client.', 'error');
+  } else if (res.status === 409) {
+    // Duplicate portal users — needs manual resolution, so show the server's words verbatim.
+    toast(detail || 'Duplicate portal users for this client. Manual resolution required.', 'error');
+  } else if (res.status === 429) {
+    toast('Too many reset attempts. Please wait and try again.', 'error');
+  } else {
+    toast(detail || ('Could not reset the password (HTTP ' + res.status + ').'), 'error');
+  }
+}
+
+function showResetPwModal(data) {
+  _resetPwValue = data.temp_password || '';
+  document.getElementById('pwreset-email').textContent = data.email || '';
+  document.getElementById('pwreset-value').textContent = _resetPwValue;
+  var btn = document.getElementById('pwreset-copy-btn');
+  btn.textContent = 'Copy password';
+  // Warn on anything that is not explicitly true — including the field being absent.
+  // A strict === false check would stay silent on a missing field and leave the admin
+  // believing a forced change will happen when it will not. A spurious warning costs a
+  // glance; a missing one is a false security assumption.
+  document.getElementById('pwreset-nochange-warn').style.display =
+    data.must_change_password_set !== true ? 'block' : 'none';
+  document.getElementById('pwreset-modal-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+// The only exit from the result modal — and the only place the credential is destroyed.
+function closeResetPwModal() {
+  _resetPwValue = '';
+  document.getElementById('pwreset-value').textContent = '';
+  document.getElementById('pwreset-email').textContent = '';
+  document.getElementById('pwreset-nochange-warn').style.display = 'none';
+  document.getElementById('pwreset-modal-overlay').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function copyResetPassword() {
+  if (!_resetPwValue) return;
+  var btn = document.getElementById('pwreset-copy-btn');
+  function copied() {
+    btn.textContent = '✓ Copied';
+    setTimeout(function() { btn.textContent = 'Copy password'; }, 2000);
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(_resetPwValue).then(copied, function() {
+      toast('Could not copy. Select the password and copy it manually.', 'error');
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = _resetPwValue; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+    copied();
   }
 }
 
@@ -2732,6 +2842,39 @@ initAuth();
       The chatbot will automatically load with this client's name, brand color, and AI settings.
       No other configuration needed.
     </div>
+  </div>
+</div>
+
+<!-- ═══════ PASSWORD RESET RESULT MODAL ═══════ -->
+<!-- DELIBERATELY NOT DISMISSIBLE. Note the missing onclick on the overlay and the absence of
+     a ✕ button — both of which the embed modal above has. admin.html binds no global Escape
+     handler, so Escape does nothing here either. This inverts the usual convention on purpose:
+     the temp password is shown exactly once and stored nowhere, so a reflexive backdrop click
+     or Escape would permanently destroy a credential the admin still needs. The only way out
+     is "I've saved it", which also wipes the value. -->
+<div id="pwreset-modal-overlay" class="embed-overlay" style="display:none;">
+  <div class="embed-modal" style="max-width:460px;">
+    <div class="embed-modal-title">Temporary password</div>
+    <div class="embed-modal-sub" id="pwreset-email"></div>
+
+    <div class="pwreset-block">
+      <div class="pwreset-value" id="pwreset-value"></div>
+    </div>
+
+    <button class="btn btn-primary btn-sm" id="pwreset-copy-btn" style="width:100%;margin-bottom:14px;" onclick="copyResetPassword()">Copy password</button>
+
+    <div class="pwreset-warn">
+      <strong>This is the only time this password will be shown.</strong> It is not stored anywhere
+      and cannot be looked up later. If you close this without saving it, you will have to reset
+      again — which produces a different password and invalidates this one.
+    </div>
+
+    <div class="pwreset-warn pwreset-warn-strong" id="pwreset-nochange-warn" style="display:none;">
+      <strong>Heads up:</strong> the password was reset, but this client will <strong>not</strong>
+      be forced to change it on next login.
+    </div>
+
+    <button class="btn btn-primary" style="width:100%;" onclick="closeResetPwModal()">I've saved it</button>
   </div>
 </div>
 </body>
