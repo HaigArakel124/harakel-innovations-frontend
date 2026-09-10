@@ -589,14 +589,25 @@ async function loadDashboardData(clientId, clientInfo) {
     if (leads.length === 0) {
       leadsEl.innerHTML = '<div class="empty">No leads yet — your chatbot is ready to capture them.</div>';
     } else {
-      leadsEl.innerHTML = leads.map(function(l) {
+      // Lead fields are written by the public chatbot, so rows are built from DOM nodes and every
+      // server value goes in via textContent (the same pattern as _coachAppendMessage below).
+      // statusCls is a lookup-table result, so the raw status never reaches a class string.
+      var leadFrag = document.createDocumentFragment();
+      leads.forEach(function(l) {
         var statusCls = {new:'status-new',hot:'status-hot',warm:'status-warm',booked:'status-booked'}[l.status] || 'status-new';
-        return '<div class="lead-row">' +
-          '<div><div class="lead-name">' + (l.name || 'Unknown') + '</div><div class="lead-email">' + (l.email || '') + '</div></div>' +
-          '<div class="lead-email">' + (l.phone || '') + '</div>' +
-          '<div><span class="lead-status ' + statusCls + '">' + (l.status || 'new') + '</span></div>' +
-        '</div>';
-      }).join('');
+        var row = _node('div', 'lead-row');
+        var who = _node('div');
+        who.appendChild(_node('div', 'lead-name', '', l.name || 'Unknown'));
+        who.appendChild(_node('div', 'lead-email', '', l.email || ''));
+        row.appendChild(who);
+        row.appendChild(_node('div', 'lead-email', '', l.phone || ''));
+        var statusWrap = _node('div');
+        statusWrap.appendChild(_node('span', 'lead-status ' + statusCls, '', l.status || 'new'));
+        row.appendChild(statusWrap);
+        leadFrag.appendChild(row);
+      });
+      leadsEl.textContent = '';
+      leadsEl.appendChild(leadFrag);
     }
   } else {
     leadsEl.innerHTML = '<div class="empty">Could not load leads.</div>';
@@ -617,19 +628,24 @@ async function loadDashboardData(clientId, clientInfo) {
     if (upcoming.length === 0) {
       apptsEl.innerHTML = '<div class="empty">No upcoming appointments.</div>';
     } else {
-      apptsEl.innerHTML = upcoming.map(function(a, i) {
+      // Same reasoning as the leads list above: appointment fields can originate from the public
+      // chatbot, so rows are DOM nodes with text via textContent. The dot colour is a lookup.
+      var apptFrag = document.createDocumentFragment();
+      upcoming.forEach(function(a, i) {
         var d = new Date(a.scheduled_time);
         var timeStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
                       d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-        return '<div class="appt-row">' +
-          '<div class="appt-dot" style="background:' + dotColors[i % dotColors.length] + '"></div>' +
-          '<div style="flex:1;">' +
-            '<div style="font-weight:500;">' + (a.customer_name || 'Appointment') + '</div>' +
-            '<div style="font-size:11px;color:var(--text3);">' + (a.appointment_type || 'Meeting') + '</div>' +
-          '</div>' +
-          '<div class="appt-time">' + timeStr + '</div>' +
-        '</div>';
-      }).join('');
+        var row = _node('div', 'appt-row');
+        row.appendChild(_node('div', 'appt-dot', 'background:' + dotColors[i % dotColors.length]));
+        var info = _node('div', '', 'flex:1;');
+        info.appendChild(_node('div', '', 'font-weight:500;', a.customer_name || 'Appointment'));
+        info.appendChild(_node('div', '', 'font-size:11px;color:var(--text3);', a.appointment_type || 'Meeting'));
+        row.appendChild(info);
+        row.appendChild(_node('div', 'appt-time', '', timeStr));
+        apptFrag.appendChild(row);
+      });
+      apptsEl.textContent = '';
+      apptsEl.appendChild(apptFrag);
     }
   } else {
     apptsEl.innerHTML = '<div class="empty">Could not load appointments.</div>';
@@ -664,6 +680,18 @@ function _esc(s) {
   return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Builds one element, with any text set via textContent. There is deliberately no HTML path in
+// here: renderers that show public-written data (leads, appointments) are assembled from these
+// nodes, so they are safe by construction rather than by remembering to escape.
+// className and cssText must be literals or lookup-table results — never server values.
+function _node(tag, className, cssText, text) {
+  var n = document.createElement(tag);
+  if (className) n.className = className;
+  if (cssText) n.style.cssText = cssText;
+  if (text != null) n.textContent = text;
+  return n;
 }
 
 function _fmtRating(r) { return (r == null) ? '—' : Number(r).toFixed(1); }
