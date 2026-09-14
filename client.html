@@ -84,6 +84,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .bot-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .bot-dot.live{background:var(--green);box-shadow:0 0 8px var(--green);}
 .bot-dot.off{background:var(--text3);}
+.bot-snippet{margin-top:12px;}
+.bot-snippet-label{font-size:11px;color:var(--text3);margin-bottom:8px;}
+.bot-snippet-row{display:flex;align-items:flex-start;gap:8px;}
+.bot-snippet-code{flex:1;min-width:0;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:12px;line-height:1.5;color:var(--green);word-break:break-all;white-space:pre-wrap;user-select:all;}
+.bot-copy-btn{flex-shrink:0;padding:8px 14px;font-size:12px;}
+.bot-toggle{background:transparent;border:none;color:var(--accent2);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:10px 0 0;}
+.bot-toggle:hover{color:var(--accent);}
+.bot-hint{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;}
 
 /* ── EMPTY STATE ── */
 .empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center;}
@@ -569,11 +577,13 @@ async function loadDashboardData(clientId, clientInfo) {
   loadCompetitors(clientId);
   loadCoachHistory(clientId);
   loadMissedCalls(clientId);
-  // Fetch me (for modules/chatbot status) + leads + appointments in parallel
-  var [meRes, leadsRes, apptsRes] = await Promise.allSettled([
+  // Fetch me (modules — kept as the chatbot entitlement fallback) + leads + appointments +
+  // chatbot install status, in one batch so the card resolves on the same page load.
+  var [meRes, leadsRes, apptsRes, botRes] = await Promise.allSettled([
     authedFetch(API + '/api/client-auth/me'),
     authedFetch(API + '/api/leads/' + clientId + '?limit=5'),
     authedFetch(API + '/api/appointments/' + clientId),
+    authedFetch(API + '/api/client-auth/chatbot-status'),
   ]);
 
   // ── Leads ──
@@ -651,26 +661,157 @@ async function loadDashboardData(clientId, clientInfo) {
     apptsEl.innerHTML = '<div class="empty">Could not load appointments.</div>';
   }
 
-  // ── Chatbot status ──
-  var botWrap = document.getElementById('bot-status-wrap');
-  var statBot = document.getElementById('stat-bot');
-  var chatbotActive = false;
+  // ── Chatbot ──
+  // module_enabled is authoritative from /api/client-auth/chatbot-status. /me (or the JWT-restored
+  // clientInfo) is only the fallback for when that call fails, so the card can still tell
+  // "not in your plan" apart from "we couldn't check".
+  var chatbotEntitledFallback = false;
   if (meRes.status === 'fulfilled' && meRes.value.ok) {
     var me = await meRes.value.json();
-    chatbotActive = !!(me.modules && me.modules.chatbot);
+    chatbotEntitledFallback = !!(me.modules && me.modules.chatbot);
   } else if (clientInfo && clientInfo.modules) {
-    chatbotActive = !!clientInfo.modules.chatbot;
+    chatbotEntitledFallback = !!clientInfo.modules.chatbot;
   }
-  statBot.textContent = chatbotActive ? 'Live' : 'Off';
-  botWrap.innerHTML = '<div class="bot-status">' +
-    '<div class="bot-dot ' + (chatbotActive ? 'live' : 'off') + '"></div>' +
-    '<div>' +
-      '<div style="font-size:13px;font-weight:500;">' + (chatbotActive ? 'Chatbot is live' : 'Chatbot is inactive') + '</div>' +
-      '<div style="font-size:11px;color:var(--text3);margin-top:2px;">' +
-        (chatbotActive ? 'Capturing leads 24/7 on your website' : 'Contact your account manager to activate') +
-      '</div>' +
-    '</div>' +
-  '</div>';
+
+  var botInfo = null;
+  if (botRes.status === 'fulfilled' && botRes.value.ok) {
+    try { botInfo = await botRes.value.json(); } catch (e) { botInfo = null; }
+  }
+  if (!botInfo) {
+    // The status call itself failed. Entitlement is still known; activity is not — which is
+    // exactly the activity_check_failed state, so render that rather than guessing.
+    botInfo = { module_enabled: chatbotEntitledFallback, activity_check_failed: true, client_id: clientId };
+  }
+  _renderChatbotCard(botInfo);
+}
+
+// ── Chatbot install card ─────────────────────────────────────
+// LIMITS — this card must never claim more than the data supports:
+//   * has_activity true does NOT prove the widget is installed on that client's site. It proves
+//     someone completed an exchange using this client id, and the id is public.
+//   * has_activity false does NOT prove "not installed". Rows are only written after a successful
+//     AI call, so a client whose model calls are all failing looks identical to one who never
+//     installed it.
+// That is why the no-activity state says "ready to install" and never "not working", "broken" or
+// "not installed", and why the card never diagnoses a cause. It reports entitlement, reports the
+// last conversation when there is one, and otherwise just offers the snippet.
+
+// The missed-calls list has _mcRelTime, but its output is deliberately terse ('2h ago') for a
+// dense list; this card reads as a sentence and needs the long form. Returns '' for a missing or
+// unparseable timestamp so the caller can drop the line instead of printing 'NaN days ago'.
+function _botRelTime(iso) {
+  if (!iso) return '';
+  var t = new Date(iso).getTime();
+  if (isNaN(t)) return '';
+  var diff = Math.floor((Date.now() - t) / 1000);
+  if (diff < 0) diff = 0;   // clock skew: a stamp slightly in the future reads as "just now"
+  if (diff < 60) return 'just now';
+  if (diff < 3600)  { var m = Math.floor(diff / 60);    return m + (m === 1 ? ' minute ago' : ' minutes ago'); }
+  if (diff < 86400) { var h = Math.floor(diff / 3600);  return h + (h === 1 ? ' hour ago'   : ' hours ago'); }
+  if (diff < 604800){ var d = Math.floor(diff / 86400); return d + (d === 1 ? ' day ago'    : ' days ago'); }
+  return new Date(iso).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'});
+}
+
+function _botCopySnippet(text, btn) {
+  function done() {
+    btn.textContent = 'Copied';
+    setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(done, function() {
+      showToast('Could not copy — select the code and copy it manually.', 'error');
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); }
+    catch (e) { showToast('Could not copy — select the code and copy it manually.', 'error'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function _renderChatbotCard(info) {
+  var wrap = document.getElementById('bot-status-wrap');
+  var statBot = document.getElementById('stat-bot');
+  if (!wrap) return;
+
+  var enabled  = !!info.module_enabled;
+  var unknown  = !!info.activity_check_failed;       // activity could not be determined
+  var active   = enabled && !unknown && !!info.has_activity;
+  var clientId = info.client_id || '';
+
+  // The stat card used to print "Live" off the entitlement flag alone, which was true for every
+  // paying client from day one. It now reflects activity: Off / Ready / Live / — (unknown).
+  if (statBot) statBot.textContent = !enabled ? 'Off' : (unknown ? '—' : (active ? 'Live' : 'Ready'));
+
+  var heading, body, dotCls, snippetMode;
+  if (!enabled) {
+    // Entitlement is a known fact and is the whole answer, even when the activity check failed.
+    heading = 'AI Chatbot';
+    body    = 'Not included in your current plan.';
+    dotCls  = 'off';
+    snippetMode = 'none';
+  } else if (unknown) {
+    heading = 'AI Chatbot';
+    body    = "We couldn't check your chatbot's activity just now. Try refreshing in a moment.";
+    dotCls  = 'off';
+    snippetMode = 'collapsed';
+  } else if (active) {
+    var rel = _botRelTime(info.last_message_at);
+    heading = 'Chatbot is live';
+    body    = rel ? 'Last conversation ' + rel + '.' : '';   // unformattable stamp: drop the line
+    dotCls  = 'live';
+    snippetMode = 'collapsed';
+  } else {
+    heading = 'Chatbot ready to install';
+    body    = 'Your chatbot is set up and waiting. Add this one line of code to your website and it starts capturing leads.';
+    dotCls  = 'off';
+    snippetMode = 'open';
+  }
+
+  var frag = document.createDocumentFragment();
+  var status = _node('div', 'bot-status');
+  status.appendChild(_node('div', 'bot-dot ' + dotCls));
+  var textCol = _node('div');
+  textCol.appendChild(_node('div', '', 'font-size:13px;font-weight:500;', heading));
+  if (body) textCol.appendChild(_node('div', '', 'font-size:11px;color:var(--text3);margin-top:2px;', body));
+  status.appendChild(textCol);
+  frag.appendChild(status);
+
+  if (snippetMode !== 'none' && clientId) {
+    // Built with textContent throughout: the snippet is full of angle brackets and must display
+    // literally, and client_id is a server value like every other.
+    var snippet = '<script src="https://harakel-innovations.com/chatbot-widget.js" data-client-id="' + clientId + '"><\/script>';
+    var block = _node('div', 'bot-snippet');
+    block.appendChild(_node('div', 'bot-snippet-label', '', 'Paste this just before the </body> tag on your website.'));
+    var row = _node('div', 'bot-snippet-row');
+    var code = _node('code', 'bot-snippet-code', '', snippet);
+    var copyBtn = _node('button', 'btn btn-ghost bot-copy-btn', '', 'Copy');
+    copyBtn.addEventListener('click', function() { _botCopySnippet(snippet, copyBtn); });
+    row.appendChild(code);
+    row.appendChild(copyBtn);
+    block.appendChild(row);
+
+    if (snippetMode === 'open') {
+      block.appendChild(_node('div', 'bot-hint', '', "Not sure how? Send this to whoever manages your website — they'll know what to do with it."));
+      frag.appendChild(block);
+    } else {
+      // Collapsed: reinstalls and redesigns happen, so the code stays reachable without cluttering.
+      block.style.display = 'none';
+      var toggle = _node('button', 'bot-toggle', '', 'View install code');
+      toggle.addEventListener('click', function() {
+        var opening = block.style.display === 'none';
+        block.style.display = opening ? 'block' : 'none';
+        toggle.textContent = opening ? 'Hide install code' : 'View install code';
+      });
+      frag.appendChild(toggle);
+      frag.appendChild(block);
+    }
+  }
+
+  wrap.textContent = '';
+  wrap.appendChild(frag);
 }
 
 // ── Competitor Intel ─────────────────────────────────────────
