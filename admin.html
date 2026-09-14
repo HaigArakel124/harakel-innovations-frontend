@@ -1511,7 +1511,11 @@ function selectClient(el, id) {
 
 // ═══════ EMBED MODAL ═══════
 function showEmbedModal(clientId, bizName) {
-  var snippet = '<script\n  src="https://harakel-innovations-frontend.vercel.app/chatbot-widget.js"\n  data-client-id="' + clientId + '"\n><\/script>';
+  // The custom domain is the ONLY one a customer should ever be handed. A snippet pointing at the
+  // vercel.app project domain would tie every installed widget to that domain staying attached
+  // forever, and changing it later would mean editing every customer's website by hand.
+  // Keep this in sync with the snippet client.html builds for the client portal (_renderChatbotCard).
+  var snippet = '<script\n  src="https://harakel-innovations.com/chatbot-widget.js"\n  data-client-id="' + clientId + '"\n><\/script>';
   document.getElementById('embed-biz-name').textContent = bizName || 'this client';
   document.getElementById('embed-code-snippet').textContent = snippet;
   document.getElementById('embed-copy-btn').textContent = 'Copy';
