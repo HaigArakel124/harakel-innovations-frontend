@@ -128,6 +128,53 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .bot-toggle:hover{color:var(--accent);}
 .bot-hint{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;}
 
+/* ── SCHEDULING SETUP ── */
+/* Rows, inputs and buttons copy the appointment-request look (.appt-req / .appt-form) so both tabs read as
+   one product. Forms are .sch-form, not .appt-form, because _apptCloseForms() removes every .appt-form in
+   the document — a Dashboard click would otherwise close a half-filled Scheduling form. */
+.sch-add-btn{font-size:11px;padding:6px 12px;}
+.sch-help{font-size:12px;color:var(--text3);line-height:1.5;margin:-6px 0 14px;}
+.sch-empty{color:var(--text2);line-height:1.55;max-width:540px;margin:0 auto;}
+.sch-item{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);padding:14px;margin-bottom:10px;}
+.sch-item:last-child{margin-bottom:0;}
+.sch-item-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.sch-item-main{flex:1;min-width:0;}
+.sch-name{font-size:13px;font-weight:600;word-break:break-word;}
+.sch-sub{font-weight:400;color:var(--text2);}
+.sch-meta{font-size:11px;color:var(--text3);margin-top:3px;word-break:break-word;}
+.sch-price{color:var(--green);font-weight:600;}
+.sch-desc{font-size:12px;color:var(--text2);margin-top:8px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;}
+.sch-item-actions{display:flex;gap:6px;flex-shrink:0;}
+.sch-item-actions .btn{width:auto;padding:6px 12px;font-size:11px;}
+.sch-danger{color:var(--pink);border-color:rgba(255,107,157,0.35);}
+.sch-danger:hover{color:var(--pink);background:var(--pink-dim);}
+.sch-form{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.sch-form-new{margin:0 0 14px;padding:14px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);}
+.sch-form .form-group{margin-bottom:10px;}
+.sch-form label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500;}
+.sch-form input,.sch-form textarea{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;}
+.sch-form textarea{min-height:64px;resize:vertical;line-height:1.5;}
+.sch-form input:focus,.sch-form textarea:focus{border-color:var(--accent);}
+.sch-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.sch-row .form-group{flex:1;min-width:120px;margin-bottom:0;}
+.sch-hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.45;}
+.sch-note{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:10px;}
+.sch-note strong{color:var(--text);font-weight:600;}
+.sch-error{display:none;font-size:12px;line-height:1.5;color:var(--pink);background:var(--pink-dim);border:1px solid rgba(255,107,157,0.3);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:10px;}
+.sch-error.show{display:block;}
+.sch-item > .sch-error{margin:12px 0 0;}
+.sch-checks{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.sch-check{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border:1px solid var(--border2);border-radius:20px;background:var(--surface);font-size:12px;color:var(--text2);cursor:pointer;user-select:none;transition:border-color .15s,color .15s,background .15s;}
+.sch-check:hover{border-color:var(--accent);}
+.sch-check.on{color:var(--text);border-color:rgba(108,99,255,0.5);background:var(--accent-glow);}
+.sch-check:focus-within{outline:2px solid var(--accent2);outline-offset:1px;}
+.sch-check input{width:14px;height:14px;margin:0;accent-color:var(--accent);cursor:pointer;}
+.sch-check input:disabled{cursor:not-allowed;}
+.sch-map-foot{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.sch-map-foot .btn{width:auto;padding:8px 16px;font-size:12px;}
+.sch-map-state{font-size:11px;color:var(--text3);}
+.sch-map-state.dirty,.sch-map-state.warn{color:var(--amber);}
+
 /* ── EMPTY STATE ── */
 .empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center;}
 
@@ -458,9 +505,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </div>
 
-  <!-- Scheduling tab: an empty container for the scheduling setup screens (next change). -->
+  <!-- Scheduling tab. The heading is static; everything in #sch-root is built by the "Scheduling setup"
+       module in the script, the first time this tab is opened in a sign-in. -->
   <div class="content" id="panel-scheduling" role="tabpanel" aria-labelledby="tab-scheduling" tabindex="0" hidden>
-    <div class="card"><div class="empty">Scheduling setup screens are coming soon.</div></div>
+    <div class="page-heading">Scheduling</div>
+    <div class="page-sub">The services you offer, the people who perform them, and who does what.</div>
+    <div id="sch-root"></div>
   </div>
 </div>
 
@@ -621,7 +671,8 @@ function logout() {
 // The loader runs once per sign-in, the first time that tab is shown — by click, keyboard, deep link
 // or hash change — with the signed-in client's id. It never runs while signed out. A loader that
 // throws or rejects can't disturb sign-in; it is simply retried the next time its tab is shown.
-// Registration can sit anywhere in the script, above or below this block. Nothing is registered yet.
+// Registration can sit anywhere in the script, above or below this block. Registered today: 'scheduling'
+// (see "Scheduling setup").
 // Two rules every loader must follow:
 //   1. Its first synchronous act resets its panel to a loading state — after sign-out and sign-in as a
 //      different client (no page reload), the previous client's content is still in the panel.
@@ -1277,6 +1328,787 @@ function _renderAppointments(appts) {
   upEl.textContent = '';
   upEl.appendChild(uf);
 }
+
+// ── Scheduling setup (Scheduling tab) ────────────────────────
+// Services, staff, and who performs which service. Weekly availability, date exceptions and the
+// booking-mode toggle are deliberately NOT here — they are the next change.
+//
+// Fetched lazily through the portal tab contract (registered at the end of this block), following both
+// of its rules:
+//   1. _schLoad's first synchronous act installs a fresh state object and resets #sch-root to a skeleton,
+//      so nothing from an earlier sign-in — possibly another client's roster — survives.
+//   2. After EVERY await, the loader and every write handler call _schStale(st) and stop if it is true.
+//      That is the contract's clientId !== PORTAL_CLIENT_ID test plus st !== SCHED, which also catches
+//      a newer load of the SAME client (sign out and back in without a reload, or "Try again").
+//
+// XSS: every server value reaches the page through _node()/textContent, an input's .value or a
+// checkbox's .checked. Nothing here assigns innerHTML, and every handler is an addEventListener closure.
+
+var SCHED = null;                     // the live state; replaced wholesale by every _schLoad
+var SCH_MAX_MINUTES = 1440;           // 24h: a longer service or buffer is a typo, not a booking
+var SCH_MAX_PRICE_CENTS = 10000000;   // $100,000: far below the INTEGER column's ceiling
+var _schFieldSeq = 0;
+
+function _schStale(st) {
+  return st !== SCHED || st.clientId !== PORTAL_CLIENT_ID;
+}
+
+// One request to /api/scheduling. On failure it throws the backend's own words — both FastAPI error
+// shapes go through extractErrorMessage — so a 409 (duplicate active service name), a 400 naming the
+// field, a 422 (an email the server rejects) and a 429 (rate limit) all reach the owner verbatim.
+// It writes nothing to the page; every caller does its stale check straight after awaiting it.
+async function _schRequest(method, path, body, fallback) {
+  var opts = { method: method };
+  if (body !== undefined) {
+    opts.headers = {'Content-Type': 'application/json'};
+    opts.body = JSON.stringify(body);
+  }
+  var res;
+  try {
+    res = await authedFetch(API + '/api/scheduling/' + path, opts);
+  } catch (e) {
+    if (e && e.message === 'Unauthorized') throw e;   // authedFetch is already reloading the page
+    throw new Error("Couldn't reach the server. Check your connection and try again.");
+  }
+  var data = await res.json().catch(function() { return null; });
+  if (!res.ok) throw new Error(extractErrorMessage(data, fallback));
+  return data || {};
+}
+
+// ── formatting ──
+function _schMinutes(m) {
+  m = Number(m) || 0;
+  var h = Math.floor(m / 60), r = m % 60;
+  if (!h) return r + ' min';
+  return h + ' hr' + (r ? ' ' + r + ' min' : '');
+}
+
+// Integer cents → "$45", "$45.50", "$1,200". Integer arithmetic only — no float ever touches a price.
+function _schPrice(cents) {
+  var c = Number(cents);
+  if (!isFinite(c) || c < 0 || c % 1 !== 0) return '';
+  var d = Math.floor(c / 100), r = c % 100;
+  return '$' + d.toLocaleString('en-US') + (r ? '.' + (r < 10 ? '0' : '') + r : '');
+}
+
+// Integer cents → the dollars text an edit form starts with: 4550 → "45.50", 4500 → "45", null → "".
+function _schCentsToInput(cents) {
+  if (cents == null) return '';
+  var c = Number(cents);
+  if (!isFinite(c) || c < 0 || c % 1 !== 0) return '';
+  var d = Math.floor(c / 100), r = c % 100;
+  return String(d) + (r ? '.' + (r < 10 ? '0' : '') + r : '');
+}
+
+// ── parsing ──
+// PRICE IS STORED IN CENTS, AND BLANK IS NOT ZERO.
+//   ""      → { blank: true }  the caller leaves price_cents OUT of the body, so it stays NULL, which
+//                              means NOT PUBLISHED — the AI must say it doesn't know, never "free".
+//   "0"     → { cents: 0 }     deliberately free, and listed as "Free".
+//   "45.5"  → { cents: 4550 }  dollars*100 + cents, computed from the digits as integers.
+// Never parseFloat(x) * 100: 19.99 * 100 is 1998.9999999999998 in floating point, and the server would
+// store 1998. The input is type="text", not type="number", because a number input reports anything it
+// can't parse (a typo, a comma decimal) as "" — which would quietly turn a mistyped price into
+// "not published" instead of an error.
+function _schParsePrice(raw) {
+  var s = String(raw == null ? '' : raw).trim().replace(/^\$\s*/, '');
+  if (s === '') return { blank: true };
+  if (s.charAt(0) === '.') s = '0' + s;
+  // Digits, optionally grouped with commas every three places (1,200), and at most two decimals.
+  // "12,50" is refused rather than guessed at: read as thousands it would be $1,250.
+  if (!/^(\d{1,3}(,\d{3})+|\d+)(\.\d{1,2})?$/.test(s)) {
+    return { error: 'Enter the price in dollars, like 45 or 45.50.' };
+  }
+  var parts = s.replace(/,/g, '').split('.');
+  var cents = parseInt(parts[0], 10) * 100 + parseInt(((parts[1] || '') + '00').slice(0, 2), 10);
+  if (!(cents <= SCH_MAX_PRICE_CENTS)) return { error: 'That price is over $100,000. Check it and try again.' };
+  return { cents: cents };
+}
+
+// Whole minutes. blankAs === null makes the field required; otherwise a blank reads as blankAs.
+// type="text" for the same reason as the price.
+function _schParseMinutes(raw, label, blankAs, min) {
+  var s = String(raw == null ? '' : raw).trim();
+  if (s === '') return blankAs === null ? { error: label + ' is required.' } : { value: blankAs };
+  if (!/^\d+$/.test(s)) return { error: label + ' must be a whole number of minutes.' };
+  var n = parseInt(s, 10);
+  if (n < min) return { error: label + ' must be at least ' + min + ' minute' + (min === 1 ? '' : 's') + '.' };
+  if (n > SCH_MAX_MINUTES) return { error: label + ' can be at most 1440 minutes (24 hours).' };
+  return { value: n };
+}
+
+// Light check, like signup's: phone characters only, and 10–15 digits. The backend stores any string.
+function _schPhoneOk(s) {
+  if (!/^[0-9+().\-\s]+$/.test(s)) return false;
+  var n = s.replace(/\D/g, '').length;
+  return n >= 10 && n <= 15;
+}
+
+// PATCH drops nulls on the server, so a saved optional field can't be set back to empty. Blanking one
+// is refused with this message rather than silently keeping the old value or writing "" in its place.
+function _schCantClear(labels) {
+  return 'A saved ' + labels.join(' and ') + " can't be cleared from here yet. Enter a new one, or put the current one back.";
+}
+
+// ── form building ──
+function _schButton(cls, label) {
+  var b = _node('button', cls, '', label);
+  b.type = 'button';
+  return b;
+}
+
+function _schText(type, value, maxLen, placeholder) {
+  var i = _apptInput(type, value);
+  i.autocomplete = 'off';
+  if (maxLen) i.maxLength = maxLen;
+  if (placeholder) i.placeholder = placeholder;
+  return i;
+}
+
+// _apptField, with the label tied to its input and an optional hint read out with it.
+function _schField(labelText, input, hint) {
+  var g = _apptField(labelText, input);
+  input.id = 'sch-f' + (++_schFieldSeq);
+  g.firstChild.htmlFor = input.id;
+  if (hint) {
+    var h = _node('div', 'sch-hint', '', hint);
+    h.id = input.id + '-hint';
+    input.setAttribute('aria-describedby', h.id);
+    g.appendChild(h);
+  }
+  return g;
+}
+
+function _schRow(fields) {
+  var r = _node('div', 'sch-row');
+  fields.forEach(function(f) { r.appendChild(f); });
+  return r;
+}
+
+function _schError() {
+  var e = _node('div', 'sch-error');
+  e.setAttribute('role', 'alert');
+  return e;
+}
+
+function _schShowError(el, msg, field) {
+  el.textContent = msg;
+  el.classList.add('show');
+  if (field) field.focus();
+}
+
+function _schClearError(el) {
+  el.textContent = '';
+  el.classList.remove('show');
+}
+
+// Enter in a single-line field presses the form's main button, as it would in a real <form>.
+function _schEnterSubmits(inputs, btn) {
+  inputs.forEach(function(i) {
+    i.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); btn.click(); }
+    });
+  });
+}
+
+// The appointment-request rules: one form open at a time across the whole tab, and clicking the button
+// that opened a form closes it again.
+function _schCloseForms() {
+  var root = document.getElementById('sch-root');
+  if (root) Array.prototype.forEach.call(root.querySelectorAll('.sch-form'), function(f) { f.remove(); });
+}
+
+function _schToggle(host, mode, build) {
+  var existing = host.querySelector('.sch-form');
+  var same = existing && existing.getAttribute('data-mode') === mode;
+  _schCloseForms();
+  if (!same) {
+    var f = build();
+    f.setAttribute('data-mode', mode);
+    host.appendChild(f);
+  }
+}
+
+// Working state exactly as _apptPost: disabled, "Working…", label restored on failure. The backend's
+// message goes in the form's own error box rather than a toast — a toast is gone in 2.4 seconds, and a
+// 409 explaining a duplicate name has to stay readable. On success the form closes and the affected
+// lists are REFETCHED, not patched locally, so the screen shows what the server actually saved.
+async function _schSubmit(st, btn, errEl, send, okMsg, refresh) {
+  var orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Working…';
+  _schClearError(errEl);
+  try {
+    await send();
+  } catch (e) {
+    if (_schStale(st)) return;
+    _schShowError(errEl, e.message || 'Could not save. Please try again.');
+    btn.disabled = false;
+    btn.textContent = orig;
+    return;
+  }
+  if (_schStale(st)) return;
+  _schCloseForms();
+  showToast(okMsg, 'success');
+  try {
+    await refresh();
+  } catch (e) {
+    if (_schStale(st)) return;
+    showToast('Saved, but the list could not refresh. Reload the page to see the change.', 'error');
+  }
+}
+
+// ── loading ──
+// Each person's current services, in parallel. Returns false if the answers arrived stale.
+async function _schLoadMappings(st, people) {
+  var results = await Promise.all(people.map(function(p) {
+    return _schRequest('GET', 'staff/' + encodeURIComponent(p.id) + '/services', undefined, 'Could not load who performs what.');
+  }));
+  if (_schStale(st)) return false;
+  people.forEach(function(p, i) {
+    st.saved[p.id] = Array.isArray(results[i].service_ids) ? results[i].service_ids.slice() : [];
+  });
+  return true;
+}
+
+async function _schReloadServices(st) {
+  var data = await _schRequest('GET', encodeURIComponent(st.clientId) + '/services', undefined, 'Could not load your services.');
+  if (_schStale(st)) return;
+  st.services = Array.isArray(data.services) ? data.services : [];
+  _schRenderServices(st);
+  _schRenderMap(st);
+}
+
+async function _schReloadStaff(st) {
+  var data = await _schRequest('GET', encodeURIComponent(st.clientId) + '/staff', undefined, 'Could not load your team.');
+  if (_schStale(st)) return;
+  var staff = Array.isArray(data.staff) ? data.staff : [];
+  // Read the current services of anyone not seen before (a just-added team member) before showing them,
+  // so their Save button is never working from a guess.
+  var fresh = staff.filter(function(p) { return !(p.id in st.saved); });
+  if (fresh.length && !(await _schLoadMappings(st, fresh))) return;
+  st.staff = staff;
+  _schRenderStaff(st);
+  _schRenderMap(st);
+}
+
+async function _schLoad(clientId) {
+  // RULE 1 — the first synchronous act. The fresh state object makes anything still in flight from an
+  // earlier load stale at once, and the skeleton replaces whatever an earlier sign-in left on screen.
+  var st = SCHED = {
+    clientId: clientId,
+    services: [],
+    staff: [],
+    saved: Object.create(null),     // staff id → service ids the server says they perform
+    pending: Object.create(null),   // staff id → ticked ids not saved yet (survives re-renders)
+    saving: Object.create(null),    // staff id → true while their PUT is in flight
+    mapErr: Object.create(null),    // staff id → the last save error for their block
+    el: null,
+  };
+  _schRenderLoading();
+  try {
+    var enc = encodeURIComponent(clientId);
+    var lists = await Promise.all([
+      _schRequest('GET', enc + '/services', undefined, 'Could not load your services.'),
+      _schRequest('GET', enc + '/staff', undefined, 'Could not load your team.'),
+    ]);
+    if (_schStale(st)) return;                                   // RULE 2
+    var services = Array.isArray(lists[0].services) ? lists[0].services : [];
+    var staff = Array.isArray(lists[1].staff) ? lists[1].staff : [];
+    if (!(await _schLoadMappings(st, staff))) return;             // RULE 2 — checked inside, after its await
+    st.services = services;
+    st.staff = staff;
+    _schRenderAll(st);
+  } catch (e) {
+    if (_schStale(st)) return;                                   // RULE 2 — a stale failure paints nothing
+    _schRenderLoadError(st, e.message || 'Could not load your scheduling setup.');
+  }
+}
+
+// ── rendering: frame ──
+function _schRenderLoading() {
+  var root = document.getElementById('sch-root');
+  root.textContent = '';
+  root.setAttribute('aria-busy', 'true');
+  var card = _node('div', 'card');
+  card.appendChild(_node('div', 'skeleton', 'margin-bottom:10px;'));
+  card.appendChild(_node('div', 'skeleton', 'width:70%;margin-bottom:10px;'));
+  card.appendChild(_node('div', 'skeleton', 'width:45%;'));
+  root.appendChild(card);
+}
+
+function _schRenderLoadError(st, msg) {
+  var root = document.getElementById('sch-root');
+  root.textContent = '';
+  root.removeAttribute('aria-busy');
+  var card = _node('div', 'card');
+  var box = _node('div', 'mc-error');
+  box.appendChild(_node('span', '', '', msg));
+  var retry = _schButton('', 'Try again');
+  retry.addEventListener('click', function() {
+    if (!_schStale(st) && localStorage.getItem('client_token')) _schLoad(st.clientId);
+  });
+  box.appendChild(retry);
+  card.appendChild(box);
+  root.appendChild(card);
+}
+
+function _schSection(title, help, addLabel, onAdd) {
+  var card = _node('div', 'card');
+  var header = _node('div', 'card-header');
+  header.appendChild(_node('div', 'card-title', '', title));
+  var slot = _node('div');
+  if (addLabel) {
+    var add = _schButton('btn btn-ghost sch-add-btn', addLabel);
+    add.addEventListener('click', function() { onAdd(slot); });
+    header.appendChild(add);
+  }
+  card.appendChild(header);
+  card.appendChild(_node('div', 'sch-help', '', help));
+  card.appendChild(slot);
+  var body = _node('div');
+  card.appendChild(body);
+  return { card: card, body: body };
+}
+
+function _schRenderAll(st) {
+  var root = document.getElementById('sch-root');
+  root.textContent = '';
+  root.removeAttribute('aria-busy');
+  var svc = _schSection('Services', 'What customers can book, how long each one takes, and its price if you want it published.', 'Add service', function(slot) {
+    _schToggle(slot, 'add', function() { return _schServiceForm(st, null); });
+  });
+  var team = _schSection('Team', 'The people customers can book with.', 'Add team member', function(slot) {
+    _schToggle(slot, 'add', function() { return _schStaffForm(st, null); });
+  });
+  var map = _schSection('Who does what', 'Tick the services each person performs, then press Save. Only people ticked for a service are offered for it.', null, null);
+  st.el = { services: svc.body, staff: team.body, map: map.body };
+  root.appendChild(svc.card);
+  root.appendChild(team.card);
+  root.appendChild(map.card);
+  _schRenderServices(st);
+  _schRenderStaff(st);
+  _schRenderMap(st);
+}
+
+// ── SECTION 1: services ──
+function _schRenderServices(st) {
+  var body = st.el.services;
+  body.textContent = '';
+  if (!st.services.length) {
+    body.appendChild(_node('div', 'empty sch-empty', '', 'No services yet. Use “Add service” to add the first thing you offer — a name and how long it takes are all it needs. Your team and your bookings are built on this list.'));
+    return;
+  }
+  var f = document.createDocumentFragment();
+  st.services.forEach(function(s) { f.appendChild(_schServiceRow(st, s)); });
+  body.appendChild(f);
+}
+
+function _schServiceRow(st, s) {
+  var row = _node('div', 'sch-item');
+  var head = _node('div', 'sch-item-head');
+  var main = _node('div', 'sch-item-main');
+  main.appendChild(_node('div', 'sch-name', '', s.name || 'Untitled service'));
+  var bits = [_schMinutes(s.duration_minutes)];
+  if (s.buffer_before_minutes > 0) bits.push(_schMinutes(s.buffer_before_minutes) + ' buffer before');
+  if (s.buffer_after_minutes > 0) bits.push(_schMinutes(s.buffer_after_minutes) + ' buffer after');
+  var meta = _node('div', 'sch-meta', '', bits.join(' · '));
+  // null = not published, so nothing is shown. 0 is a real, published price and says so.
+  if (s.price_cents != null) {
+    meta.appendChild(document.createTextNode(' · '));
+    meta.appendChild(_node('span', 'sch-price', '', s.price_cents === 0 ? 'Free' : _schPrice(s.price_cents)));
+  }
+  main.appendChild(meta);
+  if (s.description) main.appendChild(_node('div', 'sch-desc', '', s.description));
+  head.appendChild(main);
+
+  var actions = _node('div', 'sch-item-actions');
+  var editBtn = _schButton('btn btn-ghost', 'Edit');
+  var offBtn = _schButton('btn btn-ghost sch-danger', 'Deactivate');
+  editBtn.addEventListener('click', function() { _schToggle(row, 'edit', function() { return _schServiceForm(st, s); }); });
+  offBtn.addEventListener('click', function() { _schToggle(row, 'deactivate', function() { return _schDeactivateForm(st, 'service', s); }); });
+  actions.appendChild(editBtn);
+  actions.appendChild(offBtn);
+  head.appendChild(actions);
+  row.appendChild(head);
+  return row;
+}
+
+// Build the request body from the form. s = the saved row when editing, null when adding.
+function _schServiceBody(f, s) {
+  var name = f.name.value.trim();
+  if (!name) return { error: 'Give the service a name.', field: f.name };
+  var dur = _schParseMinutes(f.dur.value, 'Duration', null, 1);
+  if (dur.error) return { error: dur.error, field: f.dur };
+  var before = _schParseMinutes(f.before.value, 'Buffer before', 0, 0);
+  if (before.error) return { error: before.error, field: f.before };
+  var after = _schParseMinutes(f.after.value, 'Buffer after', 0, 0);
+  if (after.error) return { error: after.error, field: f.after };
+  var price = _schParsePrice(f.price.value);
+  if (price.error) return { error: price.error, field: f.price };
+  var desc = f.desc.value.trim();
+  var body = {};
+
+  if (!s) {
+    body.name = name;
+    body.duration_minutes = dur.value;
+    body.buffer_before_minutes = before.value;
+    body.buffer_after_minutes = after.value;
+    if (!price.blank) body.price_cents = price.cents;   // blank → key left out → NULL → not published
+    if (desc) body.description = desc;
+    return { body: body };
+  }
+
+  // Editing: send only what changed, so a field the owner didn't touch is never rewritten.
+  if (name !== s.name) body.name = name;
+  if (dur.value !== s.duration_minutes) body.duration_minutes = dur.value;
+  if (before.value !== (s.buffer_before_minutes || 0)) body.buffer_before_minutes = before.value;
+  if (after.value !== (s.buffer_after_minutes || 0)) body.buffer_after_minutes = after.value;
+  if (price.blank) {
+    if (s.price_cents != null) {
+      return { error: "A published price can't be removed from here yet. Enter the correct price — or, to stop publishing one, deactivate this service and add it again with the price left blank.", field: f.price };
+    }
+  } else if (price.cents !== s.price_cents) {
+    body.price_cents = price.cents;
+  }
+  var savedDesc = (s.description || '').trim();
+  if (!desc) {
+    if (savedDesc) return { error: _schCantClear(['description']), field: f.desc };
+  } else if (desc !== savedDesc) {
+    body.description = desc;
+  }
+  return { body: body };
+}
+
+function _schServiceForm(st, s) {
+  var editing = !!s;
+  var form = _node('div', editing ? 'sch-form' : 'sch-form sch-form-new');
+  var err = _schError();
+  form.appendChild(err);
+
+  var f = {
+    name:   _schText('text', editing ? s.name : '', 120, 'e.g. Women’s cut & style'),
+    dur:    _schText('text', editing ? String(s.duration_minutes) : '', 4, 'e.g. 60'),
+    before: _schText('text', editing && s.buffer_before_minutes ? String(s.buffer_before_minutes) : '', 4, '0'),
+    after:  _schText('text', editing && s.buffer_after_minutes ? String(s.buffer_after_minutes) : '', 4, '0'),
+    price:  _schText('text', editing ? _schCentsToInput(s.price_cents) : '', 12, 'Not published'),
+    desc:   document.createElement('textarea'),
+  };
+  f.dur.setAttribute('inputmode', 'numeric');
+  f.before.setAttribute('inputmode', 'numeric');
+  f.after.setAttribute('inputmode', 'numeric');
+  f.price.setAttribute('inputmode', 'decimal');
+  f.desc.rows = 2;
+  f.desc.maxLength = 2000;
+  if (editing && s.description) f.desc.value = s.description;
+
+  form.appendChild(_schField('Service name', f.name));
+  form.appendChild(_schRow([
+    _schField('Duration (minutes)', f.dur),
+    _schField('Buffer before (min)', f.before),
+    _schField('Buffer after (min)', f.after),
+  ]));
+  form.appendChild(_node('div', 'sch-hint', 'margin:-4px 0 10px;', 'Buffers keep prep or clean-up time free around the appointment. Leave them blank for none.'));
+  form.appendChild(_schField('Price in dollars (optional)', f.price, 'Leave blank to keep the price unpublished — blank is not the same as 0. Enter 0 only if it is genuinely free.'));
+  form.appendChild(_schField('Description (optional)', f.desc));
+
+  var actions = _node('div', 'appt-actions');
+  var go = _schButton('btn btn-primary', editing ? 'Save changes' : 'Add service');
+  var cancel = _schButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    var v = _schServiceBody(f, s);
+    if (v.error) { _schShowError(err, v.error, v.field); return; }
+    if (editing && !Object.keys(v.body).length) { _schCloseForms(); showToast('No changes to save.'); return; }
+    _schSubmit(st, go, err, function() {
+      return editing
+        ? _schRequest('PATCH', 'services/' + encodeURIComponent(s.id), v.body, 'Could not update this service.')
+        : _schRequest('POST', encodeURIComponent(st.clientId) + '/services', v.body, 'Could not add this service.');
+    }, editing ? 'Service updated.' : 'Service added.', function() { return _schReloadServices(st); });
+  });
+  cancel.addEventListener('click', _schCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+  _schEnterSubmits([f.name, f.dur, f.before, f.after, f.price], go);
+  setTimeout(function() { f.name.focus(); }, 0);
+  return form;
+}
+
+// ── SECTION 2: staff ──
+function _schRenderStaff(st) {
+  var body = st.el.staff;
+  body.textContent = '';
+  if (!st.staff.length) {
+    body.appendChild(_node('div', 'empty sch-empty', '', 'No team members yet. Use “Add team member” to add everyone customers can book with — even if that’s just you. Only a name is required.'));
+    return;
+  }
+  var f = document.createDocumentFragment();
+  st.staff.forEach(function(p) { f.appendChild(_schStaffRow(st, p)); });
+  body.appendChild(f);
+}
+
+function _schStaffRow(st, p) {
+  var row = _node('div', 'sch-item');
+  var head = _node('div', 'sch-item-head');
+  var main = _node('div', 'sch-item-main');
+  var name = _node('div', 'sch-name', '', p.name || 'Team member');
+  if (p.title) name.appendChild(_node('span', 'sch-sub', '', ' · ' + p.title));
+  main.appendChild(name);
+  var contact = [p.email, p.phone].filter(Boolean).join(' · ');
+  main.appendChild(_node('div', 'sch-meta', '', contact || 'No contact details'));
+  head.appendChild(main);
+
+  var actions = _node('div', 'sch-item-actions');
+  var editBtn = _schButton('btn btn-ghost', 'Edit');
+  var offBtn = _schButton('btn btn-ghost sch-danger', 'Deactivate');
+  editBtn.addEventListener('click', function() { _schToggle(row, 'edit', function() { return _schStaffForm(st, p); }); });
+  offBtn.addEventListener('click', function() { _schToggle(row, 'deactivate', function() { return _schDeactivateForm(st, 'staff', p); }); });
+  actions.appendChild(editBtn);
+  actions.appendChild(offBtn);
+  head.appendChild(actions);
+  row.appendChild(head);
+  return row;
+}
+
+function _schStaffBody(f, p) {
+  var name = f.name.value.trim();
+  if (!name) return { error: 'Enter their name.', field: f.name };
+  var vals = { title: f.title.value.trim(), email: f.email.value.trim(), phone: f.phone.value.trim() };
+  if (vals.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email)) {
+    return { error: 'That email address doesn’t look right.', field: f.email };
+  }
+  if (vals.phone && !_schPhoneOk(vals.phone)) {
+    return { error: 'Enter the phone number with its area code, like (555) 123-4567.', field: f.phone };
+  }
+  var body = {};
+  if (!p) {
+    body.name = name;
+    ['title', 'email', 'phone'].forEach(function(k) { if (vals[k]) body[k] = vals[k]; });
+    return { body: body };
+  }
+  if (name !== p.name) body.name = name;
+  var labels = { title: 'title', email: 'email address', phone: 'phone number' };
+  var cleared = [], firstCleared = null;
+  ['title', 'email', 'phone'].forEach(function(k) {
+    var cur = p[k] || '';
+    if (!vals[k]) {
+      if (cur) { cleared.push(labels[k]); firstCleared = firstCleared || f[k]; }
+    } else if (vals[k] !== cur) {
+      body[k] = vals[k];
+    }
+  });
+  if (cleared.length) return { error: _schCantClear(cleared), field: firstCleared };
+  return { body: body };
+}
+
+function _schStaffForm(st, p) {
+  var editing = !!p;
+  var form = _node('div', editing ? 'sch-form' : 'sch-form sch-form-new');
+  var err = _schError();
+  form.appendChild(err);
+  var f = {
+    name:  _schText('text', editing ? p.name : '', 120, 'e.g. Marcus Reed'),
+    title: _schText('text', editing ? (p.title || '') : '', 80, 'e.g. Senior stylist'),
+    email: _schText('email', editing ? (p.email || '') : '', 254, ''),
+    phone: _schText('tel', editing ? (p.phone || '') : '', 32, ''),
+  };
+  form.appendChild(_schRow([_schField('Name', f.name), _schField('Title (optional)', f.title)]));
+  form.appendChild(_schRow([_schField('Email (optional)', f.email), _schField('Phone (optional)', f.phone)]));
+
+  var actions = _node('div', 'appt-actions');
+  var go = _schButton('btn btn-primary', editing ? 'Save changes' : 'Add team member');
+  var cancel = _schButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    var v = _schStaffBody(f, p);
+    if (v.error) { _schShowError(err, v.error, v.field); return; }
+    if (editing && !Object.keys(v.body).length) { _schCloseForms(); showToast('No changes to save.'); return; }
+    _schSubmit(st, go, err, function() {
+      return editing
+        ? _schRequest('PATCH', 'staff/' + encodeURIComponent(p.id), v.body, 'Could not update this team member.')
+        : _schRequest('POST', encodeURIComponent(st.clientId) + '/staff', v.body, 'Could not add this team member.');
+    }, editing ? 'Team member updated.' : 'Team member added.', function() { return _schReloadStaff(st); });
+  });
+  cancel.addEventListener('click', _schCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+  _schEnterSubmits([f.name, f.title, f.email, f.phone], go);
+  setTimeout(function() { f.name.focus(); }, 0);
+  return form;
+}
+
+// DEACTIVATE, NOT DELETE — for staff and services alike. The server only sets is_active=false: every
+// past appointment keeps its link, and nothing is erased. The two-step inline form IS the confirmation
+// (nothing is sent until the pink button), and it says so in plain words, because an owner who thinks
+// they just erased someone's history will panic.
+function _schDeactivateForm(st, kind, item) {
+  var isStaff = (kind === 'staff');
+  var form = _node('div', 'sch-form');
+  var err = _schError();
+  form.appendChild(err);
+  var note = _node('div', 'sch-note');
+  if (isStaff) {
+    note.appendChild(_node('strong', '', '', 'Nothing is deleted — ' + (item.name || 'their') + (item.name ? '’s' : '') + ' past appointments are kept, exactly as they are. '));
+    note.appendChild(document.createTextNode('Deactivating takes them off your team list and stops them being offered for new bookings. Appointments already booked with them are not cancelled, so move or cancel any upcoming ones yourself if they’re leaving.'));
+  } else {
+    note.appendChild(_node('strong', '', '', 'Nothing is deleted — past appointments for ' + (item.name || 'this service') + ' are kept, exactly as they are. '));
+    note.appendChild(document.createTextNode('Deactivating stops it being offered for new bookings and takes it off the lists here. You can add a new service with the same name straight away — for example, to change its price.'));
+  }
+  form.appendChild(note);
+
+  var actions = _node('div', 'appt-actions');
+  var go = _schButton('btn btn-ghost sch-danger', isStaff ? 'Deactivate team member' : 'Deactivate service');
+  var keep = _schButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    _schSubmit(st, go, err, function() {
+      return _schRequest('DELETE', (isStaff ? 'staff/' : 'services/') + encodeURIComponent(item.id), undefined,
+        isStaff ? 'Could not deactivate this team member.' : 'Could not deactivate this service.');
+    }, isStaff ? (item.name || 'Team member') + ' deactivated. Their history is kept.' : 'Service deactivated. Its history is kept.', function() {
+      if (isStaff) { delete st.pending[item.id]; return _schReloadStaff(st); }
+      return _schReloadServices(st);
+    });
+  });
+  keep.addEventListener('click', _schCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(keep);
+  form.appendChild(actions);
+  setTimeout(function() { keep.focus(); }, 0);   // the safe choice has focus, so a stray Enter keeps them
+  return form;
+}
+
+// ── SECTION 3: who does what ──
+function _schRenderMap(st) {
+  var body = st.el.map;
+  body.textContent = '';
+  var noSvc = !st.services.length, noStaff = !st.staff.length;
+  if (noSvc || noStaff) {
+    body.appendChild(_node('div', 'empty sch-empty', '',
+      noSvc && noStaff ? 'Once you’ve added a service and a team member above, you’ll tick here which services each person performs. Nobody can be booked for a service until they’re ticked for it.'
+      : noSvc ? 'Add a service above, then tick here which of your team perform it. Nobody can be booked for a service until they’re ticked for it.'
+      : 'Add a team member above, then tick here which services they perform. Nobody can be booked for a service until they’re ticked for it.'));
+    return;
+  }
+  var f = document.createDocumentFragment();
+  st.staff.forEach(function(p) { f.appendChild(_schMapBlock(st, p)); });
+  body.appendChild(f);
+}
+
+// ⚠️ PUT /staff/{id}/services REPLACES THE WHOLE SET. So the body is the complete list: EVERY box ticked
+// in this person's block at the moment Save is pressed — never just the box that changed — plus any id
+// the server returned that has no box here (a service deactivated since it was assigned; the server
+// keeps that link). This screen can't show those, so it must not be what silently deletes them.
+function _schWholeSet(st, staffId, boxes) {
+  var hasBox = Object.create(null);
+  var ids = [];
+  boxes.forEach(function(b) {
+    hasBox[b.id] = true;
+    if (b.input.checked) ids.push(b.id);
+  });
+  (st.saved[staffId] || []).forEach(function(id) {
+    if (!hasBox[id] && ids.indexOf(id) === -1) ids.push(id);
+  });
+  return ids;
+}
+
+function _schMapBlock(st, p) {
+  var block = _node('div', 'sch-item');
+  var name = _node('div', 'sch-name', '', p.name || 'Team member');
+  if (p.title) name.appendChild(_node('span', 'sch-sub', '', ' · ' + p.title));
+  block.appendChild(name);
+
+  if (!(p.id in st.saved)) {
+    // Their current set never loaded. A Save now would be a blind whole-set replace, so none is offered.
+    block.appendChild(_node('div', 'sch-meta', '', 'Couldn’t load the services they perform. Reload the page to set them.'));
+    return block;
+  }
+
+  var shownIds = st.services.map(function(s) { return s.id; });
+  var savedShown = st.saved[p.id].filter(function(id) { return shownIds.indexOf(id) > -1; });
+  var start = st.pending[p.id] || savedShown;
+  var busy = !!st.saving[p.id];
+  var boxes = [];
+  var group = _node('div', 'sch-checks');
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-label', 'Services performed by ' + (p.name || 'this team member'));
+  st.services.forEach(function(s) {
+    var label = _node('label', 'sch-check');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = start.indexOf(s.id) > -1;
+    cb.disabled = busy;
+    label.appendChild(cb);
+    label.appendChild(_node('span', '', '', s.name || 'Untitled service'));
+    cb.addEventListener('change', paint);
+    boxes.push({ id: s.id, input: cb, label: label });
+    group.appendChild(label);
+  });
+  block.appendChild(group);
+
+  var err = _schError();
+  if (st.mapErr[p.id]) _schShowError(err, st.mapErr[p.id]);
+  block.appendChild(err);
+
+  var foot = _node('div', 'sch-map-foot');
+  var save = _schButton('btn btn-primary', busy ? 'Working…' : 'Save');
+  var state = _node('div', 'sch-map-state');
+  state.setAttribute('aria-live', 'polite');
+  foot.appendChild(save);
+  foot.appendChild(state);
+  block.appendChild(foot);
+
+  function ticked() {
+    return boxes.filter(function(b) { return b.input.checked; }).map(function(b) { return b.id; });
+  }
+  function paint() {
+    var now = ticked();
+    boxes.forEach(function(b) { b.label.classList.toggle('on', b.input.checked); });
+    var dirty = now.length !== savedShown.length || now.some(function(id) { return savedShown.indexOf(id) === -1; });
+    if (dirty) st.pending[p.id] = now; else delete st.pending[p.id];   // unsaved ticks survive a re-render
+    save.disabled = busy || !dirty;
+    var total = st.services.length;
+    state.className = 'sch-map-state' + (dirty ? ' dirty' : (now.length ? '' : ' warn'));
+    state.textContent = dirty ? 'Unsaved changes'
+      : now.length ? 'Performs ' + now.length + ' of ' + total + ' service' + (total === 1 ? '' : 's')
+      : 'Not ticked for any service yet — they can’t be booked until they are.';
+  }
+
+  save.addEventListener('click', function() { _schSaveMapping(st, p, _schWholeSet(st, p.id, boxes)); });
+  paint();
+  return block;
+}
+
+// Behind a Save button, not on each tick: the server's replace is a delete-then-insert, one per
+// request, so saving per tick would mean several overlapping replaces that can land out of order —
+// the last to ARRIVE wins, not the last clicked. It would also spend the 60-writes-an-hour limit
+// three times as fast. One deliberate Save sends one complete list.
+async function _schSaveMapping(st, p, ids) {
+  st.saving[p.id] = true;
+  delete st.mapErr[p.id];
+  _schRenderMap(st);                     // boxes and button locked while the replace is in flight
+  try {
+    var data = await _schRequest('PUT', 'staff/' + encodeURIComponent(p.id) + '/services', { service_ids: ids }, 'Could not save these services. Please try again.');
+    if (_schStale(st)) return;
+    st.saved[p.id] = Array.isArray(data.service_ids) ? data.service_ids.slice() : ids.slice();
+    delete st.pending[p.id];
+    showToast('Saved services for ' + (p.name || 'this team member') + '.', 'success');
+  } catch (e) {
+    if (_schStale(st)) return;
+    st.mapErr[p.id] = e.message || 'Could not save these services. Please try again.';
+    // The server's replace isn't atomic. Re-read what is actually saved, so "Unsaved changes" is measured
+    // against the truth; the ticks on screen stay put so Save can simply be pressed again.
+    try {
+      var fresh = await _schRequest('GET', 'staff/' + encodeURIComponent(p.id) + '/services', undefined, '');
+      if (_schStale(st)) return;
+      if (Array.isArray(fresh.service_ids)) st.saved[p.id] = fresh.service_ids.slice();
+    } catch (e2) {
+      if (_schStale(st)) return;
+    }
+  }
+  st.saving[p.id] = false;
+  _schRenderMap(st);
+}
+
+registerPortalTabLoader('scheduling', _schLoad);
 
 // ── Competitor Intel ─────────────────────────────────────────
 var COMP_CLIENT_ID = null;
