@@ -48,6 +48,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .page-heading{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:6px;}
 .page-sub{font-size:13px;color:var(--text3);margin-bottom:28px;}
 
+/* ── PORTAL TABS ── */
+/* Same column as .content (1100px, 28px gutters) so the tab rule lines up with the cards below.
+   Colours follow .btn-ghost: text2 at rest (6.3:1 on the page background; text3 would be 2.95:1 and
+   fail WCAG AA), text + surface2 on hover; the active marker uses the same --accent as primary
+   buttons and focused inputs. */
+.portal-tabs-wrap{max-width:1100px;margin:0 auto;padding:18px 28px 0;}
+.portal-tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);}
+.portal-tab{position:relative;background:transparent;border:none;border-radius:var(--radius-sm) var(--radius-sm) 0 0;padding:10px 16px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:color .15s,background .15s;}
+.portal-tab:hover{color:var(--text);background:var(--surface2);}
+.portal-tab.active{color:var(--text);}
+.portal-tab.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-1px;height:2px;border-radius:2px;background:var(--accent);}
+.portal-tab:focus-visible{outline:2px solid var(--accent2);outline-offset:-2px;}
+#panel-dashboard[hidden],#panel-scheduling[hidden]{display:none;}
+#panel-scheduling:focus-visible{outline:2px solid var(--accent2);outline-offset:-2px;border-radius:var(--radius);}
+
 /* ── CARDS ── */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -309,7 +324,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     </div>
   </header>
 
-  <div class="content">
+  <div class="portal-tabs-wrap">
+    <div class="portal-tabs" id="portal-tabs" role="tablist" aria-label="Portal sections">
+      <button type="button" class="portal-tab active" id="tab-dashboard" role="tab" aria-selected="true" aria-controls="panel-dashboard">Dashboard</button>
+      <button type="button" class="portal-tab" id="tab-scheduling" role="tab" aria-selected="false" aria-controls="panel-scheduling" tabindex="-1">Scheduling</button>
+    </div>
+  </div>
+
+  <!-- Dashboard tab: the pre-existing .content container, promoted to a tabpanel. Its children are unchanged. -->
+  <div class="content" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
     <div class="page-heading" id="dash-heading">Welcome back</div>
     <div class="page-sub">Here's what's happening with your business today.</div>
 
@@ -433,6 +456,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="mc-thread-spinner"><div class="mc-spinner"></div>Loading missed calls...</div>
       </div>
     </div>
+  </div>
+
+  <!-- Scheduling tab: an empty container for the scheduling setup screens (next change). -->
+  <div class="content" id="panel-scheduling" role="tabpanel" aria-labelledby="tab-scheduling" tabindex="0" hidden>
+    <div class="card"><div class="empty">Scheduling setup screens are coming soon.</div></div>
   </div>
 </div>
 
@@ -582,6 +610,151 @@ function logout() {
   document.getElementById('login-btn').disabled = false;
 }
 
+// ── Portal tabs ──────────────────────────────────────────────
+// A presentation-only shell. Both panels stay in the DOM permanently; the inactive one just carries
+// the `hidden` attribute. That is deliberate: every renderer on this page targets elements by id, and
+// getElementById still finds nodes inside a hidden panel, so data that arrives while its tab isn't
+// showing still lands. Dashboard data still loads eagerly on sign-in, exactly as before.
+//
+// CONTRACT FOR LAZY TABS: a section that should fetch only when its tab is first opened calls
+//     registerPortalTabLoader('scheduling', function(clientId) { ... });
+// The loader runs once per sign-in, the first time that tab is shown — by click, keyboard, deep link
+// or hash change — with the signed-in client's id. It never runs while signed out. A loader that
+// throws or rejects can't disturb sign-in; it is simply retried the next time its tab is shown.
+// Registration can sit anywhere in the script, above or below this block. Nothing is registered yet.
+// Two rules every loader must follow:
+//   1. Its first synchronous act resets its panel to a loading state — after sign-out and sign-in as a
+//      different client (no page reload), the previous client's content is still in the panel.
+//   2. After every await it stops if clientId !== PORTAL_CLIENT_ID, so a request still in flight when
+//      the user signed out, or someone else signed in, can't write into the wrong client's panel.
+var PORTAL_TABS = ['dashboard', 'scheduling'];
+var PORTAL_CLIENT_ID = null;                       // set on every sign-in and session restore
+var _portalActiveTab = 'dashboard';
+var _portalTabLoaders = _portalTabLoaders || {};   // `||` keeps any loader registered by code above here
+var _portalTabLoaded = {};
+var _portalTabsBound = false;
+var _portalDashSeen = false;                       // Dashboard has been on screen at least once this sign-in
+var _coachHeightWhenHidden = null;                 // #coach-history scrollHeight when Dashboard was last hidden
+
+function registerPortalTabLoader(tab, fn) {
+  if (!_portalTabLoaders) _portalTabLoaders = {};
+  _portalTabLoaders[tab] = fn;
+  if (tab === _portalActiveTab) _runPortalTabLoader(tab);   // registered after its tab was already open
+}
+
+function _runPortalTabLoader(tab) {
+  var fn = _portalTabLoaders && _portalTabLoaders[tab];
+  // logout() clears the token without reloading, so PORTAL_CLIENT_ID can be stale on the login screen;
+  // no token means signed out, and nothing may fetch.
+  if (!PORTAL_CLIENT_ID || !localStorage.getItem('client_token')) return;
+  if (_portalTabLoaded[tab] || typeof fn !== 'function') return;
+  _portalTabLoaded[tab] = true;
+  // Isolated: a failing loader must never take the rest of sign-in down with it.
+  try {
+    var p = fn(PORTAL_CLIENT_ID);
+    if (p && typeof p.catch === 'function') p.catch(function(e) { _portalTabLoaded[tab] = false; console.error('[portal] ' + tab + ' loader failed:', e); });
+  } catch (e) {
+    _portalTabLoaded[tab] = false;
+    console.error('[portal] ' + tab + ' loader failed:', e);
+  }
+}
+
+function _portalTabFromHash() {
+  var h = (location.hash || '').replace(/^#/, '').toLowerCase();
+  return PORTAL_TABS.indexOf(h) > -1 ? h : null;
+}
+
+// #coach-history is a scroll box that its renderer pins to the newest message. If it rendered while the
+// Dashboard panel was hidden, that scroll was a no-op (display:none has no layout) and it would come back
+// at the oldest message. So on revealing Dashboard, re-pin it ONLY if it could have rendered while hidden:
+// Dashboard hasn't been on screen yet this sign-in (a #scheduling deep link), or the history's height
+// changed since Dashboard was hidden. Otherwise the browser has kept the user's own scroll position —
+// including the very top — and it is left alone.
+function _revealDashboardCoach() {
+  var firstReveal = !_portalDashSeen;
+  _portalDashSeen = true;
+  var h = document.getElementById('coach-history');
+  if (!h || h.scrollHeight <= h.clientHeight) return;
+  if (firstReveal || h.scrollHeight !== _coachHeightWhenHidden) h.scrollTop = h.scrollHeight;
+}
+
+function showPortalTab(tab, updateHash) {
+  if (PORTAL_TABS.indexOf(tab) === -1) tab = 'dashboard';
+  var dashPanel = document.getElementById('panel-dashboard');
+  var dashWasHidden = dashPanel ? dashPanel.hidden : false;
+  if (dashPanel && !dashWasHidden && tab !== 'dashboard') {
+    var ch = document.getElementById('coach-history');
+    _coachHeightWhenHidden = ch ? ch.scrollHeight : null;   // measure now; hidden panels report 0
+  }
+  _portalActiveTab = tab;
+  PORTAL_TABS.forEach(function(t) {
+    var on = (t === tab);
+    var btn = document.getElementById('tab-' + t);
+    var panel = document.getElementById('panel-' + t);
+    if (btn) {
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      btn.tabIndex = on ? 0 : -1;     // roving tabindex: Tab lands on the active tab, arrows move between
+    }
+    if (panel) panel.hidden = !on;    // hide, never remove — every id must stay reachable
+  });
+  if (updateHash) {
+    // replaceState rather than location.hash: switching tabs shouldn't pile up Back-button entries,
+    // and it doesn't fire hashchange, so there is no re-entry. The query string is preserved.
+    try { history.replaceState(null, '', location.pathname + location.search + '#' + tab); } catch (e) {}
+  }
+  if (tab === 'dashboard') {
+    if (dashWasHidden) _revealDashboardCoach();
+    else _portalDashSeen = true;      // already on screen, so its renderers scroll themselves
+  }
+  _runPortalTabLoader(tab);
+}
+
+// Honour the URL fragment. An unknown one (#foo) falls back to Dashboard and is dropped from the
+// URL, so the address bar never names a tab that isn't showing.
+function _applyHashTab() {
+  var fromHash = _portalTabFromHash();
+  if (!fromHash && location.hash) {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  }
+  showPortalTab(fromHash || 'dashboard');
+}
+
+function _onPortalTabKey(e) {
+  if (e.altKey || e.ctrlKey || e.metaKey) return;   // Alt+←/→ is browser Back/Forward — never hijack it
+  var i = PORTAL_TABS.indexOf(_portalActiveTab), next = null;
+  if (e.key === 'ArrowRight') next = PORTAL_TABS[(i + 1) % PORTAL_TABS.length];
+  else if (e.key === 'ArrowLeft') next = PORTAL_TABS[(i - 1 + PORTAL_TABS.length) % PORTAL_TABS.length];
+  else if (e.key === 'Home') next = PORTAL_TABS[0];
+  else if (e.key === 'End') next = PORTAL_TABS[PORTAL_TABS.length - 1];
+  if (!next) return;
+  e.preventDefault();
+  showPortalTab(next, true);
+  var b = document.getElementById('tab-' + next);
+  if (b) b.focus();
+}
+
+// Called from showDashboard on every sign-in and session restore. Listeners bind once; the client id
+// and the per-tab "already loaded" flags reset each time, because a new sign-in may be a different
+// client (logout() hides the dashboard without reloading the page).
+function initPortalTabs(clientId) {
+  PORTAL_CLIENT_ID = clientId || null;
+  _portalTabLoaded = {};
+  _portalDashSeen = false;
+  _coachHeightWhenHidden = null;
+  if (!_portalTabsBound) {
+    _portalTabsBound = true;
+    PORTAL_TABS.forEach(function(t) {
+      var btn = document.getElementById('tab-' + t);
+      if (btn) btn.addEventListener('click', function() { showPortalTab(t, true); });
+    });
+    var list = document.getElementById('portal-tabs');
+    if (list) list.addEventListener('keydown', _onPortalTabKey);
+    window.addEventListener('hashchange', _applyHashTab);   // hand-edited URL or an in-page #link
+  }
+  _applyHashTab();
+}
+
 // ── Dashboard ────────────────────────────────────────────────
 function showDashboard(clientInfo, mustChangePassword) {
   document.getElementById('login-screen').style.display = 'none';
@@ -600,6 +773,10 @@ function showDashboard(clientInfo, mustChangePassword) {
 
   // Single chokepoint: forced password change gates BOTH entry paths.
   if (mustChangePassword) openPwChangeModal(true);
+
+  // Last on purpose: nothing tab-related — including a lazy tab loader fired by a #scheduling deep link —
+  // may ever run ahead of the data load or the forced-password gate above.
+  initPortalTabs(clientInfo && clientInfo.client_id);
 }
 
 async function loadDashboardData(clientId, clientInfo) {
