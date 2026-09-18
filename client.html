@@ -78,6 +78,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .appt-row:last-child{border-bottom:none;}
 .appt-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .appt-time{font-size:11px;color:var(--text3);min-width:52px;}
+.appt-when{text-align:right;min-width:96px;}
+.appt-when-date{font-size:12px;color:var(--text2);font-weight:500;}
+.appt-when-time{font-size:11px;color:var(--text3);margin-top:2px;}
+.appt-dur{font-size:11px;color:var(--text3);}
+.appt-count{font-size:11px;font-weight:600;padding:2px 9px;border-radius:20px;background:var(--amber-dim);color:var(--amber);}
+.appt-req{border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);padding:14px;margin-bottom:10px;}
+.appt-req:last-child{margin-bottom:0;}
+.appt-req-name{font-size:13px;font-weight:600;}
+.appt-req-meta{font-size:11px;color:var(--text3);margin-top:3px;word-break:break-word;}
+.appt-req-text{margin-top:10px;padding:10px 12px;background:var(--surface);border-left:2px solid var(--accent);border-radius:4px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;}
+.appt-req-ask{font-size:11px;color:var(--amber);margin-top:8px;}
+.appt-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.appt-actions .btn{width:auto;padding:8px 16px;font-size:12px;}
+.appt-form{margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.appt-form-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.appt-form-row .form-group{margin-bottom:0;flex:1;min-width:132px;}
+.appt-form label{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500;}
+.appt-form input{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;}
+.appt-form input:focus{border-color:var(--accent);}
+.appt-note{font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:10px;}
 
 /* ── CHATBOT STATUS ── */
 .bot-status{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface2);border-radius:var(--radius-sm);}
@@ -310,6 +330,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="stat-value" id="stat-bot">—</div>
         <div class="stat-label">Chatbot status</div>
       </div>
+    </div>
+
+    <!-- Appointment requests — hidden unless there are pending ones -->
+    <div class="card" id="appt-requests-card" style="display:none;">
+      <div class="card-header">
+        <div class="card-title">Appointment requests</div>
+        <span class="appt-count" id="appt-requests-count">0</span>
+      </div>
+      <div id="appt-requests-wrap"></div>
     </div>
 
     <div class="grid-2">
@@ -579,11 +608,12 @@ async function loadDashboardData(clientId, clientInfo) {
   loadMissedCalls(clientId);
   // Fetch me (modules — kept as the chatbot entitlement fallback) + leads + appointments +
   // chatbot install status, in one batch so the card resolves on the same page load.
-  var [meRes, leadsRes, apptsRes, botRes] = await Promise.allSettled([
+  var [meRes, leadsRes, apptsRes, botRes, clientRes] = await Promise.allSettled([
     authedFetch(API + '/api/client-auth/me'),
     authedFetch(API + '/api/leads/' + clientId + '?limit=5'),
     authedFetch(API + '/api/appointments/' + clientId),
     authedFetch(API + '/api/client-auth/chatbot-status'),
+    authedFetch(API + '/api/clients/' + clientId),
   ]);
 
   // ── Leads ──
@@ -624,41 +654,28 @@ async function loadDashboardData(clientId, clientInfo) {
   }
 
   // ── Appointments ──
-  var apptsEl  = document.getElementById('appts-list');
+  // Resolve the business timezone BEFORE rendering — every time shown below depends on it.
+  // Nothing else in the portal exposes clients.timezone; the client record is the only source,
+  // and openMcSettings already reads this same endpoint with the client token. If the field is
+  // missing or is not a zone Intl recognises, APPT_TZ stays null and times fall back to the
+  // browser's zone with its abbreviation shown, so the hour is self-describing rather than
+  // silently wrong.
+  if (clientRes.status === 'fulfilled' && clientRes.value.ok) {
+    try {
+      var cRec = await clientRes.value.json();
+      if (_apptTzValid(cRec && cRec.timezone)) APPT_TZ = cRec.timezone;
+    } catch (e) { /* leave APPT_TZ null and fall back to the browser zone */ }
+  }
+
+  APPT_CLIENT_ID = clientId;
   var statAppts = document.getElementById('stat-appts');
-  var dotColors = ['var(--green)','var(--accent)','var(--amber)','var(--pink)','var(--blue)'];
   if (apptsRes.status === 'fulfilled' && apptsRes.value.ok) {
     var ad = await apptsRes.value.json();
     var appts = ad.appointments || [];
     statAppts.textContent = ad.count !== undefined ? ad.count : appts.length;
-    var now = Date.now();
-    var upcoming = appts.filter(function(a) {
-      return a.scheduled_time && new Date(a.scheduled_time).getTime() >= now;
-    }).slice(0, 5);
-    if (upcoming.length === 0) {
-      apptsEl.innerHTML = '<div class="empty">No upcoming appointments.</div>';
-    } else {
-      // Same reasoning as the leads list above: appointment fields can originate from the public
-      // chatbot, so rows are DOM nodes with text via textContent. The dot colour is a lookup.
-      var apptFrag = document.createDocumentFragment();
-      upcoming.forEach(function(a, i) {
-        var d = new Date(a.scheduled_time);
-        var timeStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' +
-                      d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
-        var row = _node('div', 'appt-row');
-        row.appendChild(_node('div', 'appt-dot', 'background:' + dotColors[i % dotColors.length]));
-        var info = _node('div', '', 'flex:1;');
-        info.appendChild(_node('div', '', 'font-weight:500;', a.customer_name || 'Appointment'));
-        info.appendChild(_node('div', '', 'font-size:11px;color:var(--text3);', a.appointment_type || 'Meeting'));
-        row.appendChild(info);
-        row.appendChild(_node('div', 'appt-time', '', timeStr));
-        apptFrag.appendChild(row);
-      });
-      apptsEl.textContent = '';
-      apptsEl.appendChild(apptFrag);
-    }
+    _renderAppointments(appts);
   } else {
-    apptsEl.innerHTML = '<div class="empty">Could not load appointments.</div>';
+    document.getElementById('appts-list').innerHTML = '<div class="empty">Could not load appointments.</div>';
   }
 
   // ── Chatbot ──
@@ -812,6 +829,276 @@ function _renderChatbotCard(info) {
 
   wrap.textContent = '';
   wrap.appendChild(frag);
+}
+
+// ── Appointments ─────────────────────────────────────────────
+// Rows carry customer-written text (customer_name, requested_text), so every value goes in through
+// _node/textContent — the same rule as the leads list. Nothing below builds an HTML string from data.
+//
+// TIMESTAMP ASSUMPTION: scheduled_at and requested_at are treated as timezone-aware ISO strings, the
+// way last_message_at is on /api/client-auth/chatbot-status. If the API ever returns them naive,
+// new Date() would read them as browser-local and the timeZone formatting below would shift them.
+var APPT_CLIENT_ID = null;
+var APPT_TZ = null;   // IANA zone from the client record; null = unknown, fall back to browser zone
+
+function _apptTzValid(tz) {
+  if (!tz || typeof tz !== 'string') return false;
+  try { new Intl.DateTimeFormat('en-US', {timeZone: tz}); return true; } catch (e) { return false; }
+}
+
+function _apptFmtOpts(extra) {
+  var o = {};
+  if (APPT_TZ) o.timeZone = APPT_TZ;
+  for (var k in extra) if (Object.prototype.hasOwnProperty.call(extra, k)) o[k] = extra[k];
+  return o;
+}
+
+// "Tue, Nov 24"
+function _apptDate(iso) {
+  var d = new Date(iso);
+  if (!iso || isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-US', _apptFmtOpts({weekday: 'short', month: 'short', day: 'numeric'}));
+}
+
+// "2:00 PM EST" — the zone abbreviation is always shown, so the hour can't be misread whether it
+// came from the client's zone or, in the fallback, the browser's.
+function _apptTime(iso) {
+  var d = new Date(iso);
+  if (!iso || isNaN(d.getTime())) return '';
+  return d.toLocaleString('en-US', _apptFmtOpts({hour: 'numeric', minute: '2-digit', timeZoneName: 'short'}));
+}
+
+function _apptWhen(iso) {
+  var dt = _apptDate(iso), tm = _apptTime(iso);
+  return (dt && tm) ? dt + ', ' + tm : '';
+}
+
+// Split a timestamp into <input type="date"> / <input type="time"> values as they read IN THE
+// CLIENT'S ZONE, so pre-filling from requested_at doesn't shift the hour for an owner abroad.
+function _apptInputParts(iso) {
+  var d = new Date(iso);
+  if (!iso || isNaN(d.getTime())) return null;
+  var opts = {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false};
+  if (APPT_TZ) opts.timeZone = APPT_TZ;
+  var m = {};
+  new Intl.DateTimeFormat('en-CA', opts).formatToParts(d).forEach(function(p) { m[p.type] = p.value; });
+  if (!m.year || !m.month || !m.day || !m.hour || !m.minute) return null;
+  // hour12:false renders midnight as "24" in some engines; <input type="time"> needs "00".
+  return { date: m.year + '-' + m.month + '-' + m.day, time: (m.hour === '24' ? '00' : m.hour) + ':' + m.minute };
+}
+
+function _apptCloseForms() {
+  Array.prototype.forEach.call(document.querySelectorAll('.appt-form'), function(f) { f.remove(); });
+}
+
+function _apptInput(type, value) {
+  var i = document.createElement('input');
+  i.type = type;
+  if (value) i.value = value;
+  return i;
+}
+
+function _apptField(labelText, input) {
+  var g = _node('div', 'form-group');
+  g.appendChild(_node('label', '', '', labelText));
+  g.appendChild(input);
+  return g;
+}
+
+// Every action refetches rather than mutating the list in place: the server owns the status
+// transition (a confirm moves a row from pending to upcoming and changes the count), so re-reading
+// it is the only way the UI can't drift from what was actually saved.
+async function _apptPost(id, action, payload, btn, okMsg) {
+  var orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Working…';
+  try {
+    var res = await authedFetch(API + '/api/appointments/' + encodeURIComponent(id) + '/' + action, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      var err = await res.json().catch(function() { return {}; });
+      throw new Error(extractErrorMessage(err, 'Could not update this appointment. Please try again.'));
+    }
+    showToast(okMsg, 'success');
+    await refreshAppointments();
+  } catch (e) {
+    showToast(e.message || 'Could not update this appointment. Please try again.', 'error');
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+async function refreshAppointments() {
+  if (!APPT_CLIENT_ID) return;
+  try {
+    var res = await authedFetch(API + '/api/appointments/' + APPT_CLIENT_ID);
+    if (!res.ok) throw new Error('reload');
+    var data = await res.json();
+    var appts = data.appointments || [];
+    var statAppts = document.getElementById('stat-appts');
+    if (statAppts) statAppts.textContent = data.count !== undefined ? data.count : appts.length;
+    _renderAppointments(appts);
+  } catch (e) {
+    showToast('Saved, but the list could not refresh. Reload the page to see the change.', 'error');
+  }
+}
+
+// PART B — confirm. Inline under the request (not a modal) so the customer's own words and their
+// suggested time stay on screen while the owner picks the slot.
+function _apptConfirmForm(a) {
+  var form = _node('div', 'appt-form');
+  form.appendChild(_node('div', 'appt-note', '', 'Pick the slot you can take them. Times are in your business timezone.'));
+  var pre = _apptInputParts(a.requested_at);
+  var dateInput = _apptInput('date', pre ? pre.date : '');
+  var timeInput = _apptInput('time', pre ? pre.time : '');
+  var fields = _node('div', 'appt-form-row');
+  fields.appendChild(_apptField('Date', dateInput));
+  fields.appendChild(_apptField('Time', timeInput));
+  form.appendChild(fields);
+
+  var actions = _node('div', 'appt-actions');
+  var go = _node('button', 'btn btn-primary', '', 'Confirm appointment');
+  go.addEventListener('click', function() {
+    var dateVal = dateInput.value, timeVal = timeInput.value;
+    if (!dateVal || !timeVal) { showToast('Pick a date and a time first.', 'error'); return; }
+    // NAIVE LOCAL DATETIME — DELIBERATELY NO OFFSET AND NO TRAILING "Z".
+    // The backend reads this string in the client's own timezone (routes/appointments.py converts it
+    // through clients.timezone). new Date(...).toISOString() would re-anchor it to UTC, and any
+    // appended offset would be the BROWSER's — either way an owner not sitting in the salon's zone
+    // would silently book the wrong hour.
+    _apptPost(a.id, 'confirm', { scheduled_at: dateVal + 'T' + timeVal + ':00' }, go, 'Appointment confirmed.');
+  });
+  var cancel = _node('button', 'btn btn-ghost', '', 'Cancel');
+  cancel.addEventListener('click', _apptCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+  setTimeout(function() { dateInput.focus(); }, 0);
+  return form;
+}
+
+// DECLINE — a two-step inline form is the confirmation: nothing is sent until "Decline request".
+// A native confirm() couldn't carry the optional reason.
+function _apptDeclineForm(a) {
+  var form = _node('div', 'appt-form');
+  form.appendChild(_node('div', 'appt-note', '', "This ends the request and they won't be booked in. It can't be undone."));
+  var reason = _apptInput('text', '');
+  reason.placeholder = 'e.g. Fully booked that week';
+  form.appendChild(_apptField('Reason (optional)', reason));
+  var actions = _node('div', 'appt-actions');
+  var go = _node('button', 'btn btn-ghost', 'color:var(--pink);border-color:rgba(255,107,157,0.35);', 'Decline request');
+  go.addEventListener('click', function() {
+    var body = {};
+    var r = reason.value.trim();
+    if (r) body.reason = r;
+    _apptPost(a.id, 'decline', body, go, 'Request declined.');
+  });
+  var keep = _node('button', 'btn btn-ghost', '', 'Keep request');
+  keep.addEventListener('click', _apptCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(keep);
+  form.appendChild(actions);
+  setTimeout(function() { reason.focus(); }, 0);
+  return form;
+}
+
+// PART A — one pending request.
+function _apptRequestRow(a) {
+  var row = _node('div', 'appt-req');
+  row.appendChild(_node('div', 'appt-req-name', '', a.customer_name || 'Someone'));
+  var contact = [a.customer_phone, a.customer_email].filter(Boolean).join(' · ');
+  if (contact) row.appendChild(_node('div', 'appt-req-meta', '', contact));
+  // Their own words are the whole point of a logged request — shown in full, not summarised.
+  if (a.requested_text) row.appendChild(_node('div', 'appt-req-text', '', a.requested_text));
+  var asked = _apptWhen(a.requested_at);
+  if (asked) row.appendChild(_node('div', 'appt-req-ask', '', 'Asked for ' + asked));
+
+  var actions = _node('div', 'appt-actions');
+  var confirmBtn = _node('button', 'btn btn-primary', '', 'Confirm');
+  var declineBtn = _node('button', 'btn btn-ghost', '', 'Decline');
+  // One form open at a time across the whole list; clicking the same button again closes it.
+  function toggle(mode, build) {
+    var existing = row.querySelector('.appt-form');
+    var same = existing && existing.getAttribute('data-mode') === mode;
+    _apptCloseForms();
+    if (!same) {
+      var f = build();
+      f.setAttribute('data-mode', mode);
+      row.appendChild(f);
+    }
+  }
+  confirmBtn.addEventListener('click', function() { toggle('confirm', function() { return _apptConfirmForm(a); }); });
+  declineBtn.addEventListener('click', function() { toggle('decline', function() { return _apptDeclineForm(a); }); });
+  actions.appendChild(confirmBtn);
+  actions.appendChild(declineBtn);
+  row.appendChild(actions);
+  return row;
+}
+
+// PART C — one upcoming appointment.
+function _apptUpcomingRow(a, i) {
+  var dotColors = ['var(--green)', 'var(--accent)', 'var(--amber)', 'var(--pink)', 'var(--blue)'];
+  var row = _node('div', 'appt-row');
+  row.appendChild(_node('div', 'appt-dot', 'background:' + dotColors[i % dotColors.length]));
+  var info = _node('div', '', 'flex:1;min-width:0;');
+  info.appendChild(_node('div', '', 'font-weight:500;', a.customer_name || 'Appointment'));
+  var bits = [];
+  if (a.duration_minutes) bits.push(a.duration_minutes + ' min');
+  if (a.appointment_type) bits.push(a.appointment_type);
+  if (bits.length) info.appendChild(_node('div', 'appt-dur', '', bits.join(' · ')));
+  row.appendChild(info);
+  var when = _node('div', 'appt-when');
+  when.appendChild(_node('div', 'appt-when-date', '', _apptDate(a.scheduled_at)));
+  when.appendChild(_node('div', 'appt-when-time', '', _apptTime(a.scheduled_at)));
+  row.appendChild(when);
+  return row;
+}
+
+function _renderAppointments(appts) {
+  appts = appts || [];
+  var card = document.getElementById('appt-requests-card');
+  var wrap = document.getElementById('appt-requests-wrap');
+  var countEl = document.getElementById('appt-requests-count');
+  var upEl = document.getElementById('appts-list');
+
+  // Pending, oldest first — the request that has waited longest needs answering first.
+  var pending = appts.filter(function(a) { return a.status === 'pending'; }).sort(function(x, y) {
+    return new Date(x.created_at || x.requested_at || 0) - new Date(y.created_at || y.requested_at || 0);
+  });
+  if (card && wrap) {
+    wrap.textContent = '';
+    if (pending.length === 0) {
+      card.style.display = 'none';
+    } else {
+      var pf = document.createDocumentFragment();
+      pending.forEach(function(a) { pf.appendChild(_apptRequestRow(a)); });
+      wrap.appendChild(pf);
+      if (countEl) countEl.textContent = pending.length + ' waiting';
+      card.style.display = '';
+    }
+  }
+
+  if (!upEl) return;
+  // Confirmed and still ahead, soonest first. scheduled_at is NULL on pending rows, so this guard is
+  // load-bearing — the old card read a non-existent scheduled_time and so never showed anything.
+  var now = Date.now();
+  var upcoming = appts.filter(function(a) {
+    if (a.status !== 'confirmed' || !a.scheduled_at) return false;
+    var t = new Date(a.scheduled_at).getTime();
+    return !isNaN(t) && t >= now;
+  }).sort(function(x, y) { return new Date(x.scheduled_at) - new Date(y.scheduled_at); }).slice(0, 5);
+
+  if (upcoming.length === 0) {
+    upEl.innerHTML = '<div class="empty">No upcoming appointments.</div>';   // literal only
+    return;
+  }
+  var uf = document.createDocumentFragment();
+  upcoming.forEach(function(a, i) { uf.appendChild(_apptUpcomingRow(a, i)); });
+  upEl.textContent = '';
+  upEl.appendChild(uf);
 }
 
 // ── Competitor Intel ─────────────────────────────────────────
