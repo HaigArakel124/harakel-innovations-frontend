@@ -175,6 +175,97 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sch-map-state{font-size:11px;color:var(--text3);}
 .sch-map-state.dirty,.sch-map-state.warn{color:var(--amber);}
 
+/* ── SCHEDULING: weekly hours, days off, direct booking ── */
+#sch-root > .card{scroll-margin-top:84px;}
+.sch-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+.sch-gap{margin-top:12px;}
+.sch-row[hidden]{display:none;}
+.sch-picker{display:flex;flex-wrap:wrap;gap:6px;}
+.sch-pick{padding:6px 14px;border:1px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);font-size:12px;font-weight:500;font-family:inherit;cursor:pointer;transition:color .15s,background .15s,border-color .15s;}
+.sch-pick:hover{color:var(--text);border-color:var(--accent);}
+.sch-pick.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.sch-pick.dirty::after{content:'';display:inline-block;width:6px;height:6px;margin-left:7px;border-radius:50%;background:var(--amber);vertical-align:middle;}
+.sch-pick:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
+.sch-sum{font-size:12px;color:var(--text2);margin:14px 0 10px;line-height:1.5;}
+.sch-sum.warn{color:var(--amber);}
+.sch-day{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:start;padding:10px 12px;margin-bottom:6px;border:1px solid var(--border);border-left:3px solid var(--green);border-radius:var(--radius-sm);background:var(--surface2);}
+.sch-day.off{border-left-color:var(--border2);background:transparent;}
+.sch-day-name{font-size:13px;font-weight:600;color:var(--text);padding-top:6px;}
+.sch-day.off .sch-day-name{color:var(--text3);font-weight:500;}
+.sch-day-off{font-size:12px;color:var(--text2);font-style:italic;padding:6px 0 2px;}
+.sch-win{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+.sch-win input{width:132px;padding:7px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none;color-scheme:dark;transition:border-color .15s;}
+.sch-win input:focus{border-color:var(--accent);}
+.sch-win.bad input{border-color:var(--pink);}
+.sch-win-to{font-size:12px;color:var(--text3);}
+.sch-win-x{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid var(--border2);border-radius:50%;background:transparent;color:var(--text2);font-size:15px;line-height:1;font-family:inherit;cursor:pointer;}
+.sch-win-x:hover{color:var(--pink);border-color:rgba(255,107,157,0.45);}
+.sch-win-x:disabled,.sch-win input:disabled{opacity:.5;cursor:not-allowed;}
+.sch-day-actions{display:flex;gap:16px;flex-wrap:wrap;}
+.sch-link{background:transparent;border:none;padding:4px 0;color:var(--accent2);font-size:12px;font-family:inherit;cursor:pointer;}
+.sch-link:hover{color:var(--accent);text-decoration:underline;}
+.sch-link:disabled{color:var(--text3);cursor:not-allowed;text-decoration:none;}
+.sch-form .sch-check{display:inline-flex;margin:0;font-size:12px;font-weight:400;color:var(--text2);}
+.sch-form .sch-check.on{color:var(--text);}
+.sch-form input[type=checkbox],.sch-form input[type=radio]{width:14px;height:14px;padding:0;margin:0;flex-shrink:0;accent-color:var(--accent);}
+.sch-form input[type=date],.sch-form input[type=time]{color-scheme:dark;}
+.sch-copy-days{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 6px;}
+.sch-q{font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500;}
+.sch-kinds{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.sch-form .sch-kind-opt{display:flex;align-items:flex-start;gap:10px;margin:0;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface);cursor:pointer;}
+.sch-form .sch-kind-opt.on{border-color:rgba(108,99,255,0.55);background:var(--accent-glow);}
+.sch-form .sch-kind-opt input{margin-top:2px;}
+.sch-form .sch-kind-opt:focus-within{outline:2px solid var(--accent2);outline-offset:1px;}
+.sch-pick:disabled{opacity:.5;cursor:not-allowed;}
+.sch-kind-title{display:block;font-size:13px;font-weight:600;color:var(--text);}
+.sch-kind-text{display:block;font-size:12px;font-weight:400;color:var(--text2);margin-top:2px;line-height:1.45;}
+.sch-kind{display:inline-block;margin-top:5px;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.sch-kind.off{background:var(--pink-dim);color:var(--pink);}
+.sch-kind.block{background:var(--amber-dim);color:var(--amber);}
+.sch-kind.extra{background:var(--green-dim);color:var(--green);}
+.sch-range{font-size:11px;color:var(--text3);margin:14px 0 10px;}
+.sch-mode{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);}
+.sch-mode-main{flex:1;min-width:0;}
+.sch-mode-title{font-size:13px;font-weight:600;}
+.sch-mode-sub{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5;}
+.sch-switch{position:relative;width:46px;height:26px;flex-shrink:0;padding:0;border:1px solid var(--border2);border-radius:20px;background:var(--surface3);cursor:pointer;transition:background .15s,border-color .15s;}
+.sch-switch::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--text2);transition:transform .15s,background .15s;}
+.sch-switch[aria-checked="true"]{background:var(--green);border-color:var(--green);}
+.sch-switch[aria-checked="true"]::after{transform:translateX(20px);background:#fff;}
+.sch-switch.danger[aria-checked="true"]{background:var(--pink);border-color:var(--pink);}
+.sch-switch:disabled{opacity:.35;cursor:not-allowed;}
+.sch-switch:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
+.sch-confirm{margin-top:12px;padding:14px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);}
+.sch-ready{margin-top:18px;}
+.sch-ready-title{font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:4px;}
+.sch-req{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.sch-req:last-child{border-bottom:none;}
+.sch-req-ico{width:20px;height:20px;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-size:11px;font-weight:700;}
+.sch-req-ico.met{background:var(--green-dim);color:var(--green);}
+.sch-req-ico.unmet{background:var(--amber-dim);color:var(--amber);}
+.sch-ready.danger .sch-req-ico.unmet{background:var(--pink-dim);color:var(--pink);}
+.sch-req-main{flex:1;min-width:0;}
+.sch-req-label{font-size:13px;font-weight:500;}
+.sch-req-detail{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.45;}
+.sch-drift{margin-bottom:14px;padding:14px;border:1px solid rgba(255,107,157,0.5);border-radius:var(--radius-sm);background:var(--pink-dim);}
+.sch-drift-title{font-size:14px;font-weight:700;color:var(--pink);margin-bottom:4px;}
+.sch-drift-text{font-size:13px;line-height:1.55;color:var(--text);}
+.sch-drift .btn,.sch-drift-bar .btn{width:auto;padding:8px 16px;font-size:12px;background:var(--pink);color:#fff;}
+.sch-drift .btn{margin-top:10px;}
+.sch-drift .btn:hover,.sch-drift-bar .btn:hover{filter:brightness(1.1);}
+.sch-drift .btn:disabled{opacity:.5;cursor:not-allowed;}
+.sch-drift-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;width:calc(100% - 32px);max-width:760px;display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid rgba(255,107,157,0.6);border-radius:var(--radius-sm);background:linear-gradient(var(--pink-dim),var(--pink-dim)),var(--surface);box-shadow:0 12px 32px rgba(0,0,0,0.5);font-size:13px;line-height:1.45;color:var(--text);}
+.sch-drift-bar strong{color:var(--pink);}
+.sch-drift-bar .btn{flex-shrink:0;}
+@media(max-width:680px){
+  .sch-day{grid-template-columns:1fr;gap:4px;padding:10px;}
+  .sch-day-name,.sch-day-off{padding-top:0;}
+  .sch-win{flex-wrap:nowrap;gap:6px;}
+  .sch-win input{flex:1 1 0;width:auto;min-width:0;padding:7px 6px;font-size:12px;}
+  .sch-win-x{flex-shrink:0;}
+  .sch-drift-bar{flex-direction:column;align-items:stretch;}
+}
+
 /* ── EMPTY STATE ── */
 .empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center;}
 
@@ -1330,8 +1421,9 @@ function _renderAppointments(appts) {
 }
 
 // ── Scheduling setup (Scheduling tab) ────────────────────────
-// Services, staff, and who performs which service. Weekly availability, date exceptions and the
-// booking-mode toggle are deliberately NOT here — they are the next change.
+// Six sections: services, staff, who performs which service, each person's weekly hours, their days off
+// and one-offs, and the direct-booking switch with its readiness checklist. These are configuration
+// forms only — there is deliberately no calendar of appointments here.
 //
 // Fetched lazily through the portal tab contract (registered at the end of this block), following both
 // of its rules:
@@ -1371,7 +1463,12 @@ async function _schRequest(method, path, body, fallback) {
     throw new Error("Couldn't reach the server. Check your connection and try again.");
   }
   var data = await res.json().catch(function() { return null; });
-  if (!res.ok) throw new Error(extractErrorMessage(data, fallback));
+  if (!res.ok) {
+    var err = new Error(extractErrorMessage(data, fallback));
+    err.status = res.status;   // for callers that need more than the words: the 409 from PUT /mode
+    err.data = data;           // carries its whole readiness checklist in an object-shaped `detail`
+    throw err;
+  }
   return data || {};
 }
 
@@ -1542,7 +1639,11 @@ async function _schSubmit(st, btn, errEl, send, okMsg, refresh) {
     await send();
   } catch (e) {
     if (_schStale(st)) return;
-    _schShowError(errEl, e.message || 'Could not save. Please try again.');
+    var msg = e.message || 'Could not save. Please try again.';
+    // If the form was closed while this was in flight (another form opened, or the person on screen
+    // changed), its error box is gone — so say it where it can still be seen.
+    if (errEl.isConnected) _schShowError(errEl, msg);
+    else showToast(msg, 'error');
     btn.disabled = false;
     btn.textContent = orig;
     return;
@@ -1556,6 +1657,7 @@ async function _schSubmit(st, btn, errEl, send, okMsg, refresh) {
     if (_schStale(st)) return;
     showToast('Saved, but the list could not refresh. Reload the page to see the change.', 'error');
   }
+  if (!_schStale(st)) _schRefreshMode(st);   // any saved change in sections 1-5 can flip booking readiness
 }
 
 // ── loading ──
@@ -1590,6 +1692,7 @@ async function _schReloadStaff(st) {
   st.staff = staff;
   _schRenderStaff(st);
   _schRenderMap(st);
+  _schStaffChanged(st);   // sections 4-5 follow the roster
 }
 
 async function _schLoad(clientId) {
@@ -1603,6 +1706,27 @@ async function _schLoad(clientId) {
     pending: Object.create(null),   // staff id → ticked ids not saved yet (survives re-renders)
     saving: Object.create(null),    // staff id → true while their PUT is in flight
     mapErr: Object.create(null),    // staff id → the last save error for their block
+    tz: null,                       // this client's own IANA timezone, read by the loader; null = unknown
+    person: null,                   // whose hours and days off sections 4-5 show
+    excWriting: 0,                  // day-off saves in flight; the person pickers lock while > 0
+    avail: Object.create(null),     // staff id → saved week: 7 arrays (0 = Sunday) of {s, e} "HH:MM:SS"
+    availLoading: Object.create(null),
+    availErr: Object.create(null),
+    weekDraft: Object.create(null), // staff id → edited week not saved yet (survives re-renders)
+    weekSaving: Object.create(null),
+    weekErr: Object.create(null),
+    weekBad: Object.create(null),   // staff id → [[day, window]] the last check refused
+    exc: Object.create(null),       // staff id → exceptions in the range below, as the server sent them
+    excRange: Object.create(null),  // staff id → the {from, to} that list was read for
+    excLoading: Object.create(null),
+    excErr: Object.create(null),
+    mode: null,                     // last GET /mode answer (or the 409's checklist)
+    modeTicket: 0,                  // only the newest mode answer is ever drawn
+    modeBusy: false,
+    modeConfirm: false,
+    modeErr: null,                  // {mode, refused, text}: a failed switch, shown while still true
+    modeLoadErr: null,              // a failed checklist read
+    modeNote: null,                 // {mode, text}: the server's message after the last switch
     el: null,
   };
   _schRenderLoading();
@@ -1611,10 +1735,19 @@ async function _schLoad(clientId) {
     var lists = await Promise.all([
       _schRequest('GET', enc + '/services', undefined, 'Could not load your services.'),
       _schRequest('GET', enc + '/staff', undefined, 'Could not load your team.'),
+      _schClientZone(clientId),
     ]);
     if (_schStale(st)) return;                                   // RULE 2
     var services = Array.isArray(lists[0].services) ? lists[0].services : [];
     var staff = Array.isArray(lists[1].staff) ? lists[1].staff : [];
+    st.tz = lists[2];
+    // Sections 4-6 start now, alongside the mapping reads. Each keeps its own loading and error state
+    // and draws itself once the frame exists, so a failure there never blocks sections 1-3. The cost is
+    // constant: the mode, plus ONE person's hours and days off — not every person's.
+    st.staff = staff;
+    st.person = staff.length ? staff[0].id : null;
+    _schRefreshMode(st);
+    if (st.person) _schLoadPerson(st, st.person);
     if (!(await _schLoadMappings(st, staff))) return;             // RULE 2 — checked inside, after its await
     st.services = services;
     st.staff = staff;
@@ -1668,7 +1801,7 @@ function _schSection(title, help, addLabel, onAdd) {
   card.appendChild(slot);
   var body = _node('div');
   card.appendChild(body);
-  return { card: card, body: body };
+  return { card: card, body: body, add: add || null };
 }
 
 function _schRenderAll(st) {
@@ -1682,13 +1815,32 @@ function _schRenderAll(st) {
     _schToggle(slot, 'add', function() { return _schStaffForm(st, null); });
   });
   var map = _schSection('Who does what', 'Tick the services each person performs, then press Save. Only people ticked for a service are offered for it.', null, null);
-  st.el = { services: svc.body, staff: team.body, map: map.body };
+  var week = _schSection('Weekly hours', 'The days and times each person normally works, in your business’s local time. A day with no hours is a day off.', null, null);
+  var exc = _schSection('Days off and one-offs', 'Holidays, sick days, time blocked out, or extra hours on one particular date. Each changes their usual week for that date only.', 'Add day off or one-off', function(slot) {
+    var p = _schPerson(st);
+    if (p && (p.id in st.exc)) _schToggle(slot, 'add', function() { return _schExcForm(st, p); });
+  });
+  var mode = _schSection('Direct booking', 'Let customers book open times themselves, instead of sending you a request to confirm.', null, null);
+  var drift = _node('div');   // holds the fixed warning bar while booking is on but nobody is bookable
+  st.el = {
+    services: svc.body, staff: team.body, map: map.body,
+    week: week.body, exc: exc.body, excAdd: exc.add, mode: mode.body, drift: drift,
+    pillsWeek: null, pillsExc: null,
+    cards: { services: svc.card, staff: team.card, map: map.card, week: week.card, exc: exc.card, mode: mode.card },
+  };
   root.appendChild(svc.card);
   root.appendChild(team.card);
   root.appendChild(map.card);
+  root.appendChild(week.card);
+  root.appendChild(exc.card);
+  root.appendChild(mode.card);
+  root.appendChild(drift);
   _schRenderServices(st);
   _schRenderStaff(st);
   _schRenderMap(st);
+  _schRenderWeek(st);
+  _schRenderExc(st);
+  _schRenderMode(st);
 }
 
 // ── SECTION 1: services ──
@@ -2085,6 +2237,7 @@ async function _schSaveMapping(st, p, ids) {
   st.saving[p.id] = true;
   delete st.mapErr[p.id];
   _schRenderMap(st);                     // boxes and button locked while the replace is in flight
+  var mayHaveChanged = true;
   try {
     var data = await _schRequest('PUT', 'staff/' + encodeURIComponent(p.id) + '/services', { service_ids: ids }, 'Could not save these services. Please try again.');
     if (_schStale(st)) return;
@@ -2094,6 +2247,7 @@ async function _schSaveMapping(st, p, ids) {
   } catch (e) {
     if (_schStale(st)) return;
     st.mapErr[p.id] = e.message || 'Could not save these services. Please try again.';
+    mayHaveChanged = !(e.status >= 400 && e.status < 500);   // a 4xx is refused before anything is touched
     // The server's replace isn't atomic. Re-read what is actually saved, so "Unsaved changes" is measured
     // against the truth; the ticks on screen stay put so Save can simply be pressed again.
     try {
@@ -2106,6 +2260,1013 @@ async function _schSaveMapping(st, p, ids) {
   }
   st.saving[p.id] = false;
   _schRenderMap(st);
+  if (mayHaveChanged) _schRefreshMode(st);   // who performs what is one of the readiness checks
+}
+
+// ════ Sections 4-6 ════════════════════════════════════════════
+// day_of_week is 0-6 with 0 = SUNDAY — Postgres EXTRACT(DOW), the backend's _DAY_NAMES, and JS
+// Date.getDay() all agree. The index into this array IS the number sent. The week is drawn Sunday
+// first, so the screen reads in exactly the order the data is stored and nothing is ever re-mapped.
+var SCH_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+var SCH_DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+var SCH_EXC_DAYS = 365;   // days off are listed from today to today + 365: 366 days, the backend's cap
+
+// ── time and date helpers ──
+// "09:00" or "09:00:00" → "09:00:00"; anything else → "". Working hours are WALL-CLOCK TEXT: no Date is
+// ever built from them, so no timezone can shift them — the backend resolves them through the client's
+// own timezone at query time. Seconds a saved rule already has (23:59:59 set through the API) are kept,
+// so an unrelated save never quietly rewrites them.
+function _schCanonTime(v) {
+  var m = /^(\d{2}):(\d{2})(?::(\d{2}))?/.exec(String(v == null ? '' : v).trim());
+  if (!m || +m[1] > 23 || +m[2] > 59 || (m[3] && +m[3] > 59)) return '';
+  return m[1] + ':' + m[2] + ':' + (m[3] || '00');
+}
+
+// "14:30:00" → "2:30 PM", for words on screen. String arithmetic only.
+function _schClock(t) {
+  var c = _schCanonTime(t);
+  if (!c) return '?';
+  var h = +c.slice(0, 2);
+  return (h % 12 || 12) + ':' + c.slice(3, 5) + (c.slice(6) !== '00' ? ':' + c.slice(6) : '') + (h < 12 ? ' AM' : ' PM');
+}
+
+function _schSpan(s, e) { return _schClock(s) + '–' + _schClock(e); }
+
+function _schMins(t) {
+  var c = _schCanonTime(t);
+  return c ? +c.slice(0, 2) * 60 + +c.slice(3, 5) + +c.slice(6) / 60 : 0;
+}
+
+// This client's own timezone, read from the same client record the Dashboard uses. Read here rather than
+// borrowed from the Dashboard's APPT_TZ, which is never cleared between sign-ins: after signing out and in
+// as another client with no zone set, it still holds the previous client's. Never rejects — any failure
+// is null, and "today" falls back to the browser's date.
+async function _schClientZone(clientId) {
+  try {
+    var res = await authedFetch(API + '/api/clients/' + encodeURIComponent(clientId));
+    if (!res.ok) return null;
+    var rec = await res.json();
+    return _apptTzValid(rec && rec.timezone) ? rec.timezone : null;
+  } catch (e) {
+    if (e && e.message === 'Unauthorized') throw e;   // authedFetch is already reloading the page
+    return null;
+  }
+}
+
+// Today in the BUSINESS's timezone when it is known, otherwise the browser's. It only decides which days
+// off are listed and which dates can be picked.
+function _schToday(st) {
+  var opts = { year: 'numeric', month: '2-digit', day: '2-digit' };
+  if (st.tz) opts.timeZone = st.tz;
+  try {
+    var p = {};
+    new Intl.DateTimeFormat('en-CA', opts).formatToParts(new Date()).forEach(function(x) { p[x.type] = x.value; });
+    if (p.year && p.month && p.day) return p.year + '-' + p.month + '-' + p.day;
+  } catch (e) {}
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// Calendar arithmetic on "YYYY-MM-DD" done in UTC, so no daylight-saving change can move a date.
+function _schAddDays(iso, n) {
+  var p = iso.split('-');
+  return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)).toISOString().slice(0, 10);
+}
+
+function _schExcRangeNow(st) {
+  var from = _schToday(st);
+  return { from: from, to: _schAddDays(from, SCH_EXC_DAYS) };
+}
+
+// "2026-12-24" → "Thu, Dec 24, 2026" — read as a calendar date (UTC in, UTC out), never shifted.
+function _schDateLabel(iso) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso == null ? '' : iso));
+  if (!m) return String(iso == null ? '' : iso);
+  return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function _schPerson(st) {
+  return st.staff.filter(function(p) { return p.id === st.person; })[0] || null;
+}
+
+function _schSkeleton() {
+  var w = _node('div', '', 'margin-top:14px;');
+  w.appendChild(_node('div', 'skeleton', 'margin-bottom:10px;'));
+  w.appendChild(_node('div', 'skeleton', 'width:60%;'));
+  return w;
+}
+
+function _schRetryBox(msg, retry) {
+  var box = _node('div', 'mc-error', 'margin-top:14px;');
+  box.appendChild(_node('span', '', '', msg));
+  var b = _schButton('', 'Try again');
+  b.addEventListener('click', retry);
+  box.appendChild(b);
+  return box;
+}
+
+// ── the person picker (sections 4 and 5) ──
+// Each of the two cards has its own picker, and both always show the same person. An amber dot marks
+// anyone with weekly hours edited but not saved.
+function _schPicker(st, key) {
+  var wrap = _node('div', 'sch-picker');
+  wrap.setAttribute('role', 'group');
+  wrap.setAttribute('aria-label', 'Choose a team member');
+  var pills = Object.create(null);
+  st.staff.forEach(function(p) {
+    var on = (p.id === st.person);
+    var b = _schButton(on ? 'sch-pick on' : 'sch-pick', p.name || 'Team member');
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.disabled = st.excWriting > 0;
+    var sr = _node('span', 'sch-sr', '', ' (unsaved changes)');
+    b.appendChild(sr);
+    b.addEventListener('click', function() { if (p.id !== st.person) _schSelectPerson(st, p.id, key); });
+    pills[p.id] = { btn: b, sr: sr };
+    wrap.appendChild(b);
+  });
+  st.el[key] = pills;
+  _schPaintPickers(st);
+  return wrap;
+}
+
+function _schPaintPickers(st) {
+  if (!st.el) return;
+  ['pillsWeek', 'pillsExc'].forEach(function(key) {
+    var pills = st.el[key];
+    if (!pills) return;
+    Object.keys(pills).forEach(function(sid) {
+      var dirty = _schWeekDirty(st, sid);
+      pills[sid].btn.classList.toggle('dirty', dirty);
+      pills[sid].sr.hidden = !dirty;
+    });
+  });
+}
+
+// A day-off form belongs to the person it was opened for, so it closes whenever the person on screen
+// changes — through the picker, or because the roster changed underneath it.
+function _schCloseExcForms(st) {
+  Array.prototype.forEach.call(st.el.cards.exc.querySelectorAll('.sch-form'), function(f) { f.remove(); });
+}
+
+function _schSelectPerson(st, sid, key) {
+  if (st.excWriting > 0) return;     // a day-off save for the person on screen is still in flight
+  _schCloseExcForms(st);
+  st.person = sid;
+  _schRenderWeek(st);
+  _schRenderExc(st);
+  _schLoadPerson(st, sid);
+  var pill = key && st.el[key] && st.el[key][sid];
+  if (pill) pill.btn.focus();        // the clicked pill was rebuilt; keep keyboard focus on it
+}
+
+// One day-off write, with the person pickers locked while it is in flight: the form it came from belongs
+// to the person on screen, and switching away would leave its answer — even a failure — with no one.
+function _schExcWrite(st, send) {
+  return function() {
+    st.excWriting++;
+    _schLockPickers(st);
+    return send().finally(function() {
+      st.excWriting--;
+      _schLockPickers(st);
+    });
+  };
+}
+
+function _schLockPickers(st) {
+  if (!st.el) return;
+  ['pillsWeek', 'pillsExc'].forEach(function(key) {
+    var pills = st.el[key];
+    if (pills) Object.keys(pills).forEach(function(sid) { pills[sid].btn.disabled = st.excWriting > 0; });
+  });
+}
+
+// Sections 4 and 5 follow the roster: a new person appears in the pickers, and if the person on screen
+// was deactivated the first remaining one takes their place. Unsaved hours for someone who is no
+// longer on the team are dropped with them.
+function _schStaffChanged(st) {
+  var ids = st.staff.map(function(p) { return p.id; });
+  Object.keys(st.weekDraft).forEach(function(id) { if (ids.indexOf(id) === -1) delete st.weekDraft[id]; });
+  if (ids.indexOf(st.person) === -1) {
+    _schCloseExcForms(st);
+    st.person = ids.length ? ids[0] : null;
+  }
+  _schRenderWeek(st);
+  _schRenderExc(st);
+  if (st.person) _schLoadPerson(st, st.person);
+}
+
+// One person's hours and days off, read the first time they're shown and kept after that — two reads
+// per person per visit, however large the team. Never every person's at once.
+function _schLoadPerson(st, sid) {
+  if (!(sid in st.avail) && !st.availLoading[sid]) _schLoadAvail(st, sid);
+  if (!(sid in st.exc) && !st.excLoading[sid]) _schLoadExc(st, sid);
+}
+
+async function _schLoadAvail(st, sid) {
+  st.availLoading[sid] = true;
+  delete st.availErr[sid];
+  _schRenderWeek(st);
+  try {
+    var data = await _schRequest('GET', 'staff/' + encodeURIComponent(sid) + '/availability', undefined, 'Could not load their weekly hours.');
+    if (_schStale(st)) return;
+    st.avail[sid] = _schWeekFromRules(data.rules);
+  } catch (e) {
+    if (_schStale(st)) return;
+    st.availErr[sid] = e.message || 'Could not load their weekly hours.';
+  }
+  st.availLoading[sid] = false;
+  _schRenderWeek(st);
+  _schPaintPickers(st);
+}
+
+// GET /exceptions needs a range and caps it at 366 days. Today to today + 365 is exactly that: every
+// upcoming entry for the next year. The past is left out — it can't change a booking.
+async function _schFetchExc(st, sid) {
+  var r = _schExcRangeNow(st);
+  var data = await _schRequest('GET', 'staff/' + encodeURIComponent(sid) + '/exceptions?date_from=' + r.from + '&date_to=' + r.to, undefined, 'Could not load their days off.');
+  return { list: Array.isArray(data.exceptions) ? data.exceptions : [], range: r };
+}
+
+async function _schLoadExc(st, sid) {
+  st.excLoading[sid] = true;
+  delete st.excErr[sid];
+  _schRenderExc(st);
+  try {
+    var got = await _schFetchExc(st, sid);
+    if (_schStale(st)) return;
+    st.exc[sid] = got.list;
+    st.excRange[sid] = got.range;
+  } catch (e) {
+    if (_schStale(st)) return;
+    st.excErr[sid] = e.message || 'Could not load their days off.';
+  }
+  st.excLoading[sid] = false;
+  _schRenderExc(st);
+}
+
+// After a write: throws on failure so _schSubmit can say the list didn't refresh.
+async function _schReloadExc(st, sid) {
+  var got = await _schFetchExc(st, sid);
+  if (_schStale(st)) return;
+  st.exc[sid] = got.list;
+  st.excRange[sid] = got.range;
+  _schRenderExc(st);
+}
+
+// ── SECTION 4: weekly hours ──
+// A week is seven arrays, index = day_of_week, each holding {s, e} windows as "HH:MM:SS".
+function _schCmpWin(a, b) {
+  return a.s < b.s ? -1 : a.s > b.s ? 1 : (a.e < b.e ? -1 : a.e > b.e ? 1 : 0);
+}
+
+function _schWeekFromRules(rules) {
+  var week = [[], [], [], [], [], [], []];
+  (Array.isArray(rules) ? rules : []).forEach(function(r) {
+    var d = r ? r.day_of_week : null;
+    if (typeof d === 'number' && d % 1 === 0 && d >= 0 && d <= 6) {
+      week[d].push({ s: _schCanonTime(r.start_time), e: _schCanonTime(r.end_time) });
+    }
+  });
+  week.forEach(function(ws) { ws.sort(_schCmpWin); });
+  return week;
+}
+
+function _schCloneWeek(week) {
+  return week.map(function(ws) { return ws.map(function(w) { return { s: w.s, e: w.e }; }); });
+}
+
+function _schWeekKey(week) {
+  return JSON.stringify(week.map(function(ws) {
+    return ws.slice().sort(_schCmpWin).map(function(w) { return w.s + '-' + w.e; });
+  }));
+}
+
+// ⚠️ PUT /staff/{id}/availability REPLACES THE WHOLE WEEK. So the body is built from the whole week on
+// screen — all seven days, every window — never just the day that was edited. A day with no windows
+// sends nothing, and that absence is exactly what makes it a day off.
+function _schWeekRules(week) {
+  var rules = [];
+  week.forEach(function(ws, d) {
+    ws.slice().sort(_schCmpWin).forEach(function(w) {
+      rules.push({ day_of_week: d, start_time: w.s, end_time: w.e });
+    });
+  });
+  return rules;
+}
+
+// The backend's _validate_rules, mirrored so a mistake is caught on screen — with the windows outlined —
+// instead of costing one of the 60 writes an hour. The server still checks; if it ever disagrees, its
+// own message is what the owner sees.
+function _schCheckWeek(week) {
+  for (var d = 0; d < 7; d++) {
+    var ws = week[d];
+    for (var i = 0; i < ws.length; i++) {
+      if (!ws[i].s || !ws[i].e) {
+        return { error: SCH_DAYS[d] + ': enter both a start and an end time for every window, or remove the empty one.', bad: [[d, i]] };
+      }
+      if (ws[i].e <= ws[i].s) {
+        return { error: SCH_DAYS[d] + ': ' + _schSpan(ws[i].s, ws[i].e) + ' ends before it starts. A shift that runs past midnight needs two windows — one ending at 11:59 PM, and one starting at 12:00 AM on ' + SCH_DAYS[(d + 1) % 7] + '.', bad: [[d, i]] };
+      }
+    }
+    // Same rule as the server: sorted by start, each window must start at or after the previous one
+    // ends. Touching is fine (9-12 then 12-3); overlapping is not.
+    var order = ws.map(function(w, i) { return { w: w, i: i }; }).sort(function(a, b) { return _schCmpWin(a.w, b.w); });
+    for (var k = 1; k < order.length; k++) {
+      if (order[k].w.s < order[k - 1].w.e) {
+        return {
+          error: 'Overlapping hours on ' + SCH_DAYS[d] + ': ' + _schSpan(order[k - 1].w.s, order[k - 1].w.e) + ' overlaps ' + _schSpan(order[k].w.s, order[k].w.e) + '. Split shifts are fine, but the windows can’t overlap.',
+          bad: [[d, order[k - 1].i], [d, order[k].i]],
+        };
+      }
+    }
+  }
+  return null;
+}
+
+// "Works Tue–Sat — 45 hours a week." Counts only complete, valid windows.
+function _schWeekSummary(week) {
+  var days = [], mins = 0;
+  week.forEach(function(ws, d) {
+    var worked = false;
+    ws.forEach(function(w) {
+      if (w.s && w.e && w.e > w.s) { mins += _schMins(w.e) - _schMins(w.s); worked = true; }
+    });
+    if (worked) days.push(d);
+  });
+  if (!days.length) return null;
+  var runs = [], cur = null;
+  days.forEach(function(d) {
+    if (cur && d === cur[1] + 1) cur[1] = d;
+    else { cur = [d, d]; runs.push(cur); }
+  });
+  var which = days.length === 7 ? 'every day' : runs.map(function(r) {
+    return r[1] - r[0] >= 2 ? SCH_DAYS_SHORT[r[0]] + '–' + SCH_DAYS_SHORT[r[1]]
+      : r[0] === r[1] ? SCH_DAYS_SHORT[r[0]] : SCH_DAYS_SHORT[r[0]] + ', ' + SCH_DAYS_SHORT[r[1]];
+  }).join(', ');
+  var h = Math.round(mins / 6) / 10;
+  return 'Works ' + which + ' — ' + h + (h === 1 ? ' hour' : ' hours') + ' a week.';
+}
+
+// The editable copy of a person's week, made on the first change and kept until Save succeeds or the
+// owner discards it — so switching person, or any re-render, never loses what was typed. The same
+// promise the "who does what" ticks make.
+function _schDraft(st, sid) {
+  if (!st.weekDraft[sid]) st.weekDraft[sid] = _schCloneWeek(st.avail[sid]);
+  return st.weekDraft[sid];
+}
+
+function _schWeekDirty(st, sid) {
+  return !!st.weekDraft[sid] && (sid in st.avail) && _schWeekKey(st.weekDraft[sid]) !== _schWeekKey(st.avail[sid]);
+}
+
+function _schTimeInput(value, label) {
+  var i = document.createElement('input');
+  i.type = 'time';
+  var c = _schCanonTime(value);
+  if (c && c.slice(6) !== '00') { i.step = 1; i.value = c; }   // keep seconds a saved rule already has
+  else if (c) i.value = c.slice(0, 5);
+  i.setAttribute('aria-label', label);
+  return i;
+}
+
+function _schFocusIn(st, d, selector, index) {
+  var row = st.el.week.querySelectorAll('.sch-day')[d];
+  var el = row && row.querySelectorAll(selector)[index || 0];
+  if (el) el.focus();
+}
+
+function _schRenderWeek(st) {
+  if (!st.el) return;
+  var body = st.el.week;
+  body.textContent = '';
+  st.el.pillsWeek = null;
+  if (!st.staff.length) {
+    body.appendChild(_node('div', 'empty sch-empty', '', 'Add a team member above, then set the days and hours they normally work here. Nobody can be booked outside their hours.'));
+    return;
+  }
+  body.appendChild(_schPicker(st, 'pillsWeek'));
+  var p = _schPerson(st);
+  if (!p) return;
+  var sid = p.id;
+  if (!(sid in st.avail)) {
+    body.appendChild(st.availErr[sid] && !st.availLoading[sid]
+      ? _schRetryBox(st.availErr[sid], function() { if (!_schStale(st)) _schLoadAvail(st, sid); })
+      : _schSkeleton());
+    return;
+  }
+  // A draft edited back to exactly what's saved is dropped HERE, where the rows are rebuilt anyway, so
+  // the (day, window) positions the inputs write through always match the rows on screen.
+  if (st.weekDraft[sid] && !st.weekSaving[sid] && !_schWeekDirty(st, sid)) delete st.weekDraft[sid];
+  body.appendChild(_schWeekEditor(st, p));
+}
+
+// Working day vs day off, at a glance: a working day is a raised row with a green edge, its name in
+// white and its times as inputs; a day off is flat and dim, with a green-less edge and the words
+// "Day off" where the times would be. The summary line above says the same in words.
+function _schWeekEditor(st, p) {
+  var sid = p.id;
+  var week = st.weekDraft[sid] || st.avail[sid];
+  var busy = !!st.weekSaving[sid];
+  var bad = st.weekBad[sid] || [];
+  var wrap = _node('div', 'sch-week');
+  var summary = _node('div', 'sch-sum');
+  summary.setAttribute('aria-live', 'polite');
+  wrap.appendChild(summary);
+  SCH_DAYS.forEach(function(dayName, d) {
+    wrap.appendChild(_schDayRow(st, p, d, week[d], busy, bad, paint));
+  });
+
+  var err = _schError();
+  if (st.weekErr[sid]) _schShowError(err, st.weekErr[sid]);
+  wrap.appendChild(err);
+
+  var foot = _node('div', 'sch-map-foot');
+  var save = _schButton('btn btn-primary', busy ? 'Working…' : 'Save hours');
+  var discard = _schButton('btn btn-ghost', 'Discard changes');
+  var state = _node('div', 'sch-map-state');
+  state.setAttribute('aria-live', 'polite');
+  foot.appendChild(save);
+  foot.appendChild(discard);
+  foot.appendChild(state);
+  wrap.appendChild(foot);
+
+  function paint() {
+    var shown = st.weekDraft[sid] || st.avail[sid];
+    var dirty = _schWeekDirty(st, sid);
+    var text = _schWeekSummary(shown);
+    summary.className = text ? 'sch-sum' : 'sch-sum warn';
+    summary.textContent = text || 'No weekly hours yet — ' + (p.name || 'they') + ' can’t be booked until you add some. Use “Add hours” on each day they work.';
+    save.disabled = busy || !dirty;
+    discard.disabled = busy || !dirty;
+    state.className = dirty ? 'sch-map-state dirty' : 'sch-map-state';
+    state.textContent = (dirty && !busy) ? 'Unsaved changes' : '';
+    _schPaintPickers(st);
+  }
+  save.addEventListener('click', function() { _schSaveWeek(st, p); });
+  discard.addEventListener('click', function() {
+    delete st.weekDraft[sid];
+    delete st.weekErr[sid];
+    delete st.weekBad[sid];
+    _schRenderWeek(st);
+  });
+  paint();
+  return wrap;
+}
+
+function _schDayRow(st, p, d, windows, busy, bad, paint) {
+  var sid = p.id;
+  var row = _node('div', windows.length ? 'sch-day' : 'sch-day off');
+  row.appendChild(_node('div', 'sch-day-name', '', SCH_DAYS[d]));
+  var body = _node('div', 'sch-day-body');
+  if (!windows.length) body.appendChild(_node('div', 'sch-day-off', '', 'Day off'));
+  windows.forEach(function(w, i) {
+    var line = _node('div', 'sch-win');
+    if (bad.some(function(b) { return b[0] === d && b[1] === i; })) line.classList.add('bad');
+    var a = _schTimeInput(w.s, SCH_DAYS[d] + ', window ' + (i + 1) + ', start time');
+    var b = _schTimeInput(w.e, SCH_DAYS[d] + ', window ' + (i + 1) + ', end time');
+    a.disabled = b.disabled = busy;
+    // Typing writes straight into the draft at (day, window) — no re-render, so focus stays put.
+    a.addEventListener('input', function() { _schDraft(st, sid)[d][i].s = _schCanonTime(a.value); line.classList.remove('bad'); paint(); });
+    b.addEventListener('input', function() { _schDraft(st, sid)[d][i].e = _schCanonTime(b.value); line.classList.remove('bad'); paint(); });
+    var x = _schButton('sch-win-x', '×');
+    x.setAttribute('aria-label', 'Remove ' + SCH_DAYS[d] + ' window ' + (i + 1));
+    x.disabled = busy;
+    x.addEventListener('click', function() {
+      _schDraft(st, sid)[d].splice(i, 1);
+      delete st.weekBad[sid];
+      _schRenderWeek(st);
+      _schFocusIn(st, d, '.sch-day-actions .sch-link');
+    });
+    line.appendChild(a);
+    line.appendChild(_node('span', 'sch-win-to', '', 'to'));
+    line.appendChild(b);
+    line.appendChild(x);
+    body.appendChild(line);
+  });
+
+  var actions = _node('div', 'sch-day-actions');
+  var add = _schButton('sch-link', '+ Add hours');
+  add.setAttribute('aria-label', 'Add hours on ' + SCH_DAYS[d]);
+  add.disabled = busy;
+  add.addEventListener('click', function() {
+    var ws = _schDraft(st, sid)[d];
+    // A day's first window starts as 9 to 5, so a typical day is one click. A second window (a split
+    // shift) starts empty, so its times are always chosen, never assumed.
+    ws.push(ws.length ? { s: '', e: '' } : { s: '09:00:00', e: '17:00:00' });
+    delete st.weekBad[sid];
+    _schRenderWeek(st);
+    _schFocusIn(st, d, '.sch-win input', (ws.length - 1) * 2);
+  });
+  actions.appendChild(add);
+  if (windows.length) {
+    var copy = _schButton('sch-link', 'Copy to other days…');
+    copy.setAttribute('aria-label', 'Copy ' + SCH_DAYS[d] + '’s hours to other days');
+    copy.disabled = busy;
+    copy.addEventListener('click', function() {
+      _schToggle(body, 'copy', function() { return _schCopyForm(st, p, d); });
+    });
+    actions.appendChild(copy);
+  }
+  body.appendChild(actions);
+  row.appendChild(body);
+  return row;
+}
+
+// COPY ONE DAY TO OTHERS. Nothing is sent: the chosen days' windows are replaced IN THE DRAFT, the rows
+// redraw, and the owner reviews them before pressing Save hours like any other edit.
+function _schCopyForm(st, p, d) {
+  var form = _node('div', 'sch-form');
+  var err = _schError();
+  form.appendChild(err);
+  form.appendChild(_node('div', 'sch-q', '', 'Copy ' + SCH_DAYS[d] + '’s hours to:'));
+  var days = _node('div', 'sch-copy-days');
+  var boxes = [];
+  SCH_DAYS.forEach(function(name, t) {
+    if (t === d) return;
+    var label = _node('label', 'sch-check');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.addEventListener('change', function() { label.classList.toggle('on', cb.checked); });
+    label.appendChild(cb);
+    label.appendChild(_node('span', '', '', SCH_DAYS_SHORT[t]));
+    boxes.push({ t: t, cb: cb, label: label });
+    days.appendChild(label);
+  });
+  form.appendChild(days);
+  function pick(list) {
+    boxes.forEach(function(b) {
+      b.cb.checked = list.indexOf(b.t) > -1;
+      b.label.classList.toggle('on', b.cb.checked);
+    });
+  }
+  var quick = _node('div', 'sch-day-actions', 'margin-bottom:6px;');
+  [['Mon–Fri', [1, 2, 3, 4, 5]], ['Every day', [0, 1, 2, 3, 4, 5, 6]], ['None', []]].forEach(function(q) {
+    var b = _schButton('sch-link', q[0]);
+    b.addEventListener('click', function() { pick(q[1]); });
+    quick.appendChild(b);
+  });
+  form.appendChild(quick);
+  form.appendChild(_node('div', 'sch-hint', 'margin:0 0 10px;', 'This replaces any hours already on the days you pick. Nothing is saved until you press Save hours.'));
+
+  var actions = _node('div', 'appt-actions');
+  var go = _schButton('btn btn-primary', 'Copy hours');
+  var cancel = _schButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    var targets = boxes.filter(function(b) { return b.cb.checked; }).map(function(b) { return b.t; });
+    if (!targets.length) { _schShowError(err, 'Pick at least one day to copy to.'); return; }
+    var draft = _schDraft(st, p.id);
+    targets.forEach(function(t) {
+      draft[t] = draft[d].map(function(w) { return { s: w.s, e: w.e }; });
+    });
+    delete st.weekBad[p.id];
+    _schRenderWeek(st);
+    showToast('Copied to ' + targets.length + ' day' + (targets.length === 1 ? '' : 's') + '. Press Save hours to keep it.');
+    var saveBtn = st.el.week.querySelector('.sch-map-foot .btn-primary');
+    if (saveBtn) saveBtn.focus();
+  });
+  cancel.addEventListener('click', _schCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+  setTimeout(function() { if (boxes[0]) boxes[0].cb.focus(); }, 0);
+  return form;
+}
+
+// Per person, not everyone at once. The endpoint replaces ONE person's week, as a delete then an
+// insert on the server. "Save all" would be several of those in a row, where a failure halfway leaves
+// some people saved and some not, with nothing on screen saying which. One person, one request, one
+// result — the same unit as "who does what".
+async function _schSaveWeek(st, p) {
+  var sid = p.id;
+  var week = st.weekDraft[sid];
+  if (!week || st.weekSaving[sid]) return;
+  var bad = _schCheckWeek(week);
+  if (bad) {
+    st.weekErr[sid] = bad.error;
+    st.weekBad[sid] = bad.bad;
+    _schRenderWeek(st);
+    return;
+  }
+  var rules = _schWeekRules(week);
+  st.weekSaving[sid] = true;
+  delete st.weekErr[sid];
+  delete st.weekBad[sid];
+  _schRenderWeek(st);
+  var mayHaveChanged = true;
+  try {
+    var data = await _schRequest('PUT', 'staff/' + encodeURIComponent(sid) + '/availability', { rules: rules }, 'Could not save these hours. Please try again.');
+    if (_schStale(st)) return;
+    st.avail[sid] = _schWeekFromRules(Array.isArray(data.rules) ? data.rules : rules);   // what the server stored
+    delete st.weekDraft[sid];
+    showToast('Saved weekly hours for ' + (p.name || 'this team member') + '.', 'success');
+  } catch (e) {
+    if (_schStale(st)) return;
+    st.weekErr[sid] = e.message || 'Could not save these hours. Please try again.';
+    mayHaveChanged = !(e.status >= 400 && e.status < 500);   // a 4xx is refused before anything is touched
+    // As with the services ticks: re-read what is actually saved so "Unsaved changes" is measured against
+    // the truth. The edited week stays on screen, so Save can simply be pressed again.
+    try {
+      var fresh = await _schRequest('GET', 'staff/' + encodeURIComponent(sid) + '/availability', undefined, '');
+      if (_schStale(st)) return;
+      if (Array.isArray(fresh.rules)) st.avail[sid] = _schWeekFromRules(fresh.rules);
+    } catch (e2) {
+      if (_schStale(st)) return;
+    }
+  }
+  st.weekSaving[sid] = false;
+  _schRenderWeek(st);
+  if (mayHaveChanged) _schRefreshMode(st);   // working hours are one of the readiness checks
+}
+
+// ── SECTION 5: days off and one-offs ──
+// The three shapes the backend accepts, in the words an owner would use. is_available never appears on
+// screen. How they combine is the engine's rule: usual hours + extra hours − time off, with time off
+// applied last, so a day off beats extra hours on the same date.
+var SCH_EXC_KINDS = [
+  { v: 'off',   title: 'Day off',                         text: 'Not working at all that day. This overrides their usual hours.' },
+  { v: 'block', title: 'Unavailable for part of the day', text: 'Their usual hours still apply, except the time you block out — a long lunch, an appointment of their own.' },
+  { v: 'extra', title: 'Extra hours',                     text: 'Working on top of their usual hours — for example, opening on a Sunday. A day off on the same date still wins.' },
+];
+var SCH_KIND_CLASS = { off: 'sch-kind off', block: 'sch-kind block', extra: 'sch-kind extra' };
+
+function _schExcKind(x) {
+  if (x.is_available === true) return 'extra';
+  return x.start_time ? 'block' : 'off';
+}
+
+function _schRenderExc(st) {
+  if (!st.el) return;
+  var body = st.el.exc;
+  body.textContent = '';
+  st.el.pillsExc = null;
+  var p = _schPerson(st);
+  if (st.el.excAdd) st.el.excAdd.disabled = !(p && (p.id in st.exc));
+  if (!st.staff.length) {
+    body.appendChild(_node('div', 'empty sch-empty', '', 'Add a team member above first. Their holidays, days off and one-off extra hours go here.'));
+    return;
+  }
+  body.appendChild(_schPicker(st, 'pillsExc'));
+  if (!p) return;
+  var sid = p.id;
+  if (!(sid in st.exc)) {
+    body.appendChild(st.excErr[sid] && !st.excLoading[sid]
+      ? _schRetryBox(st.excErr[sid], function() { if (!_schStale(st)) _schLoadExc(st, sid); })
+      : _schSkeleton());
+    return;
+  }
+  var r = st.excRange[sid] || _schExcRangeNow(st);
+  body.appendChild(_node('div', 'sch-range', '', 'Showing ' + _schDateLabel(r.from) + ' to ' + _schDateLabel(r.to) + '.'));
+  var list = st.exc[sid];
+  if (!list.length) {
+    body.appendChild(_node('div', 'empty sch-empty', '', 'Nothing planned for ' + (p.name || 'them') + ' in the next 12 months. Use “Add day off or one-off” for holidays, sick days, a long lunch, or extra hours on a day they don’t usually work.'));
+    return;
+  }
+  var f = document.createDocumentFragment();
+  list.forEach(function(x) { f.appendChild(_schExcRow(st, p, x)); });
+  body.appendChild(f);
+}
+
+function _schExcRow(st, p, x) {
+  var kind = _schExcKind(x);
+  var row = _node('div', 'sch-item');
+  var head = _node('div', 'sch-item-head');
+  var main = _node('div', 'sch-item-main');
+  main.appendChild(_node('div', 'sch-name', '', _schDateLabel(x.exception_date)));
+  main.appendChild(_node('span', SCH_KIND_CLASS[kind], '',
+    kind === 'off' ? 'Day off'
+    : (kind === 'block' ? 'Unavailable ' : 'Extra hours ') + _schSpan(x.start_time, x.end_time)));
+  if (x.reason) main.appendChild(_node('div', 'sch-meta', '', x.reason));
+  head.appendChild(main);
+  var actions = _node('div', 'sch-item-actions');
+  var del = _schButton('btn btn-ghost sch-danger', 'Delete');
+  del.addEventListener('click', function() {
+    _schToggle(row, 'delete', function() { return _schExcDeleteForm(st, p, x, kind); });
+  });
+  actions.appendChild(del);
+  head.appendChild(actions);
+  row.appendChild(head);
+  return row;
+}
+
+// A real delete — nothing references these rows — so the confirmation says what happens next instead.
+function _schExcDeleteForm(st, p, x, kind) {
+  var form = _node('div', 'sch-form');
+  var err = _schError();
+  form.appendChild(err);
+  var when = _schDateLabel(x.exception_date);
+  form.appendChild(_node('div', 'sch-note', '', kind === 'extra'
+    ? 'Delete these extra hours? On ' + when + ' they’ll work only their usual hours.'
+    : 'Delete this? Their usual hours will apply again on ' + when + '.'));
+  var actions = _node('div', 'appt-actions');
+  var go = _schButton('btn btn-ghost sch-danger', 'Delete');
+  var keep = _schButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    _schSubmit(st, go, err, _schExcWrite(st, function() {
+      return _schRequest('DELETE', 'exceptions/' + encodeURIComponent(x.id), undefined, 'Could not delete this.');
+    }), 'Deleted.', function() { return _schReloadExc(st, p.id); });
+  });
+  keep.addEventListener('click', _schCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(keep);
+  form.appendChild(actions);
+  setTimeout(function() { keep.focus(); }, 0);
+  return form;
+}
+
+function _schExcForm(st, p) {
+  var form = _node('div', 'sch-form sch-form-new');
+  var err = _schError();
+  form.appendChild(err);
+  form.appendChild(_node('div', 'sch-note', '', 'For ' + (p.name || 'this team member') + '.'));
+  var r = _schExcRangeNow(st);
+  var date = _apptInput('date', '');
+  date.min = r.from;
+  date.max = r.to;
+  form.appendChild(_schField('Date', date));
+
+  form.appendChild(_node('div', 'sch-q', '', 'What kind of change is it?'));
+  var group = _node('div', 'sch-kinds');
+  group.setAttribute('role', 'radiogroup');
+  group.setAttribute('aria-label', 'What kind of change is it?');
+  var name = 'sch-kind-' + (++_schFieldSeq);
+  var radios = [];
+  SCH_EXC_KINDS.forEach(function(k, i) {
+    var opt = _node('label', 'sch-kind-opt');
+    var rb = document.createElement('input');
+    rb.type = 'radio';
+    rb.name = name;
+    rb.value = k.v;
+    rb.checked = (i === 0);
+    var words = _node('span');
+    words.appendChild(_node('span', 'sch-kind-title', '', k.title));
+    words.appendChild(_node('span', 'sch-kind-text', '', k.text));
+    opt.appendChild(rb);
+    opt.appendChild(words);
+    rb.addEventListener('change', sync);
+    radios.push({ k: k, rb: rb, opt: opt });
+    group.appendChild(opt);
+  });
+  form.appendChild(group);
+
+  var start = _apptInput('time', ''), end = _apptInput('time', '');
+  var times = _schRow([_schField('From', start), _schField('Until', end)]);
+  form.appendChild(times);
+  var reason = _schText('text', '', 200, 'e.g. Holiday, training day');
+  form.appendChild(_schField('Note (optional)', reason));
+
+  function kindNow() {
+    var c = radios.filter(function(x) { return x.rb.checked; })[0];
+    return c ? c.k.v : 'off';
+  }
+  function sync() {
+    radios.forEach(function(x) { x.opt.classList.toggle('on', x.rb.checked); });
+    times.hidden = (kindNow() === 'off');   // a whole day off has no times; the other two need them
+  }
+  sync();
+
+  var actions = _node('div', 'appt-actions');
+  var go = _schButton('btn btn-primary', 'Add');
+  var cancel = _schButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    var kind = kindNow();
+    var dv = date.value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dv)) { _schShowError(err, 'Pick a date.', date); return; }
+    if (dv < r.from || dv > r.to) { _schShowError(err, 'Pick a date from today up to a year ahead.', date); return; }
+    // The three shapes, exactly as the backend enforces them:
+    //   day off    → is_available false, no times
+    //   part-day   → is_available false, both times
+    //   extra      → is_available true,  both times
+    var body = { exception_date: dv, is_available: kind === 'extra' };
+    if (kind !== 'off') {
+      var s = _schCanonTime(start.value), e = _schCanonTime(end.value);
+      if (!s || !e) { _schShowError(err, 'Enter both the start and the end time.', s ? end : start); return; }
+      if (e <= s) { _schShowError(err, 'The end time must be after the start time. For time past midnight, add a second entry on the next day.', end); return; }
+      body.start_time = s;
+      body.end_time = e;
+    }
+    var note = reason.value.trim();
+    if (note) body.reason = note;
+    _schSubmit(st, go, err, _schExcWrite(st, function() {
+      return _schRequest('POST', 'staff/' + encodeURIComponent(p.id) + '/exceptions', body, 'Could not add this.');
+    }), kind === 'off' ? 'Day off added.' : kind === 'block' ? 'Time blocked out.' : 'Extra hours added.', function() {
+      return _schReloadExc(st, p.id);
+    });
+  });
+  cancel.addEventListener('click', _schCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+  _schEnterSubmits([start, end, reason], go);
+  setTimeout(function() { date.focus(); }, 0);
+  return form;
+}
+
+// ── SECTION 6: direct booking ──
+// Re-read the mode and the readiness checklist: on open, and after every saved change in sections 1-5,
+// because any of them can flip readiness. Each call takes a ticket and only the newest answer is drawn,
+// so two refreshes that land out of order can never leave an older checklist on screen.
+async function _schRefreshMode(st) {
+  var ticket = ++st.modeTicket;
+  if (!st.mode) _schRenderMode(st);
+  try {
+    var data = await _schRequest('GET', encodeURIComponent(st.clientId) + '/mode', undefined, 'Could not load your booking settings.');
+    if (_schStale(st) || ticket !== st.modeTicket) return;
+    st.mode = data;
+    st.modeLoadErr = null;
+  } catch (e) {
+    if (_schStale(st) || ticket !== st.modeTicket) return;
+    st.modeLoadErr = e.message || 'Could not load your booking settings.';
+  }
+  _schRenderMode(st);
+}
+
+async function _schSetMode(st, mode) {
+  if (st.modeBusy) return;
+  st.modeBusy = true;
+  st.modeConfirm = false;
+  st.modeErr = null;
+  st.modeNote = null;
+  ++st.modeTicket;                     // a checklist read still in flight predates this change: ignore it
+  _schRenderMode(st);
+  try {
+    var data = await _schRequest('PUT', encodeURIComponent(st.clientId) + '/mode', { mode: mode }, 'Could not change direct booking. Please try again.');
+    if (_schStale(st)) return;
+    // The server's answer already says what the mode now is, so it is shown at once: if the follow-up
+    // read fails, the card must not go on showing the mode from before the switch. A new ticket stops
+    // any read sent before this answer from overwriting it.
+    var now = (data.appointment_mode === 'booking' || data.appointment_mode === 'log') ? data.appointment_mode : mode;
+    st.mode = Object.assign({}, st.mode, { appointment_mode: now });
+    if (now === 'booking' && data.changed === true) st.mode.ready = true;   // its readiness guard just passed
+    st.mode.booking_live_but_not_ready = (now === 'booking' && st.mode.ready !== true);
+    ++st.modeTicket;
+    // Kept with the mode it describes, so it is only shown while it is still true — "customers can
+    // now book" must not linger next to a later warning that nobody can be booked.
+    st.modeNote = typeof data.message === 'string' ? { mode: now, text: data.message } : null;
+    showToast(now === 'booking' ? 'Direct booking is on.' : 'Direct booking is off.', 'success');
+    await _schRefreshMode(st);         // then the full checklist, from the server
+    if (_schStale(st)) return;
+  } catch (e) {
+    if (_schStale(st)) return;
+    var d = e.data && e.data.detail;
+    if (e.status === 409 && d && typeof d === 'object' && Array.isArray(d.checks)) {
+      // Refused: not ready. The body carries the same checklist GET /mode returns, so it is drawn by the
+      // same renderer — the owner sees exactly what is left, not just "no".
+      var cur = d.current_mode === 'booking' ? 'booking' : 'log';
+      st.mode = { appointment_mode: cur, ready: false, checks: d.checks, missing: Array.isArray(d.missing) ? d.missing : [], booking_live_but_not_ready: cur === 'booking' };
+      st.modeErr = { mode: mode, refused: true, text: typeof d.message === 'string' ? d.message : 'Not ready for direct booking yet.' };
+    } else {
+      st.modeErr = { mode: mode, refused: false, text: e.message || 'Could not change direct booking. Please try again.' };
+      await _schRefreshMode(st);       // find out what the mode actually is now
+      if (_schStale(st)) return;
+    }
+  }
+  st.modeBusy = false;
+  _schRenderMode(st);
+  // The button that was pressed has been rebuilt; if keyboard focus fell to the page, put it on the switch —
+  // or, when the switch is now unavailable, on the first "Go to …" fix, which is the next thing to do.
+  var next = st.el.mode.querySelector('.sch-switch:not(:disabled)') || st.el.mode.querySelector('.sch-req .sch-link');
+  if (next && (!document.activeElement || document.activeElement === document.body)) next.focus();
+}
+
+// Where each readiness check is fixed. The key only chooses a card to scroll to; it is never shown.
+var SCH_FIX = {
+  active_service: ['services', 'Services'],
+  active_staff: ['staff', 'Team'],
+  staff_service_mapping: ['map', 'Who does what'],
+  availability: ['week', 'Weekly hours'],
+};
+
+function _schRenderMode(st) {
+  if (!st.el) return;
+  var body = st.el.mode;
+  body.textContent = '';
+  var m = st.mode;
+  if (!m) {
+    body.appendChild(st.modeLoadErr
+      ? _schRetryBox(st.modeLoadErr, function() { if (!_schStale(st)) _schRefreshMode(st); })
+      : _schSkeleton());
+    _schRenderDrift(st, false);
+    return;
+  }
+  var on = m.appointment_mode === 'booking';
+  var ready = m.ready === true;
+  // THE DANGEROUS STATE: booking is on and nobody can be booked, so the AI tells every caller nothing
+  // is free. The server names it booking_live_but_not_ready; it is ALSO derived here from the two fields
+  // it is made of, so a response that ever lacked the flag still couldn't hide it.
+  var drift = m.booking_live_but_not_ready === true || (on && !ready);
+  var checks = (Array.isArray(m.checks) ? m.checks : []).filter(function(c) { return c && typeof c === 'object'; });
+  var unmet = checks.filter(function(c) { return c.met !== true; }).length;
+
+  if (drift) {
+    var warning = _node('div', 'sch-drift');
+    warning.appendChild(_node('div', 'sch-drift-title', '', 'Direct booking is on, but nobody can be booked'));
+    warning.appendChild(_node('div', 'sch-drift-text', '', 'Your AI is telling every customer who asks that nothing is free. Fix what’s missing below, or turn direct booking off so new appointments come to you as requests instead.'));
+    var offNow = _schButton('btn', st.modeBusy ? 'Working…' : 'Turn off direct booking');
+    offNow.disabled = !!st.modeBusy;
+    offNow.addEventListener('click', function() { _schSetMode(st, 'log'); });
+    warning.appendChild(offNow);
+    body.appendChild(warning);
+  }
+
+  var row = _node('div', 'sch-mode');
+  var sw = _schButton(drift ? 'sch-switch danger' : 'sch-switch', '');
+  sw.setAttribute('role', 'switch');
+  sw.setAttribute('aria-checked', on ? 'true' : 'false');
+  sw.setAttribute('aria-label', 'Direct booking');
+  // Off and not ready: visibly unavailable, with the checklist below saying why — never a switch that
+  // looks live and then fails. On: always switchable, because turning booking off needs no setup.
+  sw.disabled = !!st.modeBusy || (!on && !ready);
+  sw.addEventListener('click', function() {
+    if (on) { _schSetMode(st, 'log'); return; }
+    st.modeConfirm = !st.modeConfirm;
+    _schRenderMode(st);
+    var yes = st.el.mode.querySelector('.sch-confirm .btn-primary');
+    if (yes) yes.focus();
+  });
+  var main = _node('div', 'sch-mode-main');
+  main.appendChild(_node('div', 'sch-mode-title', '', st.modeBusy ? 'Direct booking — working…' : on ? 'Direct booking is on' : 'Direct booking is off'));
+  main.appendChild(_node('div', 'sch-mode-sub', '',
+    on && drift ? 'But nobody can be booked right now, so every customer is being told there’s no free time.'
+    : on ? 'Customers can book open times themselves. Requests still come in too.'
+    : ready ? 'New appointments come in as requests for you to confirm. Everything below is done, so you can turn on direct booking.'
+    : 'New appointments come in as requests for you to confirm. Direct booking can’t be turned on until ' + (unmet ? 'the ' + unmet + ' item' + (unmet === 1 ? '' : 's') + ' marked below ' + (unmet === 1 ? 'is' : 'are') + ' done.' : 'the setup below is complete.')));
+  row.appendChild(sw);
+  row.appendChild(main);
+  body.appendChild(row);
+
+  if (st.modeConfirm && !on && ready && !st.modeBusy) {
+    var c = _node('div', 'sch-confirm');
+    c.appendChild(_node('div', 'sch-note', '', 'Turn on direct booking? Customers will be able to book any open time straight away through your AI, without you confirming first. Requests still come in too, and you can turn this off at any time.'));
+    var acts = _node('div', 'appt-actions');
+    var yes = _schButton('btn btn-primary', 'Turn on direct booking');
+    var no = _schButton('btn btn-ghost', 'Cancel');
+    yes.addEventListener('click', function() { _schSetMode(st, 'booking'); });
+    no.addEventListener('click', function() { st.modeConfirm = false; _schRenderMode(st); });
+    acts.appendChild(yes);
+    acts.appendChild(no);
+    c.appendChild(acts);
+    body.appendChild(c);
+  }
+
+  // A failed switch is shown only while it is still true: the mode is still not the one asked for and,
+  // for a "not ready" refusal, the checklist still says not ready. Fixing the checklist clears it.
+  if (st.modeErr && m.appointment_mode !== st.modeErr.mode && !(st.modeErr.refused && ready)) {
+    var err = _schError();
+    err.classList.add('sch-gap');
+    _schShowError(err, st.modeErr.text);
+    body.appendChild(err);
+  } else if (st.modeNote && st.modeNote.mode === m.appointment_mode && !drift) {
+    body.appendChild(_node('div', 'sch-note sch-gap', '', st.modeNote.text));
+  }
+  if (st.modeLoadErr) {
+    body.appendChild(_schRetryBox('This checklist may be out of date: ' + st.modeLoadErr, function() { if (!_schStale(st)) _schRefreshMode(st); }));
+  }
+
+  var list = _node('div', drift ? 'sch-ready danger' : 'sch-ready');
+  list.appendChild(_node('div', 'sch-ready-title', '', drift ? 'What’s missing' : ready ? 'Ready for direct booking' : 'Before direct booking can go on'));
+  checks.forEach(function(ck) {
+    var met = ck.met === true;
+    var item = _node('div', 'sch-req');
+    var ico = _node('span', met ? 'sch-req-ico met' : 'sch-req-ico unmet', '', met ? '✓' : '!');
+    ico.setAttribute('aria-hidden', 'true');
+    item.appendChild(ico);
+    var main2 = _node('div', 'sch-req-main');
+    var label = _node('div', 'sch-req-label', '', typeof ck.label === 'string' ? ck.label : 'Requirement');
+    label.appendChild(_node('span', 'sch-sr', '', met ? ' — done' : ' — not done yet'));
+    main2.appendChild(label);
+    if (typeof ck.detail === 'string' && ck.detail) main2.appendChild(_node('div', 'sch-req-detail', '', ck.detail));
+    var fix = (!met && typeof ck.key === 'string' && Object.prototype.hasOwnProperty.call(SCH_FIX, ck.key)) ? SCH_FIX[ck.key] : null;
+    if (fix) {
+      var go = _schButton('sch-link', 'Go to ' + fix[1]);
+      go.addEventListener('click', function() { st.el.cards[fix[0]].scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+      main2.appendChild(go);
+    }
+    item.appendChild(main2);
+    list.appendChild(item);
+  });
+  body.appendChild(list);
+  _schRenderDrift(st, drift);
+}
+
+// The dangerous state also gets a bar pinned to the bottom of the screen for as long as it lasts, so it
+// is in view wherever the owner is on this tab — including the moment an edit further up (deactivating
+// the only stylist, removing the only hours) is what caused it. It is announced once, when it appears.
+function _schRenderDrift(st, on) {
+  var box = st.el && st.el.drift;
+  if (!box) return;
+  if (!on) { box.textContent = ''; return; }
+  if (box.firstChild) return;          // already showing: don't re-announce it on every refresh
+  var bar = _node('div', 'sch-drift-bar');
+  bar.setAttribute('role', 'alert');
+  var text = _node('div', '', 'flex:1;min-width:0;');
+  text.appendChild(_node('strong', '', '', 'Nobody can be booked right now. '));
+  text.appendChild(document.createTextNode('Direct booking is on, so your AI is telling customers nothing is free.'));
+  var go = _schButton('btn', 'Fix it');
+  go.addEventListener('click', function() { st.el.cards.mode.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  bar.appendChild(text);
+  bar.appendChild(go);
+  box.appendChild(bar);
+  box.appendChild(_node('div', '', 'height:84px;'));   // room, so the bar never covers the last card
 }
 
 registerPortalTabLoader('scheduling', _schLoad);
