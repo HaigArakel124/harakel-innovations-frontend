@@ -741,6 +741,22 @@ async function submitLogin(e) {
   }
 }
 
+// SIGN-OUT RELOADS THE PAGE. It used to only hide the dashboard, which left the previous client's data in
+// the page — leads, pending appointment requests with customers' names and phone numbers, coach history,
+// missed calls, and every module's in-memory state. The next client's data normally overwrote it, but any
+// of their fetches that failed left the previous client's card on screen. A fresh page load discards all
+// of it at once, including anything added in future, which no list of per-variable resets can promise.
+//
+// location.replace(location.pathname), not location.reload():
+//   * the new URL has no #hash and no ?query, so the login screen never opens under a stale "#scheduling"
+//     or the "?welcome=true" that signup's payment return adds;
+//   * it is a new load rather than a reload, so the browser has no saved form state to refill — a plain
+//     reload can put the old page's typed text (an unsent coach message, say) back into the page the next
+//     person signs in to;
+//   * it REPLACES this history entry, so Back can't bring the signed-in page back from the browser's
+//     back/forward cache.
+// The dashboard is hidden first, as before, so the data leaves the screen at once rather than whenever
+// the fresh page finishes loading.
 function logout() {
   localStorage.removeItem('client_token');
   document.getElementById('dashboard').style.display = 'none';
@@ -749,6 +765,7 @@ function logout() {
   document.getElementById('login-error').style.display = 'none';
   document.getElementById('login-btn').textContent = 'Sign in';
   document.getElementById('login-btn').disabled = false;
+  location.replace(location.pathname);
 }
 
 // ── Portal tabs ──────────────────────────────────────────────
@@ -765,8 +782,9 @@ function logout() {
 // Registration can sit anywhere in the script, above or below this block. Registered today: 'scheduling'
 // (see "Scheduling setup").
 // Two rules every loader must follow:
-//   1. Its first synchronous act resets its panel to a loading state — after sign-out and sign-in as a
-//      different client (no page reload), the previous client's content is still in the panel.
+//   1. Its first synchronous act resets its panel to a loading state. logout() reloads the page today,
+//      but if a second sign-in ever happens on one page load, the previous client's content would still
+//      be in the panel.
 //   2. After every await it stops if clientId !== PORTAL_CLIENT_ID, so a request still in flight when
 //      the user signed out, or someone else signed in, can't write into the wrong client's panel.
 var PORTAL_TABS = ['dashboard', 'scheduling'];
@@ -786,8 +804,8 @@ function registerPortalTabLoader(tab, fn) {
 
 function _runPortalTabLoader(tab) {
   var fn = _portalTabLoaders && _portalTabLoaders[tab];
-  // logout() clears the token without reloading, so PORTAL_CLIENT_ID can be stale on the login screen;
-  // no token means signed out, and nothing may fetch.
+  // Belt-and-braces: logout() reloads the page, so a stale PORTAL_CLIENT_ID shouldn't reach the login
+  // screen — but no token still means signed out, and nothing may fetch.
   if (!PORTAL_CLIENT_ID || !localStorage.getItem('client_token')) return;
   if (_portalTabLoaded[tab] || typeof fn !== 'function') return;
   _portalTabLoaded[tab] = true;
@@ -877,8 +895,8 @@ function _onPortalTabKey(e) {
 }
 
 // Called from showDashboard on every sign-in and session restore. Listeners bind once; the client id
-// and the per-tab "already loaded" flags reset each time, because a new sign-in may be a different
-// client (logout() hides the dashboard without reloading the page).
+// and the per-tab "already loaded" flags reset each time. logout() reloads the page, so today a page
+// load only ever sees one sign-in — the resets keep this correct if that ever stops being true.
 function initPortalTabs(clientId) {
   PORTAL_CLIENT_ID = clientId || null;
   _portalTabLoaded = {};
@@ -979,6 +997,14 @@ async function loadDashboardData(clientId, clientInfo) {
   // missing or is not a zone Intl recognises, APPT_TZ stays null and times fall back to the
   // browser's zone with its abbreviation shown, so the hour is self-describing rather than
   // silently wrong.
+  //
+  // BELT-AND-BRACES — KEEP IT. logout() now reloads the page, and that is the primary defence: a fresh
+  // page starts APPT_TZ at null. This reset is the last line if logout() is ever changed to stop
+  // reloading again. Without it, signing in as a DIFFERENT client whose record has no valid timezone (or
+  // whose fetch fails) would keep the PREVIOUS client's zone, and this client's appointment times — and
+  // the zone abbreviation beside them — would show in the wrong city's hours. Each sign-in starts from
+  // "unknown"; only a successful read of THIS client's record sets it.
+  APPT_TZ = null;
   if (clientRes.status === 'fulfilled' && clientRes.value.ok) {
     try {
       var cRec = await clientRes.value.json();
@@ -1431,7 +1457,8 @@ function _renderAppointments(appts) {
 //      so nothing from an earlier sign-in — possibly another client's roster — survives.
 //   2. After EVERY await, the loader and every write handler call _schStale(st) and stop if it is true.
 //      That is the contract's clientId !== PORTAL_CLIENT_ID test plus st !== SCHED, which also catches
-//      a newer load of the SAME client (sign out and back in without a reload, or "Try again").
+//      a newer load of the SAME client ("Try again", or a second sign-in on one page load should
+//      logout() ever stop reloading).
 //
 // XSS: every server value reaches the page through _node()/textContent, an input's .value or a
 // checkbox's .checked. Nothing here assigns innerHTML, and every handler is an addEventListener closure.
@@ -2298,9 +2325,10 @@ function _schMins(t) {
 }
 
 // This client's own timezone, read from the same client record the Dashboard uses. Read here rather than
-// borrowed from the Dashboard's APPT_TZ, which is never cleared between sign-ins: after signing out and in
-// as another client with no zone set, it still holds the previous client's. Never rejects — any failure
-// is null, and "today" falls back to the browser's date.
+// borrowed from the Dashboard's APPT_TZ so this module never depends on another one's timing: a
+// #scheduling link starts this loader while the Dashboard is still resolving its zone, so APPT_TZ may not
+// be set yet when "today" is worked out. Never rejects — any failure is null, and "today" falls back to
+// the browser's date.
 async function _schClientZone(clientId) {
   try {
     var res = await authedFetch(API + '/api/clients/' + encodeURIComponent(clientId));
