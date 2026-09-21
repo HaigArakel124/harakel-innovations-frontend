@@ -266,6 +266,108 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   .sch-drift-bar{flex-direction:column;align-items:stretch;}
 }
 
+/* ── CALENDAR ── */
+/* Three views of the same appointments the Dashboard lists. The timeline grids (week, day) use one CSS
+   grid: a 52px time gutter plus one column per day. Every hour is 56px tall — the same number as
+   CAL_HOUR_PX in the script, which positions the blocks; change both together. */
+#panel-calendar[hidden]{display:none;}
+#panel-calendar:focus-visible{outline:2px solid var(--accent2);outline-offset:-2px;border-radius:var(--radius);}
+.cal-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.cal-nav{display:flex;align-items:center;gap:6px;}
+.cal-nav .btn{width:auto;padding:7px 12px;font-size:12px;}
+.cal-nav .cal-arrow{width:34px;padding:7px 0;font-size:15px;line-height:1;}
+.cal-title{flex:1;min-width:160px;font-family:'Syne',sans-serif;font-size:16px;font-weight:700;}
+.cal-views{display:inline-flex;border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden;}
+.cal-view{background:transparent;border:none;color:var(--text2);font-size:12px;font-weight:500;font-family:inherit;padding:7px 14px;cursor:pointer;}
+.cal-view + .cal-view{border-left:1px solid var(--border2);}
+.cal-view:hover{color:var(--text);background:var(--surface2);}
+.cal-view.on{background:var(--accent);color:#fff;}
+.cal-view:focus-visible,.cal-block:focus-visible,.cal-mcell:focus-visible,.cal-dayhead:focus-visible,.cal-strip-btn:focus-visible,.cal-req:focus-visible{outline:2px solid var(--accent2);outline-offset:1px;}
+.cal-zone{font-size:11px;color:var(--text3);margin-bottom:14px;line-height:1.5;}
+.cal-empty{font-size:12px;color:var(--text3);margin:0 0 10px;}
+.cal-note{font-size:12px;color:var(--amber);margin:0 0 10px;}
+.cal-body[aria-busy="true"]{opacity:.6;transition:opacity .15s;}
+.cal-strip{margin-bottom:12px;border:1px dashed rgba(255,181,71,0.55);border-radius:var(--radius-sm);background:var(--amber-dim);}
+.cal-strip-btn{width:100%;display:flex;align-items:center;gap:8px;padding:10px 14px;background:transparent;border:none;color:var(--amber);font-family:inherit;font-size:13px;font-weight:600;text-align:left;cursor:pointer;}
+.cal-strip-sub{font-weight:400;color:var(--text2);font-size:12px;}
+.cal-strip-chev{margin-left:auto;transition:transform .15s;}
+.cal-strip-btn[aria-expanded="true"] .cal-strip-chev{transform:rotate(90deg);}
+.cal-strip-list{border-top:1px dashed rgba(255,181,71,0.35);padding:6px;display:flex;flex-direction:column;gap:4px;}
+.cal-strip-list[hidden]{display:none;}
+.cal-req-row{display:flex;align-items:center;gap:8px;}
+.cal-req{flex:1;min-width:0;display:block;padding:8px 10px;border:none;border-radius:6px;background:transparent;color:var(--text);font-family:inherit;font-size:13px;text-align:left;cursor:pointer;}
+.cal-req:hover{background:rgba(255,255,255,0.04);}
+.cal-req-name{font-weight:600;}
+.cal-req-meta{display:block;font-size:11px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-req-row .sch-link{flex-shrink:0;padding-right:8px;}
+.cal-grid-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);}
+.cal-grid{display:grid;}
+.cal-grid.week{grid-template-columns:52px repeat(7,minmax(92px,1fr));min-width:696px;}   /* 52 + 7 × 92: the grid's own box must span every column, or its sticky time gutter scrolls away on a phone */
+.cal-grid.day{grid-template-columns:52px minmax(0,1fr);}
+.cal-corner,.cal-gutter{position:sticky;left:0;z-index:4;background:var(--surface);border-right:1px solid var(--border);}
+.cal-corner{border-bottom:1px solid var(--border);}
+.cal-hour{position:absolute;right:6px;margin-top:3px;font-size:10px;color:var(--text3);white-space:nowrap;}
+.cal-dayhead{padding:8px 4px;border:none;border-bottom:1px solid var(--border);border-left:1px solid var(--border);background:transparent;color:var(--text2);font-family:inherit;font-size:11px;text-align:center;cursor:pointer;}
+.cal-dayhead:hover{background:var(--surface2);}
+.cal-dayhead-num{display:block;font-family:'Syne',sans-serif;font-size:17px;font-weight:700;color:var(--text);margin-top:2px;}
+.cal-dayhead.today{color:var(--accent2);}
+.cal-dayhead.today .cal-dayhead-num{color:var(--accent2);}
+.cal-grid.day .cal-dayhead{cursor:default;}
+.cal-grid.day .cal-dayhead:hover{background:transparent;}
+.cal-col{position:relative;border-left:1px solid var(--border);background-image:linear-gradient(to bottom,var(--border) 1px,transparent 1px);background-size:100% 56px;}
+.cal-col.today{background-color:rgba(108,99,255,0.05);}
+.cal-block{position:absolute;box-sizing:border-box;min-height:14px;padding:2px 6px;border:1px solid var(--border2);border-left:3px solid var(--text3);border-radius:6px;background:var(--surface3);color:var(--text);font-family:inherit;font-size:11px;line-height:1.3;text-align:left;overflow:hidden;cursor:pointer;z-index:2;}
+.cal-block:hover{filter:brightness(1.18);z-index:3;}
+.cal-bt{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-bs{display:block;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cal-block.s0{border-left-color:var(--accent);background:rgba(108,99,255,0.18);}
+.cal-block.s1{border-left-color:var(--green);background:rgba(0,217,163,0.14);}
+.cal-block.s2{border-left-color:var(--blue);background:rgba(77,166,255,0.15);}
+.cal-block.s3{border-left-color:var(--amber);background:rgba(255,181,71,0.14);}
+.cal-block.s4{border-left-color:var(--pink);background:rgba(255,107,157,0.14);}
+.cal-block.req{background:var(--surface);border:1.5px dashed var(--amber);border-left:3px dashed var(--amber);}
+.cal-block.req .cal-bt{color:var(--amber);}
+.cal-block.done{opacity:.55;}
+.cal-block.past{opacity:.72;}
+.cal-now{position:absolute;left:0;right:0;height:2px;background:var(--pink);z-index:3;pointer-events:none;}
+.cal-now::before{content:'';position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--pink);}
+.cal-month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface);}
+.cal-mhead{padding:8px 4px;text-align:center;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);}
+.cal-mcell{min-width:0;min-height:92px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:6px;border:none;border-right:1px solid var(--border);border-bottom:1px solid var(--border);background:transparent;color:var(--text);font-family:inherit;text-align:left;cursor:pointer;}
+.cal-mcell.edge{border-right:none;}
+.cal-mcell.lastrow{border-bottom:none;}
+.cal-mcell:hover{background:var(--surface2);}
+.cal-mcell.out{background:rgba(255,255,255,0.015);}
+.cal-mcell.out .cal-mnum{color:var(--text3);font-weight:400;}
+.cal-mnum{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-size:12px;font-weight:600;}
+.cal-mcell.today .cal-mnum{background:var(--accent);color:#fff;}
+.cal-mcount{font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--green-dim);color:var(--green);white-space:nowrap;}
+.cal-mcell.out .cal-mcount{opacity:.6;}
+.cal-mreq{font-size:11px;padding:1px 6px;border-radius:20px;border:1px dashed var(--amber);color:var(--amber);white-space:nowrap;}
+.cal-modal{max-width:480px;}
+.cal-mhdr{display:flex;align-items:flex-start;gap:10px;}
+.cal-mhdr .modal-title{flex:1;min-width:0;word-break:break-word;margin-bottom:4px;}
+.cal-close{flex-shrink:0;width:32px;height:32px;padding:0;border:1px solid var(--border2);border-radius:50%;background:transparent;color:var(--text2);font-size:16px;line-height:1;font-family:inherit;cursor:pointer;}
+.cal-close:hover{color:var(--text);background:var(--surface2);}
+.cal-pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;background:var(--surface3);color:var(--text2);}
+.cal-pill.confirmed{background:var(--green-dim);color:var(--green);}
+.cal-pill.pending{background:var(--amber-dim);color:var(--amber);}
+.cal-dl{display:grid;grid-template-columns:92px 1fr;gap:7px 12px;margin:14px 0 4px;font-size:13px;}
+.cal-dl dt{color:var(--text3);font-size:12px;}
+.cal-dl dd{margin:0;min-width:0;word-break:break-word;}
+.cal-dl a{color:var(--accent2);}
+.cal-words{margin-top:12px;padding:10px 12px;background:var(--surface2);border-left:2px solid var(--accent);border-radius:4px;font-size:13px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;}
+.cal-modal .appt-actions .btn{width:auto;}
+@media(max-width:680px){
+  .cal-title{order:-1;flex-basis:100%;font-size:15px;}
+  .cal-views{margin-left:auto;}
+  .cal-mhead{font-size:10px;letter-spacing:0;padding:6px 0;}
+  .cal-mcell{min-height:58px;padding:4px 2px;align-items:center;gap:3px;}
+  .cal-mword{display:none;}
+  .cal-mcount,.cal-mreq{padding:1px 5px;font-size:10px;}
+  .cal-dl{grid-template-columns:78px 1fr;}
+}
+
 /* ── EMPTY STATE ── */
 .empty{font-size:13px;color:var(--text3);padding:16px 0;text-align:center;}
 
@@ -465,6 +567,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="portal-tabs-wrap">
     <div class="portal-tabs" id="portal-tabs" role="tablist" aria-label="Portal sections">
       <button type="button" class="portal-tab active" id="tab-dashboard" role="tab" aria-selected="true" aria-controls="panel-dashboard">Dashboard</button>
+      <button type="button" class="portal-tab" id="tab-calendar" role="tab" aria-selected="false" aria-controls="panel-calendar" tabindex="-1">Calendar</button>
       <button type="button" class="portal-tab" id="tab-scheduling" role="tab" aria-selected="false" aria-controls="panel-scheduling" tabindex="-1">Scheduling</button>
     </div>
   </div>
@@ -594,6 +697,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="mc-thread-spinner"><div class="mc-spinner"></div>Loading missed calls...</div>
       </div>
     </div>
+  </div>
+
+  <!-- Calendar tab. The heading is static; everything in #cal-root is built by the "Calendar" module in
+       the script, the first time this tab is opened in a sign-in. -->
+  <div class="content" id="panel-calendar" role="tabpanel" aria-labelledby="tab-calendar" tabindex="0" hidden>
+    <div class="page-heading">Calendar</div>
+    <div class="page-sub">Your appointments by month, week or day, in your business’s local time.</div>
+    <div id="cal-root"></div>
   </div>
 
   <!-- Scheduling tab. The heading is static; everything in #sch-root is built by the "Scheduling setup"
@@ -779,15 +890,15 @@ function logout() {
 // The loader runs once per sign-in, the first time that tab is shown — by click, keyboard, deep link
 // or hash change — with the signed-in client's id. It never runs while signed out. A loader that
 // throws or rejects can't disturb sign-in; it is simply retried the next time its tab is shown.
-// Registration can sit anywhere in the script, above or below this block. Registered today: 'scheduling'
-// (see "Scheduling setup").
+// Registration can sit anywhere in the script, above or below this block. Registered today: 'calendar'
+// (see "Calendar") and 'scheduling' (see "Scheduling setup").
 // Two rules every loader must follow:
 //   1. Its first synchronous act resets its panel to a loading state. logout() reloads the page today,
 //      but if a second sign-in ever happens on one page load, the previous client's content would still
 //      be in the panel.
 //   2. After every await it stops if clientId !== PORTAL_CLIENT_ID, so a request still in flight when
 //      the user signed out, or someone else signed in, can't write into the wrong client's panel.
-var PORTAL_TABS = ['dashboard', 'scheduling'];
+var PORTAL_TABS = ['dashboard', 'calendar', 'scheduling'];   // this order is the arrow-key order
 var PORTAL_CLIENT_ID = null;                       // set on every sign-in and session restore
 var _portalActiveTab = 'dashboard';
 var _portalTabLoaders = _portalTabLoaders || {};   // `||` keeps any loader registered by code above here
@@ -3298,6 +3409,1123 @@ function _schRenderDrift(st, on) {
 }
 
 registerPortalTabLoader('scheduling', _schLoad);
+
+// ── Calendar (Calendar tab) ──────────────────────────────────
+// Month, week and day views of the SAME appointments the Dashboard lists. Mostly read-only: the only
+// writes are the four actions in the details dialog (confirm, decline, reschedule, cancel), and each is
+// followed by a refetch, so the screen shows what the server says happened rather than what was assumed.
+//
+// TIMEZONE. Every time on this tab is the BUSINESS's wall clock, never the browser's — an owner checking
+// from abroad sees the salon's hours. The loader reads the zone from this client's own record rather than
+// borrowing the Dashboard's APPT_TZ: a #calendar link starts this loader while the Dashboard is still
+// resolving its zone, so APPT_TZ may not be set yet. With no usable zone the calendar refuses to draw
+// rather than guess, because a guessed zone puts every appointment at the wrong hour. Times are formatted
+// with exactly the Intl options _apptDate and _apptTime use, so they read character-for-character like
+// the Dashboard's.
+//
+// LOADER RULES (the tab contract): _calLoad's first synchronous act installs a fresh state object and
+// resets #cal-root; after EVERY await, it and every fetch and action call _calStale(st) and stop.
+//
+// XSS: server values reach the page only through _node()/textContent, an input's .value, or
+// setAttribute with a plain string. Nothing here assigns innerHTML; every handler is addEventListener.
+
+var CAL = null;                                      // live state; replaced wholesale by every _calLoad
+var CAL_VIEWS = ['month', 'week', 'day'];
+var CAL_VIEW_LABEL = { month: 'Month', week: 'Week', day: 'Day' };
+var CAL_HOUR_PX = 56;                                // must match .cal-col's background-size in the CSS
+var CAL_DAY_FROM = 8, CAL_DAY_TO = 20;               // hours always drawn; widened to fit anything outside
+var CAL_MIN_BLOCK_PX = 14;
+var CAL_DEFAULT_MIN = 30;                            // the backend's DEFAULT_DURATION_MINUTES
+var CAL_BOOKED = ['confirmed', 'completed', 'no_show'];   // statuses that occupy time on the calendar
+var CAL_STAFF_CLASS = ['s0', 's1', 's2', 's3', 's4'];
+var CAL_DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+var CAL_STATUS_LABEL = {
+  confirmed: 'Confirmed', completed: 'Completed', no_show: 'No-show',
+  pending: 'Request — not booked yet', cancelled: 'Cancelled', declined: 'Declined',
+};
+
+function _calStale(st) {
+  return st !== CAL || st.clientId !== PORTAL_CLIENT_ID;
+}
+
+// A status from the server is only ever a lookup KEY, checked as an own property — so a value like
+// "constructor" can't pull a built-in off the object and print it.
+function _calStatusLabel(status) {
+  return (typeof status === 'string' && Object.prototype.hasOwnProperty.call(CAL_STATUS_LABEL, status)) ? CAL_STATUS_LABEL[status] : null;
+}
+
+// One request. On failure it throws the backend's own words (both FastAPI error shapes, through
+// extractErrorMessage), so a 409 naming an appointment's real status reaches the owner verbatim.
+async function _calCall(method, path, body, fallback) {
+  var opts = { method: method };
+  if (body !== undefined) {
+    opts.headers = {'Content-Type': 'application/json'};
+    opts.body = JSON.stringify(body);
+  }
+  var res;
+  try {
+    res = await authedFetch(API + path, opts);
+  } catch (e) {
+    if (e && e.message === 'Unauthorized') throw e;   // authedFetch is already reloading the page
+    throw new Error("Couldn't reach the server. Check your connection and try again.");
+  }
+  var data = await res.json().catch(function() { return null; });
+  if (!res.ok) {
+    var err = new Error(extractErrorMessage(data, fallback));
+    err.status = res.status;
+    throw err;
+  }
+  return data || {};
+}
+
+// This client's IANA zone, from the same client record the Dashboard reads. A zone that Intl doesn't know
+// comes back as a problem to show, not a fallback — see TIMEZONE above.
+async function _calZone(clientId) {
+  var rec = await _calCall('GET', '/api/clients/' + encodeURIComponent(clientId), undefined, 'Could not load your business details.');
+  var tz = rec && rec.timezone;
+  if (_apptTzValid(tz)) return { tz: tz };
+  return {
+    problem: tz
+      ? 'Your business timezone (“' + tz + '”) isn’t one this browser recognises, so appointment times can’t be shown correctly. Please contact support.'
+      : 'Your business has no timezone set, so appointment times can’t be shown correctly. Please contact support.',
+  };
+}
+
+// Staff or service names, INCLUDING inactive ones: a past appointment can belong to someone who has since
+// left. Optional — if a list fails, the calendar still draws, with a note saying names are missing.
+async function _calNames(clientId, kind) {
+  try {
+    var data = await _calCall('GET', '/api/scheduling/' + encodeURIComponent(clientId) + '/' + kind + '?include_inactive=true', undefined, '');
+    var map = Object.create(null), order = [];
+    (Array.isArray(data[kind]) ? data[kind] : []).forEach(function(x) {
+      if (!x || typeof x.id !== 'string') return;
+      map[x.id] = {
+        name: typeof x.name === 'string' && x.name ? x.name : null,
+        active: x.is_active !== false,
+        dur: Number(x.duration_minutes) > 0 ? Number(x.duration_minutes) : null,   // services only; used to size requests
+      };
+      order.push(x.id);
+    });
+    return { ok: true, map: map, order: order };
+  } catch (e) {
+    if (e && e.message === 'Unauthorized') throw e;
+    return { ok: false, map: Object.create(null), order: [] };
+  }
+}
+
+// ── calendar dates ("YYYY-MM-DD"), done in UTC so no daylight-saving change can move a date ──
+function _calAddDays(key, n) {
+  var p = key.split('-');
+  return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)).toISOString().slice(0, 10);
+}
+
+function _calAddMonths(key, n) {
+  var p = key.split('-');
+  var y = +p[0], m = +p[1] - 1 + n;
+  var last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();   // Jan 31 + 1 month → Feb 28, not Mar 3
+  return new Date(Date.UTC(y, m, Math.min(+p[2], last))).toISOString().slice(0, 10);
+}
+
+function _calDow(key) {   // 0 = Sunday, as everywhere else in the portal
+  var p = key.split('-');
+  return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).getUTCDay();
+}
+
+// Words for a calendar date. It is a date, not an instant, so it is formatted in UTC and never shifts.
+function _calDayLabel(key, opts) {
+  var p = key.split('-'), o = { timeZone: 'UTC' };
+  for (var k in opts) if (Object.prototype.hasOwnProperty.call(opts, k)) o[k] = opts[k];
+  return new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])).toLocaleDateString('en-US', o);
+}
+
+// ── instants, read in the BUSINESS's zone ──
+function _calFmt(st, opts) {
+  var key = JSON.stringify(opts);
+  if (!st.fmts[key]) {
+    var o = { timeZone: st.tz };
+    for (var k in opts) if (Object.prototype.hasOwnProperty.call(opts, k)) o[k] = opts[k];
+    st.fmts[key] = new Intl.DateTimeFormat('en-US', o);
+  }
+  return st.fmts[key];
+}
+
+// An instant → its local calendar date and minutes since local midnight, on the business's clock.
+function _calParts(st, ms) {
+  var p = {};
+  _calFmt(st, { hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+    .formatToParts(new Date(ms)).forEach(function(x) { p[x.type] = x.value; });
+  return { key: p.year + '-' + p.month + '-' + p.day, min: (+p.hour % 24) * 60 + +p.minute };
+}
+
+function _calToday(st) { return _calParts(st, Date.now()).key; }
+
+// The same options as _apptDate / _apptTime, in the business zone: "Tue, Sep 22" and "2:15 PM EDT".
+function _calDateText(st, ms) { return _calFmt(st, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(ms)); }
+function _calTimeText(st, ms) { return _calFmt(st, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date(ms)); }
+function _calClock(st, ms) { return _calFmt(st, { hour: 'numeric', minute: '2-digit' }).format(new Date(ms)); }
+function _calSpan(st, ms, dur) { return _calClock(st, ms) + '–' + _calTimeText(st, ms + dur * 60000); }
+
+function _calZoneAbbr(st) {
+  var out = '';
+  _calFmt(st, { timeZoneName: 'short' }).formatToParts(new Date()).forEach(function(x) { if (x.type === 'timeZoneName') out = x.value; });
+  return out;
+}
+
+// <input type="date"> / <input type="time"> values as the moment reads IN THE BUSINESS ZONE — the same
+// shape _apptInputParts returns.
+function _calInputParts(st, ms) {
+  var p = _calParts(st, ms), h = Math.floor(p.min / 60), m = p.min % 60;
+  return { date: p.key, time: (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m };
+}
+
+// How long to draw a row for.
+// A SETTLED appointment carries its real duration. A REQUEST does not: nothing sets one when the chatbot
+// or phone assistant files it, so the column default (30) is what comes back for every request whatever
+// was asked for. Confirming writes the SERVICE's duration instead, so that is what the dashed block must
+// show — otherwise a two-hour balayage request draws as a half-hour gap and grows over the appointment
+// after it the moment it is confirmed.
+function _calDur(st, row, kind) {
+  var own = Number(row && row.duration_minutes);
+  var mine = (own > 0 && own % 1 === 0) ? own : 0;
+  if (kind !== 'request' && mine) return mine;
+  var svc = (st && row && row.service_id) ? st.services.map[row.service_id] : null;
+  if (svc && svc.dur > 0) return svc.dur;
+  return mine || CAL_DEFAULT_MIN;
+}
+
+function _calStaffName(st, id) { var s = id ? st.staff.map[id] : null; return s && s.name ? s.name : null; }
+function _calServiceName(st, id) { var s = id ? st.services.map[id] : null; return s && s.name ? s.name : null; }
+function _calStaffClass(st, id) {
+  var i = id ? st.staff.order.indexOf(id) : -1;
+  return i < 0 ? '' : CAL_STAFF_CLASS[i % CAL_STAFF_CLASS.length];
+}
+
+// ── the period on screen ──
+// Visible calendar dates, in order. Weeks run Sunday to Saturday, as in Scheduling; a month shows the
+// whole weeks that contain it, so the grid is always complete rows of seven.
+function _calDays(st) {
+  var start, end;
+  if (st.view === 'day') return [st.date];
+  if (st.view === 'week') {
+    start = _calAddDays(st.date, -_calDow(st.date));
+    end = _calAddDays(start, 6);
+  } else {
+    var first = st.date.slice(0, 8) + '01';
+    var p = first.split('-');
+    var last = new Date(Date.UTC(+p[0], +p[1], 0)).toISOString().slice(0, 10);
+    start = _calAddDays(first, -_calDow(first));
+    end = _calAddDays(last, 6 - _calDow(last));
+  }
+  var days = [];
+  for (var k = start; k <= end; k = _calAddDays(k, 1)) days.push(k);
+  return days;
+}
+
+function _calRangeKey(st) {
+  var d = _calDays(st);
+  return st.view + ':' + d[0] + ':' + d[d.length - 1];
+}
+
+function _calTitle(st) {
+  if (st.view === 'month') return _calDayLabel(st.date, { month: 'long', year: 'numeric' });
+  if (st.view === 'day') return _calDayLabel(st.date, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  var d = _calDays(st), a = d[0], b = d[6];
+  if (a.slice(0, 7) === b.slice(0, 7)) return _calDayLabel(a, { month: 'short', day: 'numeric' }) + ' – ' + (+b.slice(8)) + ', ' + b.slice(0, 4);
+  if (a.slice(0, 4) === b.slice(0, 4)) return _calDayLabel(a, { month: 'short', day: 'numeric' }) + ' – ' + _calDayLabel(b, { month: 'short', day: 'numeric' }) + ', ' + b.slice(0, 4);
+  return _calDayLabel(a, { month: 'short', day: 'numeric', year: 'numeric' }) + ' – ' + _calDayLabel(b, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ── the URL ──
+// The period rides in the QUERY (?cal=2026-09-22&calview=week), not the hash. The tab shell owns the hash:
+// it matches it against the tab names and rewrites it to "#calendar" on every switch, so anything added
+// there would be dropped. The shell already carries location.search through untouched, and sign-out
+// replaces the URL with the bare path, so none of this outlives a sign-in.
+function _calReadUrl() {
+  var out = {};
+  try {
+    var q = new URLSearchParams(location.search);
+    var d = q.get('cal'), v = q.get('calview');
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d) && _calAddDays(d, 0) === d) out.date = d;   // a real date only
+    if (v && CAL_VIEWS.indexOf(v) > -1) out.view = v;
+  } catch (e) {}
+  return out;
+}
+
+function _calWriteUrl(st) {
+  try {
+    var q = new URLSearchParams(location.search);
+    q.set('cal', st.date);
+    q.set('calview', st.view);
+    history.replaceState(null, '', location.pathname + '?' + q.toString() + location.hash);
+  } catch (e) {}
+}
+
+// ── loading ──
+// View defaults to WEEK — a week of blocks is what a salon plans against — except at phone width, where
+// seven columns can't be read and DAY is the useful one. A ?calview in the URL wins over both.
+async function _calLoad(clientId) {
+  // RULE 1 — the first synchronous act: a fresh state object, and #cal-root reset to a skeleton.
+  if (CAL && CAL.observer) CAL.observer.disconnect();
+  var st = CAL = {
+    clientId: clientId,
+    tz: null,
+    view: null,
+    date: null,                                     // the focus date, "YYYY-MM-DD" on the business's calendar
+    staff: { ok: true, map: Object.create(null), order: [] },
+    services: { ok: true, map: Object.create(null), order: [] },
+    rows: [], rowsKey: null, rangeErr: null, rangeTicket: 0, rangeLoading: false,
+    pending: [], pendingLoaded: false, pendingErr: null, pendingTicket: 0,
+    stripOpen: false,
+    namesTicket: 0,                                 // only the newest staff/service read is applied
+    namesBusy: false,
+    namesMissing: Object.create(null),              // ids a re-read already failed to explain
+    drawnKey: null,                                 // the period last drawn (keeps a phone's sideways scroll)
+    fmts: Object.create(null),
+    modal: null,
+    observer: null,
+    ready: false,
+    el: null,
+  };
+  _calRenderLoading();
+  try {
+    var got = await Promise.all([_calZone(clientId), _calNames(clientId, 'staff'), _calNames(clientId, 'services')]);
+    if (_calStale(st)) return;                                                   // RULE 2
+    if (!got[0].tz) { _calRenderProblem(st, got[0].problem); return; }
+    st.tz = got[0].tz;
+    st.staff = got[1];
+    st.services = got[2];
+    var url = _calReadUrl();
+    var narrow = !!(window.matchMedia && window.matchMedia('(max-width: 680px)').matches);
+    st.view = url.view || (narrow ? 'day' : 'week');
+    st.date = url.date || _calToday(st);
+    _calRenderFrame(st);
+    _calWatchPanel(st);
+    await Promise.all([_calFetchRange(st), _calFetchPending(st)]);   // each checks staleness after its await
+    if (_calStale(st)) return;                                                   // RULE 2
+    st.ready = true;
+  } catch (e) {
+    if (_calStale(st)) return;                                                   // RULE 2
+    _calRenderProblem(st, e.message || 'Could not load your calendar.');
+  }
+}
+
+// The appointments in the visible period. The range is sent as UTC instants ("…T00:00:00Z"), because
+// the backend hands date_from / date_to straight to Postgres, which reads a naive time in UTC — not in
+// the business's zone. It is padded a day on each side, so whatever the business's offset, every
+// appointment on the visible LOCAL dates is inside it; each row is then placed by its own local date,
+// so the padding never shows anything extra. Both ends are inclusive (the backend uses gte / lte).
+async function _calFetchRange(st) {
+  var days = _calDays(st), key = _calRangeKey(st);
+  var ticket = ++st.rangeTicket;
+  var from = _calAddDays(days[0], -1) + 'T00:00:00Z';
+  var to = _calAddDays(days[days.length - 1], 1) + 'T23:59:59Z';
+  st.rangeLoading = true;
+  if (st.el) st.el.body.setAttribute('aria-busy', 'true');
+  try {
+    var data = await _calCall('GET', '/api/appointments/' + encodeURIComponent(st.clientId)
+      + '?date_from=' + encodeURIComponent(from) + '&date_to=' + encodeURIComponent(to), undefined, 'Could not load appointments.');
+    if (_calStale(st) || ticket !== st.rangeTicket) return;          // RULE 2, and only the newest period
+    st.rows = Array.isArray(data.appointments) ? data.appointments : [];
+    st.rowsKey = key;
+    st.rangeErr = null;
+  } catch (e) {
+    if (_calStale(st) || ticket !== st.rangeTicket) return;
+    if (st.rowsKey !== key) { st.rows = []; st.rowsKey = key; }       // a refresh that fails keeps what was shown
+    st.rangeErr = e.message || 'Could not load appointments.';
+  }
+  st.rangeLoading = false;
+  _calRenderBody(st);
+}
+
+// Requests are fetched on their own: a pending request has no scheduled_at, and a date range filters on
+// scheduled_at, so no range query ever returns one.
+async function _calFetchPending(st) {
+  var ticket = ++st.pendingTicket;
+  try {
+    var data = await _calCall('GET', '/api/appointments/' + encodeURIComponent(st.clientId) + '?status=pending', undefined, 'Could not load requests.');
+    if (_calStale(st) || ticket !== st.pendingTicket) return;       // RULE 2
+    st.pending = (Array.isArray(data.appointments) ? data.appointments : []).filter(function(r) { return r && r.status === 'pending'; });
+    st.pendingLoaded = true;
+    st.pendingErr = null;
+  } catch (e) {
+    if (_calStale(st) || ticket !== st.pendingTicket) return;
+    st.pendingErr = e.message || 'Could not load requests.';
+  }
+  _calRenderBody(st);
+}
+
+// BOTH LISTS, ALWAYS. The grid is two queries stitched together — the range (which can never return a
+// pending row, because it filters on scheduled_at) and the pending queue. Refreshing only the range leaves
+// the queue frozen: a request confirmed on another device would keep its dashed block beside the real
+// booking, and the strip would keep counting it. withNames also re-reads staff and service names, which
+// the Scheduling tab can change while this tab is open; navigation skips that to stay cheap.
+function _calRefresh(st, withNames) {
+  _calFetchRange(st);
+  _calFetchPending(st);
+  if (withNames) _calRefreshNames(st);
+}
+
+// Names can change under us: the Scheduling tab adds and renames staff and services in the same session.
+// A failed read keeps the names already on screen rather than blanking them.
+async function _calRefreshNames(st) {
+  if (st.namesBusy) return;
+  st.namesBusy = true;
+  var ticket = ++st.namesTicket;
+  try {
+    var got = await Promise.all([_calNames(st.clientId, 'staff'), _calNames(st.clientId, 'services')]);
+    if (_calStale(st) || ticket !== st.namesTicket) return;
+    if (got[0].ok) st.staff = got[0];
+    if (got[1].ok) st.services = got[1];
+    _calRenderBody(st);
+  } finally {
+    if (!_calStale(st)) st.namesBusy = false;
+  }
+}
+
+// Refetch whenever the tab is shown again: the Dashboard confirms and declines the same requests, and new
+// ones arrive from the chatbot and phone assistant while the owner is elsewhere. Watching the panel's
+// `hidden` attribute keeps the tab shell untouched. The details dialog closes when the tab is left.
+function _calWatchPanel(st) {
+  var panel = document.getElementById('panel-calendar');
+  if (!panel || typeof MutationObserver !== 'function') return;
+  var obs = new MutationObserver(function() {
+    if (_calStale(st)) { obs.disconnect(); return; }
+    if (panel.hidden) { _calCloseModal(st, false); return; }
+    if (st.ready) _calRefresh(st, true);
+  });
+  obs.observe(panel, { attributes: true, attributeFilter: ['hidden'] });
+  st.observer = obs;
+}
+
+// ── frame ──
+function _calRenderLoading() {
+  var root = document.getElementById('cal-root');
+  root.textContent = '';
+  root.setAttribute('aria-busy', 'true');
+  var card = _node('div', 'card');
+  card.appendChild(_node('div', 'skeleton', 'margin-bottom:10px;'));
+  card.appendChild(_node('div', 'skeleton', 'width:70%;margin-bottom:10px;'));
+  card.appendChild(_node('div', 'skeleton', 'width:45%;'));
+  root.appendChild(card);
+}
+
+function _calRenderProblem(st, msg) {
+  var root = document.getElementById('cal-root');
+  root.textContent = '';
+  root.removeAttribute('aria-busy');
+  var card = _node('div', 'card');
+  var box = _node('div', 'mc-error');
+  box.appendChild(_node('span', '', '', msg));
+  var retry = _node('button', '', '', 'Try again');
+  retry.type = 'button';
+  retry.addEventListener('click', function() {
+    if (!_calStale(st) && localStorage.getItem('client_token')) _calLoad(st.clientId);
+  });
+  box.appendChild(retry);
+  card.appendChild(box);
+  root.appendChild(card);
+}
+
+function _calRenderFrame(st) {
+  var root = document.getElementById('cal-root');
+  root.textContent = '';
+  root.removeAttribute('aria-busy');
+  st.el = { root: root, bar: _node('div', 'cal-toolbar'), zone: _node('div', 'cal-zone'), body: _node('div', 'cal-body') };
+  root.appendChild(st.el.bar);
+  root.appendChild(st.el.zone);
+  root.appendChild(st.el.body);
+  _calRenderBar(st);
+  _calRenderZone(st);
+  _calRenderBody(st);
+}
+
+function _calButton(cls, text, label) {
+  var b = _node('button', cls, '', text);
+  b.type = 'button';
+  if (label) b.setAttribute('aria-label', label);
+  return b;
+}
+
+// NAVIGATION: previous / today / next, and the view switch. Each rebuilds the toolbar, so the button that
+// was pressed is found again by name and keeps keyboard focus.
+function _calRenderBar(st, focusName) {
+  var bar = st.el.bar;
+  bar.textContent = '';
+  var named = {};
+  var unit = st.view;
+  var nav = _node('div', 'cal-nav');
+  var prev = _calButton('btn btn-ghost cal-arrow', '‹', 'Previous ' + unit);
+  var today = _calButton('btn btn-ghost', 'Today');
+  var next = _calButton('btn btn-ghost cal-arrow', '›', 'Next ' + unit);
+  prev.addEventListener('click', function() { _calStep(st, -1, 'prev'); });
+  today.addEventListener('click', function() { _calGo(st, st.view, _calToday(st), 'today'); });
+  next.addEventListener('click', function() { _calStep(st, 1, 'next'); });
+  nav.appendChild(prev);
+  nav.appendChild(today);
+  nav.appendChild(next);
+  named.prev = prev; named.today = today; named.next = next;
+  var title = _node('div', 'cal-title', '', _calTitle(st));
+  title.setAttribute('aria-live', 'polite');
+  var views = _node('div', 'cal-views');
+  views.setAttribute('role', 'group');
+  views.setAttribute('aria-label', 'Calendar view');
+  CAL_VIEWS.forEach(function(v) {
+    var b = _calButton(v === st.view ? 'cal-view on' : 'cal-view', CAL_VIEW_LABEL[v]);
+    b.setAttribute('aria-pressed', v === st.view ? 'true' : 'false');
+    b.addEventListener('click', function() { if (v !== st.view) _calGo(st, v, st.date, 'view-' + v); });
+    named['view-' + v] = b;
+    views.appendChild(b);
+  });
+  var refresh = _calButton('btn btn-ghost cal-arrow', '↻', 'Refresh appointments');
+  refresh.addEventListener('click', function() { _calRefresh(st, true); });
+  bar.appendChild(nav);
+  bar.appendChild(title);
+  bar.appendChild(views);
+  bar.appendChild(refresh);
+  if (focusName && named[focusName]) named[focusName].focus();
+}
+
+function _calRenderZone(st) {
+  var abbr = _calZoneAbbr(st);
+  var text = 'All times are your business’s local time: ' + st.tz + (abbr ? ' (' + abbr + ')' : '') + '.';
+  var mine = '';
+  try { mine = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch (e) {}
+  if (mine && mine !== st.tz) text += ' This device is set to ' + mine + ', so they may not match your own clock.';
+  st.el.zone.textContent = text;
+}
+
+function _calStep(st, dir, focusName) {
+  var d = st.view === 'month' ? _calAddMonths(st.date, dir) : _calAddDays(st.date, dir * (st.view === 'week' ? 7 : 1));
+  _calGo(st, st.view, d, focusName);
+}
+
+// Every navigation: remember it in the URL, redraw, and fetch the new period (one request). The body shows
+// a skeleton until that period's answer arrives; a stale answer for a period already left is ignored.
+function _calGo(st, view, date, focusName) {
+  st.view = view;
+  st.date = date;
+  _calWriteUrl(st);
+  _calRenderBar(st, focusName);
+  _calRenderBody(st);
+  _calRefresh(st, false);
+}
+
+// ── body: requests strip, notes, and the view itself ──
+function _calRenderBody(st) {
+  if (!st.el) return;
+  var body = st.el.body;
+  var oldWrap = body.querySelector('.cal-grid-wrap');
+  var oldScroll = oldWrap ? oldWrap.scrollLeft : null, oldKey = st.drawnKey;
+  body.textContent = '';
+  body.setAttribute('aria-busy', st.rangeLoading ? 'true' : 'false');
+  if (!st.staff.ok || !st.services.ok) {
+    body.appendChild(_node('div', 'cal-note', '', 'Couldn’t load staff and service names, so some appointments show without them.'));
+  }
+  if (st.pendingErr) {
+    body.appendChild(_calRetryBox('Couldn’t load the requests waiting: ' + st.pendingErr, function() { _calFetchPending(st); }));
+  }
+  var strip = _calStrip(st);
+  if (strip) body.appendChild(strip);
+
+  var days = _calDays(st);
+  if (st.rowsKey !== _calRangeKey(st)) {        // this period hasn't arrived yet
+    var sk = _node('div', 'card');
+    sk.appendChild(_node('div', 'skeleton', 'margin-bottom:10px;'));
+    sk.appendChild(_node('div', 'skeleton', 'width:60%;'));
+    body.appendChild(sk);
+    return;
+  }
+  if (st.rangeErr) {
+    body.appendChild(_calRetryBox(st.rangeErr, function() { _calFetchRange(st); }));
+  }
+  var byDay = _calItems(st, days);
+  _calCheckNames(st, byDay);
+  var total = 0;
+  days.forEach(function(k) { total += byDay[k].length; });
+  if (!total && !st.rangeErr) {
+    body.appendChild(_node('div', 'cal-empty', '',
+      st.view === 'month' ? 'Nothing booked in ' + _calDayLabel(st.date, { month: 'long', year: 'numeric' }) + '.'
+      : st.view === 'week' ? 'Nothing booked this week.'
+      : 'Nothing booked on ' + _calDayLabel(st.date, { weekday: 'long', month: 'long', day: 'numeric' }) + '.'));
+  }
+  body.appendChild(st.view === 'month' ? _calMonth(st, days, byDay) : _calTimeline(st, days, byDay));
+  var key = _calRangeKey(st);
+  st.drawnKey = key;
+  // On a phone the week scrolls sideways inside its box. A NEW week opens scrolled to the focus day (so
+  // "this week" shows today, not Sunday); redrawing the SAME week — a refresh — keeps the owner's place.
+  var wrap = body.querySelector('.cal-grid-wrap');
+  if (wrap && st.view === 'week' && wrap.scrollWidth > wrap.clientWidth) {
+    if (oldKey === key && oldScroll != null) wrap.scrollLeft = oldScroll;
+    else {
+      var col = wrap.querySelectorAll('.cal-col')[days.indexOf(st.date)];
+      var gutter = wrap.querySelector('.cal-gutter');
+      // Measured against the scroll box itself. offsetLeft would be wrong here: no ancestor between the
+      // column and <body> is positioned, so it carries the page's left inset and the grid overshoots,
+      // parking the focus day's first characters under the sticky time gutter.
+      if (col) {
+        var cr = col.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+        wrap.scrollLeft = Math.max(0, wrap.scrollLeft + (cr.left - wr.left) - (gutter ? gutter.offsetWidth : 0));
+      }
+    }
+  }
+}
+
+// An appointment naming a staff member or service the maps have never seen means the roster changed since
+// they were read — someone added to the team on the Scheduling tab, and the AI has already booked them.
+// Re-read the names once per unknown id (never in a loop: an id that is still missing afterwards is
+// remembered, so it can't trigger another read).
+function _calCheckNames(st, byDay) {
+  if (st.namesBusy) return;
+  var unknown = [];
+  Object.keys(byDay).forEach(function(k) {
+    byDay[k].forEach(function(it) {
+      var sid = it.row.staff_id, vid = it.row.service_id;
+      if (typeof sid === 'string' && sid && !(sid in st.staff.map) && !st.namesMissing[sid]) unknown.push(sid);
+      if (typeof vid === 'string' && vid && !(vid in st.services.map) && !st.namesMissing[vid]) unknown.push(vid);
+    });
+  });
+  if (!unknown.length) return;
+  unknown.forEach(function(id) { st.namesMissing[id] = true; });
+  _calRefreshNames(st);
+}
+
+function _calRetryBox(msg, retry) {
+  var box = _node('div', 'mc-error', 'margin-bottom:12px;');
+  box.appendChild(_node('span', '', '', msg));
+  var b = _node('button', '', '', 'Try again');
+  b.type = 'button';
+  b.addEventListener('click', retry);
+  box.appendChild(b);
+  return box;
+}
+
+// Each visible date → the items drawn on it. Booked appointments are placed at scheduled_at; requests
+// (pending) at requested_at — a proposal, drawn dashed. Cancelled and declined rows take up no time and
+// are left off. Every item is placed by the LOCAL date and time of its instant in the business zone.
+function _calItems(st, days) {
+  var byDay = Object.create(null);
+  days.forEach(function(k) { byDay[k] = []; });
+  var drawn = Object.create(null);          // appointment ids already placed from the booked list
+  function add(row, kind, iso) {
+    var ms = Date.parse(iso);
+    if (!iso || isNaN(ms)) return;
+    var p = _calParts(st, ms);
+    if (!(p.key in byDay)) return;
+    var dur = _calDur(st, row, kind);
+    // The END is read from the end INSTANT's own local clock rather than by adding minutes to the start.
+    // On the day clocks go forward an hour of wall clock does not exist, so adding minutes would draw the
+    // block somewhere its own label contradicts. When that reading lands back on or before the start — the
+    // repeated hour when clocks go back — fall back to the duration so the block can't collapse to nothing.
+    var pe = _calParts(st, ms + dur * 60000);
+    var overnight = pe.key !== p.key;
+    var end = overnight ? 1440 : pe.min;
+    if (end <= p.min) end = Math.min(p.min + dur, 1440);
+    byDay[p.key].push({ row: row, kind: kind, ms: ms, key: p.key, start: p.min, end: end, dur: dur, overnight: overnight });
+    if (typeof row.id === 'string') drawn[row.id] = true;
+  }
+  st.rows.forEach(function(r) {
+    if (r && CAL_BOOKED.indexOf(r.status) > -1 && r.scheduled_at) add(r, 'booked', r.scheduled_at);
+  });
+  st.pending.forEach(function(r) {
+    // The two lists are two separate queries, so the same appointment can sit in both for a moment after
+    // it is confirmed — and indefinitely if the pending refetch fails. The booked placement wins: one
+    // appointment is never drawn twice, once solid and once as a ghost request.
+    if (!r || (typeof r.id === 'string' && drawn[r.id])) return;
+    if (r.requested_at || r.scheduled_at) add(r, 'request', r.requested_at || r.scheduled_at);
+  });
+  return byDay;
+}
+
+// OVERLAPS, laid out side by side. Items are taken in start order; a run of items that overlap one another
+// (directly or through a chain) is one cluster. Inside a cluster each item takes the first lane that is
+// already free at its start time, and every item in the cluster is then 1/lanes wide. Back-to-back items
+// (one ends exactly when the next starts) share a lane. This is the usual calendar layout.
+function _calLanes(items) {
+  items.sort(function(a, b) { return a.start - b.start || b.end - a.end; });
+  var cluster = [], laneEnds = [], clusterEnd = -1;
+  function close() {
+    cluster.forEach(function(it) { it.lanes = laneEnds.length; });
+    cluster = [];
+    laneEnds = [];
+    clusterEnd = -1;
+  }
+  items.forEach(function(it) {
+    if (cluster.length && it.start >= clusterEnd) close();
+    var lane = -1;
+    for (var i = 0; i < laneEnds.length; i++) if (laneEnds[i] <= it.start) { lane = i; break; }
+    if (lane === -1) { lane = laneEnds.length; laneEnds.push(it.end); } else laneEnds[lane] = it.end;
+    it.lane = lane;
+    cluster.push(it);
+    clusterEnd = Math.max(clusterEnd, it.end);
+  });
+  close();
+}
+
+// HOUR RANGE: 8 AM to 8 PM always, widened to the whole hour that contains any earlier start or later end
+// in the visible period, so no appointment is ever clipped off the grid. The whole week shares one range.
+function _calHourRange(items) {
+  var from = CAL_DAY_FROM, to = CAL_DAY_TO;
+  items.forEach(function(it) {
+    from = Math.min(from, Math.floor(it.start / 60));
+    to = Math.max(to, Math.ceil(it.end / 60));
+  });
+  return { from: Math.max(0, from), to: Math.min(24, to) };
+}
+
+function _calHourText(h) { return (h % 12 || 12) + (h < 12 ? ' AM' : ' PM'); }
+
+// ── WEEK and DAY: one timeline grid ──
+// Every block is positioned from its own local start and duration:
+//   top    = (start minutes since local midnight − first hour × 60) ÷ 60 × CAL_HOUR_PX
+//   height = duration ÷ 60 × CAL_HOUR_PX   (at least CAL_MIN_BLOCK_PX, so a short one can still be tapped)
+//   left / width = its lane ÷ lanes in its cluster, as percentages of the day's column
+// An appointment that runs past midnight is drawn on the day it starts, to the bottom of that day, and
+// says so. The day view is ONE column — deliberately no column per staff member; each block names who it
+// is with instead.
+function _calTimeline(st, days, byDay) {
+  var isWeek = days.length > 1;
+  var all = [];
+  days.forEach(function(k) { _calLanes(byDay[k]); all = all.concat(byDay[k]); });
+  var range = _calHourRange(all);
+  var height = (range.to - range.from) * CAL_HOUR_PX;
+  var today = _calToday(st), now = _calParts(st, Date.now());
+  var wrap = _node('div', 'cal-grid-wrap');
+  var grid = _node('div', isWeek ? 'cal-grid week' : 'cal-grid day');
+  grid.appendChild(_node('div', 'cal-corner'));
+  days.forEach(function(k) {
+    var head = _node(isWeek ? 'button' : 'div', k === today ? 'cal-dayhead today' : 'cal-dayhead');
+    head.appendChild(_node('span', '', '', CAL_DAY_NAMES[_calDow(k)]));
+    head.appendChild(_node('span', 'cal-dayhead-num', '', String(+k.slice(8))));
+    if (isWeek) {
+      head.type = 'button';
+      head.setAttribute('aria-label', 'Show ' + _calDayLabel(k, { weekday: 'long', month: 'long', day: 'numeric' }) + (k === today ? ' (today)' : ''));
+      head.addEventListener('click', function() { _calGo(st, 'day', k); });
+    }
+    grid.appendChild(head);
+  });
+  var gutter = _node('div', 'cal-gutter', 'height:' + height + 'px;');
+  for (var h = range.from; h < range.to; h++) {
+    gutter.appendChild(_node('span', 'cal-hour', 'top:' + ((h - range.from) * CAL_HOUR_PX) + 'px;', _calHourText(h)));
+  }
+  grid.appendChild(gutter);
+  days.forEach(function(k) {
+    var col = _node('div', k === today ? 'cal-col today' : 'cal-col', 'height:' + height + 'px;');
+    byDay[k].forEach(function(it) { col.appendChild(_calBlock(st, it, range, isWeek)); });
+    if (k === today && now.min >= range.from * 60 && now.min <= range.to * 60) {
+      col.appendChild(_node('div', 'cal-now', 'top:' + ((now.min - range.from * 60) / 60 * CAL_HOUR_PX).toFixed(1) + 'px;'));
+    }
+    grid.appendChild(col);
+  });
+  wrap.appendChild(grid);
+  return wrap;
+}
+
+function _calBlock(st, it, range, isWeek) {
+  var row = it.row, req = it.kind === 'request';
+  var top = (it.start - range.from * 60) / 60 * CAL_HOUR_PX;
+  var h = Math.max((it.end - it.start) / 60 * CAL_HOUR_PX, CAL_MIN_BLOCK_PX);
+  var w = 100 / it.lanes, l = it.lane * w;
+  var done = row.status === 'completed' || row.status === 'no_show';
+  var past = !req && !done && it.ms + it.dur * 60000 < Date.now();
+  var cls = 'cal-block' + (req ? ' req' : (_calStaffClass(st, row.staff_id) ? ' ' + _calStaffClass(st, row.staff_id) : '')) + (done ? ' done' : '') + (past ? ' past' : '');
+  var b = _node('button', cls, 'top:' + top.toFixed(1) + 'px;height:' + h.toFixed(1) + 'px;left:calc(' + l.toFixed(3) + '% + 2px);width:calc(' + w.toFixed(3) + '% - 4px);');
+  b.type = 'button';
+  var who = row.customer_name || 'Customer';
+  var svc = _calServiceName(st, row.service_id);
+  var staff = _calStaffName(st, row.staff_id);
+  var endMs = it.ms + it.dur * 60000;
+  // Week: time then name, the classic compact label. Day: the NAME leads — the block's position already
+  // says when, and in a narrow side-by-side lane the first line is the one that stays readable.
+  var line1 = (req ? 'Request: ' : '') + (isWeek ? _calClock(st, it.ms) + ' · ' + who : who) + (it.overnight ? ' →' : '');
+  var bits = [];
+  if (!isWeek) bits.push(_calClock(st, it.ms) + '–' + _calClock(st, endMs));
+  if (svc) bits.push(svc);
+  // "not assigned" only when there really is no staff_id — an id whose name hasn't loaded is a different
+  // thing, and saying nobody is covering a booking that IS covered is the more costly mistake.
+  if (!isWeek) bits.push(staff ? 'with ' + staff : (row.staff_id ? 'with a team member' : (req ? 'no one assigned yet' : 'not assigned')));
+  if (h >= 30 && bits.length) {
+    b.appendChild(_node('span', 'cal-bt', '', line1));
+    b.appendChild(_node('span', 'cal-bs', '', bits.join(' · ')));
+  } else {
+    b.appendChild(_node('span', 'cal-bt', '', line1 + (bits.length ? ' · ' + bits.join(' · ') : '')));
+  }
+  b.setAttribute('aria-label', (req ? 'Request, not booked yet' : (_calStatusLabel(row.status) || 'Appointment')) + ': ' + who + ', '
+    + _calDateText(st, it.ms) + ', ' + _calSpan(st, it.ms, it.dur) + (it.overnight ? ' (runs past midnight)' : '')
+    + (svc ? ', ' + svc : '') + (staff ? ', with ' + staff : ''));
+  b.addEventListener('click', function() { _calOpen(st, row, it.kind, b); });
+  return b;
+}
+
+// ── MONTH ──
+// Seven columns, Sunday first. Each day shows its date and how busy it is: a count of appointments and,
+// dashed, a count of requests proposing that day. Today is a filled circle; days outside the month are
+// dimmed. A day opens the day view.
+function _calMonth(st, days, byDay) {
+  var grid = _node('div', 'cal-month');
+  CAL_DAY_NAMES.forEach(function(n) { grid.appendChild(_node('div', 'cal-mhead', '', n)); });
+  var month = st.date.slice(0, 7), today = _calToday(st);
+  days.forEach(function(k, i) {
+    var items = byDay[k];
+    var booked = items.filter(function(it) { return it.kind === 'booked'; }).length;
+    var reqs = items.length - booked;
+    var cls = 'cal-mcell' + (k.slice(0, 7) !== month ? ' out' : '') + (k === today ? ' today' : '')
+      + (i % 7 === 6 ? ' edge' : '') + (i >= days.length - 7 ? ' lastrow' : '');
+    var cell = _node('button', cls);
+    cell.type = 'button';
+    cell.appendChild(_node('span', 'cal-mnum', '', String(+k.slice(8))));
+    if (booked) {
+      var c = _node('span', 'cal-mcount', '', String(booked));
+      c.appendChild(_node('span', 'cal-mword', '', booked === 1 ? ' appt' : ' appts'));
+      cell.appendChild(c);
+    }
+    if (reqs) {
+      var q = _node('span', 'cal-mreq', '', String(reqs));
+      q.appendChild(_node('span', 'cal-mword', '', reqs === 1 ? ' request' : ' requests'));
+      cell.appendChild(q);
+    }
+    cell.setAttribute('aria-label', _calDayLabel(k, { weekday: 'long', month: 'long', day: 'numeric' })
+      + (k === today ? ', today' : '') + ': '
+      + (booked ? booked + (booked === 1 ? ' appointment' : ' appointments') : 'nothing booked')
+      + (reqs ? ', ' + reqs + (reqs === 1 ? ' request' : ' requests') : ''));
+    cell.addEventListener('click', function() { _calGo(st, 'day', k); });
+    grid.appendChild(cell);
+  });
+  return grid;
+}
+
+// ── REQUESTS WAITING ──
+// Every pending request, collapsed into one line above the grid ("3 requests waiting · 1 with no time
+// given"). A request with a proposed time is also drawn dashed at that time, so it shows up twice when it
+// falls in view — this strip is the whole queue; the grid is where the time is. Requests with no time
+// can only live here.
+function _calStrip(st) {
+  if (!st.pendingLoaded || !st.pending.length) return null;
+  // Anything the range already knows as booked is no longer waiting, whatever a not-yet-refreshed pending
+  // list still says — the strip must not go on counting a request that has become an appointment.
+  var settled = Object.create(null);
+  st.rows.forEach(function(r) { if (r && typeof r.id === 'string' && CAL_BOOKED.indexOf(r.status) > -1) settled[r.id] = true; });
+  var list = st.pending.filter(function(r) { return r && !(typeof r.id === 'string' && settled[r.id]); }).sort(function(a, b) {
+    var ta = a.requested_at ? Date.parse(a.requested_at) : NaN, tb = b.requested_at ? Date.parse(b.requested_at) : NaN;
+    if (!isNaN(ta) && !isNaN(tb)) return ta - tb;
+    if (!isNaN(ta)) return -1;
+    if (!isNaN(tb)) return 1;
+    return Date.parse(a.created_at || 0) - Date.parse(b.created_at || 0);   // untimed: longest waiting first
+  });
+  if (!list.length) return null;            // every request in the list has since been settled
+  var untimed = list.filter(function(r) { return !r.requested_at || isNaN(Date.parse(r.requested_at)); }).length;
+  var n = list.length;
+  var wrap = _node('div', 'cal-strip');
+  var btn = _node('button', 'cal-strip-btn');
+  btn.type = 'button';
+  btn.setAttribute('aria-expanded', st.stripOpen ? 'true' : 'false');
+  btn.appendChild(_node('span', '', '', n + (n === 1 ? ' request waiting' : ' requests waiting')));
+  if (untimed) btn.appendChild(_node('span', 'cal-strip-sub', '', '· ' + untimed + ' with no time given'));
+  btn.appendChild(_node('span', 'cal-strip-chev', '', '›'));
+  wrap.appendChild(btn);
+  var body = _node('div', 'cal-strip-list');
+  body.hidden = !st.stripOpen;
+  list.forEach(function(r) {
+    var line = _node('div', 'cal-req-row');
+    var item = _node('button', 'cal-req');
+    item.type = 'button';
+    item.appendChild(_node('span', 'cal-req-name', '', r.customer_name || 'Customer'));
+    var ms = r.requested_at ? Date.parse(r.requested_at) : NaN;
+    var words = r.requested_text ? String(r.requested_text).replace(/\s+/g, ' ').slice(0, 90) : '';
+    item.appendChild(_node('span', 'cal-req-meta', '', !isNaN(ms)
+      ? 'Asked for ' + _calDateText(st, ms) + ', ' + _calTimeText(st, ms)
+      : 'No time given' + (words ? ' — “' + words + (String(r.requested_text).length > 90 ? '…' : '') + '”' : '')));
+    item.addEventListener('click', function() { _calOpen(st, r, 'request', item); });
+    line.appendChild(item);
+    if (!isNaN(ms)) {
+      var show = _node('button', 'sch-link', '', 'Show on calendar');
+      show.type = 'button';
+      show.addEventListener('click', function() { _calGo(st, 'day', _calParts(st, ms).key); });
+      line.appendChild(show);
+    }
+    body.appendChild(line);
+  });
+  wrap.appendChild(body);
+  btn.addEventListener('click', function() {
+    st.stripOpen = !st.stripOpen;
+    body.hidden = !st.stripOpen;
+    btn.setAttribute('aria-expanded', st.stripOpen ? 'true' : 'false');
+  });
+  return wrap;
+}
+
+// ── DETAILS DIALOG ──
+function _calCloseModal(st, restoreFocus) {
+  if (!st.modal) return;
+  var opener = st.modal.opener;
+  if (st.modal.onKey) document.removeEventListener('keydown', st.modal.onKey, true);
+  st.modal.el.remove();
+  st.modal = null;
+  if (restoreFocus && opener && opener.isConnected) opener.focus();
+}
+
+function _calError() {
+  var e = _node('div', 'sch-error');
+  e.setAttribute('role', 'alert');
+  return e;
+}
+
+function _calShowError(el, msg) {
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function _calOpen(st, row, kind, opener) {
+  _calCloseModal(st, false);
+  var req = kind === 'request';
+  var back = _node('div', 'modal-backdrop open');
+  var card = _node('div', 'modal-card cal-modal');
+  card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-modal', 'true');
+  card.setAttribute('aria-labelledby', 'cal-modal-title');
+  var hdr = _node('div', 'cal-mhdr');
+  var title = _node('div', 'modal-title', '', row.customer_name || 'Customer');
+  title.id = 'cal-modal-title';
+  var close = _calButton('cal-close', '×', 'Close');
+  close.addEventListener('click', function() { _calCloseModal(st, true); });
+  hdr.appendChild(title);
+  hdr.appendChild(close);
+  card.appendChild(hdr);
+  var status = row.status;
+  card.appendChild(_node('span', status === 'confirmed' ? 'cal-pill confirmed' : status === 'pending' ? 'cal-pill pending' : 'cal-pill',
+    '', _calStatusLabel(status) || 'Unknown status'));
+
+  var dl = _node('dl', 'cal-dl');
+  function add(label, value, node) {
+    dl.appendChild(_node('dt', '', '', label));
+    var dd = _node('dd', '', '', node ? null : value);
+    if (node) dd.appendChild(node);
+    dl.appendChild(dd);
+  }
+  var dur = _calDur(st, row, req ? 'request' : 'booked');
+  if (req) {
+    var rms = row.requested_at ? Date.parse(row.requested_at) : NaN;
+    add('Asked for', !isNaN(rms) ? _calDateText(st, rms) + ', ' + _calTimeText(st, rms) : 'No time given');
+    // What confirming would actually book: the service's length, not the 30 the request row carries.
+    var wsvc = row.service_id ? st.services.map[row.service_id] : null;
+    add('Would take', dur + ' min' + (wsvc && wsvc.dur > 0 ? ' — the length of ' + (wsvc.name || 'this service') : ', unless you change it'));
+  } else {
+    var sms = row.scheduled_at ? Date.parse(row.scheduled_at) : NaN;
+    add('When', !isNaN(sms) ? _calDateText(st, sms) + ', ' + _calSpan(st, sms, dur) : 'No time set');
+    add('Duration', dur + ' min');
+  }
+  var svc = row.service_id ? st.services.map[row.service_id] : null;
+  add('Service', !row.service_id ? 'Not specified' : svc && svc.name ? svc.name + (svc.active ? '' : ' (no longer offered)') : 'Unknown service');
+  var who = row.staff_id ? st.staff.map[row.staff_id] : null;
+  add('With', !row.staff_id ? 'Not assigned' : who && who.name ? who.name + (who.active ? '' : ' (no longer on the team)') : 'Unknown staff member');
+  var phone = row.customer_phone ? String(row.customer_phone) : '';
+  var email = row.customer_email ? String(row.customer_email) : '';
+  if (phone) {
+    var a = _node('a', '', '', phone);
+    a.href = 'tel:' + phone.replace(/[^0-9+]/g, '');      // fixed scheme; only digits and + reach the link
+    add('Phone', null, a);
+  }
+  if (email) {
+    var m = _node('a', '', '', email);
+    m.href = 'mailto:' + email.replace(/[^A-Za-z0-9._%+@-]/g, '');   // fixed scheme; address characters only
+    add('Email', null, m);
+  }
+  if (!phone && !email) add('Contact', 'None given');
+  card.appendChild(dl);
+  if (row.requested_text) {
+    card.appendChild(_node('div', 'sch-q', 'margin-top:12px;', 'In their words'));
+    card.appendChild(_node('div', 'cal-words', '', row.requested_text));
+  }
+
+  var err = _calError();
+  err.classList.add('sch-gap');
+  card.appendChild(err);
+  var actions = _node('div', 'appt-actions');
+  var slot = _node('div');
+  function toggle(mode, build) {
+    var existing = slot.firstChild;
+    var same = existing && existing.getAttribute('data-mode') === mode;
+    slot.textContent = '';
+    if (!same) {
+      var f = build();
+      f.setAttribute('data-mode', mode);
+      slot.appendChild(f);
+    }
+  }
+  if (status === 'confirmed') {
+    var move = _calButton('btn btn-primary', 'Reschedule');
+    var cancel = _calButton('btn btn-ghost sch-danger', 'Cancel appointment');
+    move.addEventListener('click', function() { toggle('reschedule', function() { return _calTimeForm(st, row, 'reschedule', move); }); });
+    cancel.addEventListener('click', function() { toggle('cancel', function() { return _calCancelForm(st, row, cancel); }); });
+    actions.appendChild(move);
+    actions.appendChild(cancel);
+  } else if (status === 'pending') {
+    var ok = _calButton('btn btn-primary', 'Confirm');
+    var no = _calButton('btn btn-ghost', 'Decline');
+    ok.addEventListener('click', function() { toggle('confirm', function() { return _calTimeForm(st, row, 'confirm', ok); }); });
+    no.addEventListener('click', function() { toggle('decline', function() { return _calDeclineForm(st, row, no); }); });
+    actions.appendChild(ok);
+    actions.appendChild(no);
+  } else {
+    actions.appendChild(_node('div', 'sch-hint', '', 'Nothing to do here — this appointment is ' + (_calStatusLabel(status) || 'closed').toLowerCase() + '.'));
+  }
+  card.appendChild(actions);
+  card.appendChild(slot);
+  back.appendChild(card);
+
+  back.addEventListener('click', function(e) { if (e.target === back) _calCloseModal(st, true); });
+  // Bound to the DOCUMENT, not the dialog: submitting disables the pressed button and dismissing an inner
+  // form removes it, and in both cases focus lands on the page — a handler on the dialog would then never
+  // see the keys again, leaving Escape dead and Tab walking the page behind the backdrop.
+  var onKey = function(e) {
+    if (e.key === 'Escape') { e.preventDefault(); _calCloseModal(st, true); return; }
+    if (e.key !== 'Tab') return;
+    var f = Array.prototype.filter.call(card.querySelectorAll('button, a[href], input, textarea'), function(x) { return !x.disabled && x.offsetParent !== null; });
+    if (!f.length) return;
+    var here = card.contains(document.activeElement);
+    if (!here) { e.preventDefault(); f[0].focus(); return; }                       // focus had escaped: bring it back
+    if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+    else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+  };
+  document.addEventListener('keydown', onKey, true);
+  st.modal = { el: back, opener: opener, onKey: onKey };
+  st.el.root.appendChild(back);
+  close.focus();
+}
+
+// One action, the appointments module's way: button disabled and "Working…", the backend's own words on
+// failure (in the dialog, where they stay readable), and on success a REFETCH — the calendar, and the
+// Dashboard's cards too, because they show the same appointments. Written fresh rather than reusing
+// _apptPost: that one only POSTs (cancel is a DELETE), only reports failure in a 2.4-second toast, and
+// only refreshes the Dashboard.
+async function _calAct(st, btn, errEl, method, path, body, okMsg, rowId) {
+  var orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Working…';
+  errEl.textContent = '';
+  errEl.classList.remove('show');
+  // A disabled button can't hold focus, so move it to the dialog's close button for the duration —
+  // otherwise focus falls to the page and Escape and Tab stop reaching the dialog.
+  var closeBtn = st.modal && st.modal.el ? st.modal.el.querySelector('.cal-close') : null;
+  if (closeBtn && document.activeElement === btn) closeBtn.focus();
+  try {
+    await _calCall(method, path, body, 'Could not update this appointment. Please try again.');
+  } catch (e) {
+    if (_calStale(st)) return;                                     // RULE 2
+    var msg = e.message || 'Could not update this appointment. Please try again.';
+    if (errEl.isConnected) _calShowError(errEl, msg); else showToast(msg, 'error');
+    btn.disabled = false;
+    btn.textContent = orig;
+    if (btn.isConnected) btn.focus();
+    return;
+  }
+  if (_calStale(st)) return;                                       // RULE 2
+  // Record what the server just did, before refetching. Every one of these four actions moves the row out
+  // of 'pending' (or out of the calendar), so leaving it in the local lists would draw the appointment
+  // twice — solid and as a ghost request — for as long as the refetch takes, and for good if it fails.
+  if (rowId) {
+    st.pending = st.pending.filter(function(r) { return !r || r.id !== rowId; });
+    if (method === 'DELETE') st.rows = st.rows.filter(function(r) { return !r || r.id !== rowId; });
+  }
+  _calCloseModal(st, false);
+  showToast(okMsg, 'success');
+  _calRenderBody(st);
+  _calRefresh(st, true);
+  if (APPT_CLIENT_ID && APPT_CLIENT_ID === st.clientId) refreshAppointments();
+}
+
+// CONFIRM a request, or RESCHEDULE a confirmed appointment: pick a date and a time on the business's clock.
+function _calTimeForm(st, row, mode, backTo) {
+  var confirming = mode === 'confirm';
+  var form = _node('div', 'sch-form');
+  var err = _calError();
+  form.appendChild(err);
+  form.appendChild(_node('div', 'sch-note', '', (confirming ? 'Pick the time you can take them.' : 'Pick the new time.')
+    + ' Times are your business’s local time (' + st.tz + '). The customer isn’t told automatically — let them know yourself.'));
+  var src = confirming ? row.requested_at : row.scheduled_at;
+  var srcMs = src ? Date.parse(src) : NaN;
+  var pre = !isNaN(srcMs) ? _calInputParts(st, srcMs) : null;
+  var dateI = _apptInput('date', pre ? pre.date : '');
+  var timeI = _apptInput('time', pre ? pre.time : '');
+  var fields = _node('div', 'sch-row');
+  var gd = _apptField('Date', dateI), gt = _apptField('Time', timeI);
+  dateI.id = 'cal-f-date';
+  timeI.id = 'cal-f-time';
+  gd.firstChild.htmlFor = dateI.id;
+  gt.firstChild.htmlFor = timeI.id;
+  fields.appendChild(gd);
+  fields.appendChild(gt);
+  form.appendChild(fields);
+  var acts = _node('div', 'appt-actions');
+  var go = _calButton('btn btn-primary', confirming ? 'Confirm appointment' : 'Move appointment');
+  var back = _calButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    var dv = dateI.value, tv = String(timeI.value || '').slice(0, 5);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dv) || !/^\d{2}:\d{2}$/.test(tv)) { _calShowError(err, 'Pick a date and a time.'); return; }
+    // NAIVE LOCAL DATETIME — DELIBERATELY NO OFFSET AND NO "Z", exactly as the Dashboard's confirm sends
+    // it. The backend reads it on the business's clock (clients.timezone). An offset would be the
+    // BROWSER's, and toISOString() would re-anchor it to UTC — either way the wrong hour gets booked.
+    var naive = dv + 'T' + tv + ':00';
+    if (!confirming && pre && naive === pre.date + 'T' + pre.time + ':00') { _calShowError(err, 'That’s the time it’s already booked for.'); return; }
+    _calAct(st, go, err, 'POST', '/api/appointments/' + encodeURIComponent(row.id) + '/' + (confirming ? 'confirm' : 'reschedule'),
+      { scheduled_at: naive }, confirming ? 'Appointment confirmed.' : 'Appointment moved.', row.id);
+  });
+  back.addEventListener('click', function() { form.remove(); if (backTo && backTo.isConnected) backTo.focus(); });
+  acts.appendChild(go);
+  acts.appendChild(back);
+  form.appendChild(acts);
+  setTimeout(function() { dateI.focus(); }, 0);
+  return form;
+}
+
+function _calDeclineForm(st, row, backTo) {
+  var form = _node('div', 'sch-form');
+  var err = _calError();
+  form.appendChild(err);
+  form.appendChild(_node('div', 'sch-note', '', 'This ends the request and they won’t be booked in. It can’t be undone, and the customer isn’t told automatically.'));
+  var reason = _apptInput('text', '');
+  reason.placeholder = 'e.g. Fully booked that week';
+  reason.maxLength = 300;
+  var g = _apptField('Reason (optional)', reason);
+  reason.id = 'cal-f-reason';
+  g.firstChild.htmlFor = reason.id;
+  form.appendChild(g);
+  var acts = _node('div', 'appt-actions');
+  var go = _calButton('btn btn-ghost sch-danger', 'Decline request');
+  var keep = _calButton('btn btn-ghost', 'Keep request');
+  go.addEventListener('click', function() {
+    var body = {};
+    var r = reason.value.trim();
+    if (r) body.reason = r;
+    _calAct(st, go, err, 'POST', '/api/appointments/' + encodeURIComponent(row.id) + '/decline', body, 'Request declined.', row.id);
+  });
+  keep.addEventListener('click', function() { form.remove(); if (backTo && backTo.isConnected) backTo.focus(); });
+  acts.appendChild(go);
+  acts.appendChild(keep);
+  form.appendChild(acts);
+  setTimeout(function() { reason.focus(); }, 0);
+  return form;
+}
+
+function _calCancelForm(st, row, backTo) {
+  var form = _node('div', 'sch-form');
+  var err = _calError();
+  form.appendChild(err);
+  form.appendChild(_node('div', 'sch-note', '', 'Cancel this appointment? It stays in your records as cancelled and the time frees up. The customer isn’t told automatically — let them know yourself.'));
+  var acts = _node('div', 'appt-actions');
+  var go = _calButton('btn btn-ghost sch-danger', 'Cancel appointment');
+  var keep = _calButton('btn btn-ghost', 'Keep it');
+  go.addEventListener('click', function() {
+    _calAct(st, go, err, 'DELETE', '/api/appointments/' + encodeURIComponent(row.id), undefined, 'Appointment cancelled.', row.id);
+  });
+  keep.addEventListener('click', function() { form.remove(); if (backTo && backTo.isConnected) backTo.focus(); });
+  acts.appendChild(go);
+  acts.appendChild(keep);
+  form.appendChild(acts);
+  setTimeout(function() { keep.focus(); }, 0);   // the safe choice has focus
+  return form;
+}
+
+registerPortalTabLoader('calendar', _calLoad);
 
 // ── Competitor Intel ─────────────────────────────────────────
 var COMP_CLIENT_ID = null;
