@@ -113,6 +113,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .appt-form input{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;}
 .appt-form input:focus{border-color:var(--accent);}
 .appt-note{font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:10px;}
+/* Staff picker (booking mode) — one look in the Dashboard's and the Calendar's confirm / reschedule forms. */
+.appt-form select,.sch-form select{width:100%;max-width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;font-family:inherit;outline:none;color-scheme:dark;transition:border-color .15s;}
+.appt-form select:focus,.sch-form select:focus{border-color:var(--accent);}
+.staff-pick{margin-bottom:10px;}
+.staff-pick-k{display:block;font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500;}
+.staff-pick-fixed{font-size:13px;color:var(--text);overflow-wrap:anywhere;}
+.staff-pick-msg{font-size:12px;color:var(--text2);line-height:1.5;overflow-wrap:anywhere;}
+.staff-pick-msg a{color:var(--accent2);}
 
 /* ── CHATBOT STATUS ── */
 .bot-status{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--surface2);border-radius:var(--radius-sm);}
@@ -158,7 +166,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sch-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
 .sch-row .form-group{flex:1;min-width:120px;margin-bottom:0;}
 .sch-hint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.45;}
-.sch-note{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:10px;}
+.sch-note{font-size:12px;color:var(--text2);line-height:1.55;margin-bottom:10px;overflow-wrap:anywhere;}
 .sch-note strong{color:var(--text);font-weight:600;}
 .sch-error{display:none;font-size:12px;line-height:1.5;color:var(--pink);background:var(--pink-dim);border:1px solid rgba(255,107,157,0.3);border-radius:var(--radius-sm);padding:9px 12px;margin-bottom:10px;}
 .sch-error.show{display:block;}
@@ -1120,6 +1128,7 @@ async function loadDashboardData(clientId, clientInfo) {
     try {
       var cRec = await clientRes.value.json();
       if (_apptTzValid(cRec && cRec.timezone)) APPT_TZ = cRec.timezone;
+      _portalModeFromRecord(clientId, cRec);   // the same record says whether direct booking is on
     } catch (e) { /* leave APPT_TZ null and fall back to the browser zone */ }
   }
 
@@ -1364,7 +1373,10 @@ function _apptField(labelText, input) {
 // Every action refetches rather than mutating the list in place: the server owns the status
 // transition (a confirm moves a row from pending to upcoming and changes the count), so re-reading
 // it is the only way the UI can't drift from what was actually saved.
-async function _apptPost(id, action, payload, btn, okMsg) {
+// Resolves to null on success, or to the error — which carries the response's status and parsed body
+// (e.status, e.data), because a booking-mode refusal's detail can be an object extractErrorMessage
+// can't read. onFail, when given, replaces the error toast (the booking form shows errors inline).
+async function _apptPost(id, action, payload, btn, okMsg, onFail) {
   var orig = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Working…';
@@ -1376,18 +1388,31 @@ async function _apptPost(id, action, payload, btn, okMsg) {
     });
     if (!res.ok) {
       var err = await res.json().catch(function() { return {}; });
-      throw new Error(extractErrorMessage(err, 'Could not update this appointment. Please try again.'));
+      var failed = new Error(extractErrorMessage(err, 'Could not update this appointment. Please try again.'));
+      failed.status = res.status;
+      failed.data = err;
+      throw failed;
     }
     showToast(okMsg, 'success');
     await refreshAppointments();
   } catch (e) {
+    if (typeof onFail === 'function') {
+      btn.disabled = false;
+      btn.textContent = orig;
+      onFail(e);
+      return e;
+    }
     showToast(e.message || 'Could not update this appointment. Please try again.', 'error');
     btn.disabled = false;
     btn.textContent = orig;
+    return e;
   }
+  return null;
 }
 
-async function refreshAppointments() {
+// failMsg: what to say if the re-read fails. The default assumes a change was just saved, which is
+// wrong when the refresh follows a refusal ("someone else already confirmed this").
+async function refreshAppointments(failMsg) {
   if (!APPT_CLIENT_ID) return;
   try {
     var res = await authedFetch(API + '/api/appointments/' + APPT_CLIENT_ID);
@@ -1398,13 +1423,419 @@ async function refreshAppointments() {
     if (statAppts) statAppts.textContent = data.count !== undefined ? data.count : appts.length;
     _renderAppointments(appts);
   } catch (e) {
-    showToast('Saved, but the list could not refresh. Reload the page to see the change.', 'error');
+    showToast(failMsg || 'Saved, but the list could not refresh. Reload the page to see the change.', 'error');
   }
+}
+
+// ── Direct booking: shared by every confirm and reschedule form ──────────
+// A booking-mode salon says WHO performs an appointment when it confirms one, and the backend refuses a
+// staff member who doesn't perform the appointment's service. The Dashboard's confirm form and the
+// Calendar's confirm and reschedule forms all use what is below — one mode store, one staff picker, one
+// payload builder, one reading of the server's refusals — so they can't drift apart.
+//
+// THE FRONTEND IS NOT THE AUTHORITY. The picker's filtering (active staff only; only those mapped to the
+// row's service) and its "choose someone first" guard only save a round trip that would fail. The server
+// checks all of it again, and whatever it answers is shown.
+//
+// LOG MODE IS UNTOUCHED. Each form asks _portalModeOf() first and, unless the answer is 'booking', runs its
+// original code and sends its original payload. Unknown (the client record didn't load) counts as log:
+// that form still works for a booking-mode salon whenever the row already names someone, and when it
+// doesn't, the server's refusal makes us re-read the mode (_apptModeDrift) and swap in the booking form.
+
+var PORTAL_MODE = { clientId: null, mode: null };   // read only through _portalModeOf
+var STAFF_PICK = null;                              // the roster cache — see _staffPickData
+var STAFF_PICK_TTL = 30 * 60 * 1000;                // long on purpose: see _staffPickData
+var _staffPickSeq = 0;
+
+// The backend's 400s carry no reason code, so these match its wording (routes/appointments.py). If that
+// wording ever changes, the only loss is the extra handling: the server's own text is still what's shown.
+var APPT_400_BOOKING_ONLY = /booking mode|does not perform/i;   // only booking mode ever says these
+var APPT_400_ROSTER = /does not perform|staff_id does not exist/i;   // the roster moved on: reload the picker
+var APPT_400_STALE_ROW = /Reschedule does not change who|has no staff member|staff_id is required/i;   // the row did
+
+// Mirrors the backend: clients.appointment_mode is 'booking' or it is log (routes/appointments.py reads
+// `row.get("appointment_mode") or "log"`). Stored only for the signed-in client, so a late answer from an
+// earlier sign-in can't overwrite this one's.
+function _portalModeSet(clientId, mode) {
+  if (!clientId || clientId !== PORTAL_CLIENT_ID) return;
+  PORTAL_MODE = { clientId: clientId, mode: mode === 'booking' ? 'booking' : 'log' };
+}
+
+// From a GET /api/clients/{id} record. A record without the field says nothing, so the mode stays unknown.
+function _portalModeFromRecord(clientId, rec) {
+  if (rec && typeof rec === 'object' && Object.prototype.hasOwnProperty.call(rec, 'appointment_mode')) {
+    _portalModeSet(clientId, rec.appointment_mode);
+  }
+}
+
+// 'booking', 'log', or null when it isn't known for this client.
+function _portalModeOf(clientId) {
+  return (clientId && PORTAL_MODE.clientId === clientId) ? PORTAL_MODE.mode : null;
+}
+
+// One fresh read of the mode from the client record — GET /api/clients/{id}, which is outside the scheduling
+// rate limit. Resolves to 'booking' or 'log', or null when it couldn't be read.
+async function _portalModeReread(clientId) {
+  try {
+    var res = await authedFetch(API + '/api/clients/' + encodeURIComponent(clientId));
+    if (!res.ok) return null;
+    _portalModeFromRecord(clientId, await res.json());
+  } catch (err) {
+    return null;
+  }
+  return _portalModeOf(clientId);
+}
+
+// The mode can change while this page is open — switched on from the owner's phone, say. A refusal that
+// ONLY booking mode gives (a 409 whose detail is an object, or a 400 in booking mode's own words) tells a
+// log-mode form its picture is out of date, so the mode is re-read once. Resolves true only if it is NOW
+// booking. Log mode's own refusals never match, so a log-mode salon's requests are exactly what they were.
+// (The opposite drift — booking switched OFF elsewhere — is caught by the picker's onBlocked; see there.)
+async function _apptModeDrift(clientId, e) {
+  if (!e || !clientId) return false;
+  var d = e.data && e.data.detail;
+  var bookingOnly = (e.status === 409 && !!d && typeof d === 'object' && !Array.isArray(d))
+    || (e.status === 400 && typeof d === 'string' && APPT_400_BOOKING_ONLY.test(d));
+  if (!bookingOnly) return false;
+  if (_portalModeOf(clientId) === 'booking') return true;   // already learned since the form opened (Scheduling)
+  return (await _portalModeReread(clientId)) === 'booking';
+}
+
+// The active roster and — only when a row has a service — which services each person performs. No endpoint
+// answers "who performs service X", so the mappings cost one GET per active staff member, all from the same
+// 120-an-hour per-IP read allowance the Scheduling and Calendar tabs draw on: a salon of 12 pays 13 reads
+// per refill. Hence ONE cache shared by every picker, refilled only when it has reason to be wrong:
+//   * a roster or who-does-what write on the Scheduling tab (_staffPickTouched, in _schRequest);
+//   * a refusal saying the roster moved on (staff_inactive, "does not perform", a deleted staff member);
+//   * the picker's own Try again / Check again;
+//   * otherwise, after 30 minutes — the backstop for changes made on another device. Until then such a change
+//     costs at most one refused confirm (the server checks every choice), which itself refills the cache.
+// Promises are cached rather than results, so two pickers opened together share one set of requests, and a
+// failed read is dropped so the next attempt starts fresh.
+function _staffPickForget() { STAFF_PICK = null; }
+
+// Writes that can change who is on the team or who does which service. Hours, days off, services and the
+// mode can't, so they leave the cache alone.
+function _staffPickTouched(method, path) {
+  if (method === 'GET') return false;
+  var p = String(path || '').split('?')[0];
+  return /^[^/]+\/staff$/.test(p) || /^staff\/[^/]+$/.test(p) || /^staff\/[^/]+\/services$/.test(p);
+}
+
+function _staffPickData(clientId, needLinks) {
+  var c = STAFF_PICK;
+  if (!c || c.clientId !== clientId || Date.now() - c.at > STAFF_PICK_TTL) {
+    c = STAFF_PICK = { clientId: clientId, at: Date.now(), staff: null, links: null };
+    c.staff = _schRequest('GET', encodeURIComponent(clientId) + '/staff', undefined, 'Could not load your team.')
+      .then(function(data) {
+        var out = [];
+        (Array.isArray(data.staff) ? data.staff : []).forEach(function(s) {
+          // Active only, whatever the server sends: an inactive person can't take appointments.
+          if (!s || typeof s.id !== 'string' || !s.id || s.is_active === false) return;
+          out.push({ id: s.id, name: (typeof s.name === 'string' && s.name.trim()) ? s.name : 'Unnamed team member' });
+        });
+        return out;
+      });
+    c.staff.catch(function() { if (STAFF_PICK === c) STAFF_PICK = null; });
+  }
+  if (!needLinks) return c.staff.then(function(staff) { return { staff: staff, links: null }; });
+  if (!c.links) {
+    var links = c.links = c.staff.then(function(staff) {
+      return Promise.all(staff.map(function(s) {
+        return _schRequest('GET', 'staff/' + encodeURIComponent(s.id) + '/services', undefined, 'Could not load who does which service.');
+      })).then(function(all) {
+        var map = Object.create(null);
+        all.forEach(function(r, i) { map[staff[i].id] = Array.isArray(r.service_ids) ? r.service_ids : []; });
+        return map;
+      });
+    });
+    links.catch(function() { if (c.links === links) c.links = null; });
+  }
+  return Promise.all([c.staff, c.links]).then(function(r) { return { staff: r[0], links: r[1] }; });
+}
+
+// THE STAFF PICKER — one builder for every confirm and reschedule form, booking mode only.
+//   opts.clientId     whose roster
+//   opts.row          the appointment; its staff_id and service_id decide everything below
+//   opts.purpose      'confirm' | 'reschedule'
+//   opts.serviceName  the service's name, if the caller has it (the Calendar does; the Dashboard doesn't)
+//   opts.serviceActive  whether that service is still offered, if the caller knows (the Calendar does)
+//   opts.staffName    fn(id) → display name, if the caller has names (for the read-only reschedule)
+//   opts.onChange     called whenever ready() may have changed — including once DURING construction,
+//                     before the caller has the return value, so callers must tolerate that
+//   opts.onBlocked    called once, the first time the picker can offer nobody (nobody eligible, or the roster
+//                     failed and the row names nobody). The form then re-reads the mode: if booking was
+//                     switched off elsewhere, nobody needs choosing and the log form is the right one.
+// Returns { el, ready(), value(), reload() }. ready() is false while nothing valid is chosen, and the caller
+// keeps its submit disabled; value() is the id to send as staff_id, or null to send none.
+//   * Reschedule of a row that names someone: their name, read-only, and nothing is sent — the backend
+//     refuses a different person on a reschedule.
+//   * Otherwise a <select> of ACTIVE staff, only those mapped to the row's service if it has one. The row's
+//     own person is pre-selected when eligible; if not, a "Choose who will do this" placeholder that can't
+//     be submitted.
+//   * Nobody eligible: no empty dropdown — a sentence saying what to do: map the service in the Scheduling
+//     tab, or, for a RETIRED service (which the Scheduling tab can't map), decline or cancel instead.
+//   * The roster didn't load: the server's words and Try again. A confirm whose row already names someone
+//     may still go ahead, sending no staff_id, so the server uses and checks that person; nothing else may.
+// XSS: staff and service names are typed by the owner. Each reaches the page through textContent (via
+// _node or a text node), each option through createElement, and the one href is a literal.
+function _staffPicker(opts) {
+  var row = opts.row || {};
+  var rowStaff = (typeof row.staff_id === 'string' && row.staff_id) ? row.staff_id : null;
+  var serviceId = (typeof row.service_id === 'string' && row.service_id) ? row.service_id : null;
+  var wrap = _node('div', 'form-group staff-pick');
+  var ps = { ready: false, value: null, ticket: 0, fixed: false, blockedAsked: false };
+  var api = {
+    el: wrap,
+    ready: function() { return ps.ready; },
+    value: function() { return ps.fixed ? null : ps.value; },
+    reload: function() { if (ps.fixed) return; _staffPickForget(); load(ps.value); },
+  };
+  function changed() { if (typeof opts.onChange === 'function') opts.onChange(); }
+  function heading(text, forId) {
+    var h = _node(forId ? 'label' : 'div', 'staff-pick-k', '', text);
+    if (forId) h.htmlFor = forId;
+    return h;
+  }
+  function retry(label) {
+    var b = _node('button', 'sch-link', '', label);
+    b.type = 'button';
+    b.addEventListener('click', function() {
+      ps.blockedAsked = false;               // an explicit retry may also find the mode has changed
+      api.reload();
+    });
+    return b;
+  }
+  function blocked() {
+    if (ps.blockedAsked || typeof opts.onBlocked !== 'function') return;
+    ps.blockedAsked = true;
+    opts.onBlocked();
+  }
+
+  if (opts.purpose === 'reschedule' && rowStaff) {
+    var shown = typeof opts.staffName === 'function' ? opts.staffName(rowStaff) : null;
+    wrap.appendChild(heading('With'));
+    wrap.appendChild(_node('div', 'staff-pick-fixed', '', shown || 'The team member it’s already booked with'));
+    // Not "cancel and book again": nothing in the portal can book, and cancelling emails the customer.
+    wrap.appendChild(_node('div', 'sch-hint', '', 'Moving it keeps the same person — who does it can’t be changed here.'));
+    ps.fixed = true;
+    ps.ready = true;
+    return api;
+  }
+
+  // Nobody can take it. Say why in terms the owner can act on, then ask the form to check the mode once.
+  async function renderNobody(got, ticket) {
+    ps.value = null;
+    ps.ready = false;
+    var svc = null;
+    if (serviceId) {
+      svc = { name: opts.serviceName || null, active: typeof opts.serviceActive === 'boolean' ? opts.serviceActive : null };
+      if (svc.name === null || svc.active === null) {
+        // The Dashboard knows neither. One read, and only on this rare path.
+        try {
+          var data = await _schRequest('GET', encodeURIComponent(opts.clientId) + '/services?include_inactive=true', undefined, '');
+          (Array.isArray(data.services) ? data.services : []).forEach(function(s) {
+            if (!s || s.id !== serviceId) return;
+            if (svc.name === null && typeof s.name === 'string' && s.name.trim()) svc.name = s.name;
+            if (svc.active === null) svc.active = s.is_active !== false;
+          });
+        } catch (e) { /* the general wording below still holds */ }
+        if (ticket !== ps.ticket || opts.clientId !== PORTAL_CLIENT_ID) return;
+      }
+    }
+    wrap.textContent = '';
+    wrap.appendChild(heading('Who will do it'));
+    var box = _node('div', 'staff-pick-msg');
+    var what = (svc && svc.name) || 'this service';
+    if (svc && svc.active === false) {
+      // A retired service can't be given to anyone: the Scheduling tab lists active services only. The backend
+      // still lets a retired service's appointments be settled, but only with someone already mapped to it.
+      box.textContent = what + ' is no longer offered and nobody on your team is set up for it, so this can’t be '
+        + (opts.purpose === 'reschedule' ? 'moved as it is. Cancel it' : 'confirmed as it is. Decline it')
+        + ', or contact the customer about another service.';
+    } else {
+      box.appendChild(document.createTextNode(got.staff.length
+        ? 'Nobody on your team is set up to do ' + what + ' yet. Add it to the services of whoever will do it in the '
+        : 'There’s nobody on your team yet. Add the people who take appointments in the '));
+      var link = _node('a', '', '', 'Scheduling tab');
+      link.href = '#scheduling';             // the tab shell switches tabs on hashchange
+      box.appendChild(link);
+      box.appendChild(document.createTextNode(', then try again.'));
+    }
+    wrap.appendChild(box);
+    wrap.appendChild(retry('Check again'));
+    changed();
+    blocked();
+  }
+
+  function render(got, keep, ticket) {
+    var eligible = got.staff.filter(function(s) {
+      return !serviceId || (got.links[s.id] || []).indexOf(serviceId) > -1;
+    });
+    if (!eligible.length) { renderNobody(got, ticket); return; }
+    wrap.textContent = '';
+    // keep (the choice before a reload) wins over the row's own person; if it is no longer eligible, the
+    // placeholder shows rather than quietly switching back to someone the owner had changed away from.
+    var want = keep || rowStaff, pre = null;
+    eligible.forEach(function(s) { if (s.id === want) pre = s.id; });
+    var id = 'staff-pick-' + (++_staffPickSeq);
+    wrap.appendChild(heading('Who will do it', id));
+    var sel = document.createElement('select');
+    sel.id = id;
+    if (!pre) {
+      var ph = _node('option', '', '', 'Choose who will do this');
+      ph.value = '';
+      ph.disabled = true;                    // shown until a choice is made, never choosable again
+      sel.appendChild(ph);
+    }
+    eligible.forEach(function(s) {
+      var o = _node('option', '', '', s.name);
+      o.value = s.id;
+      sel.appendChild(o);
+    });
+    if (pre) sel.value = pre; else sel.selectedIndex = 0;
+    sel.addEventListener('change', function() {
+      ps.value = sel.value || null;
+      ps.ready = !!ps.value;
+      changed();
+    });
+    wrap.appendChild(sel);
+    if (rowStaff && !pre && !keep) {         // say why the person the request names isn't chosen already
+      var named = null;
+      got.staff.forEach(function(s) { if (s.id === rowStaff) named = s.name; });
+      wrap.appendChild(_node('div', 'sch-hint', '', named
+        ? 'This request names ' + named + ', who isn’t set up to do ' + (opts.serviceName || 'this service') + '. Choose who will do it.'
+        : 'This request names someone who’s no longer on your active team. Choose who will do it.'));
+    }
+    ps.value = pre;
+    ps.ready = !!pre;
+    changed();
+  }
+
+  function renderFailed(e) {
+    wrap.textContent = '';
+    wrap.appendChild(heading('Who will do it'));
+    var msg = (e && e.message) || 'Could not load your team.';
+    ps.value = null;
+    ps.ready = !!rowStaff;
+    wrap.appendChild(_node('div', 'staff-pick-msg', '', rowStaff
+      ? msg + ' You can still confirm: it will go to the person the request names, if they can take it.'
+      : msg));
+    wrap.appendChild(retry('Try again'));
+    changed();
+    if (!rowStaff) blocked();
+  }
+
+  async function load(keep) {
+    var ticket = ++ps.ticket;
+    ps.value = null;
+    ps.ready = false;
+    wrap.textContent = '';
+    wrap.appendChild(heading('Who will do it'));
+    wrap.appendChild(_node('div', 'staff-pick-msg', '', 'Loading your team…'));
+    changed();
+    var got;
+    try {
+      got = await _staffPickData(opts.clientId, !!serviceId);
+    } catch (e) {
+      if (ticket !== ps.ticket || opts.clientId !== PORTAL_CLIENT_ID) return;
+      if (e && e.message === 'Unauthorized') return;   // authedFetch is already reloading the page
+      renderFailed(e);
+      return;
+    }
+    if (ticket !== ps.ticket || opts.clientId !== PORTAL_CLIENT_ID) return;
+    render(got, keep, ticket);
+  }
+
+  load(null);
+  return api;
+}
+
+// A booking-mode body: the same naive scheduled_at the log forms send, plus staff_id whenever the picker
+// holds one. Never on a reschedule of a row that names someone — that picker is read-only and has no value.
+function _apptBookingBody(naive, picker) {
+  var body = { scheduled_at: naive };
+  var sid = picker ? picker.value() : null;
+  if (sid) body.staff_id = sid;
+  return body;
+}
+
+// A span on the business's clock — "Tue, Sep 22, 2:15 PM–3:00 PM EDT", the Intl options the Dashboard and
+// the Calendar use — naming both days if it crosses midnight. tz null means the browser's zone, which the
+// abbreviation then shows (the Dashboard's fallback when the client record has no usable zone).
+function _apptSpanText(startIso, endIso, tz) {
+  var s = Date.parse(startIso), e = Date.parse(endIso);
+  if (!startIso || isNaN(s)) return '';
+  function fmt(ms, o) { if (tz) o.timeZone = tz; return new Date(ms).toLocaleString('en-US', o); }
+  try {
+    var day = fmt(s, { weekday: 'short', month: 'short', day: 'numeric' });
+    if (!endIso || isNaN(e) || e <= s) return day + ', ' + fmt(s, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+    var endDay = fmt(e, { weekday: 'short', month: 'short', day: 'numeric' });
+    return day + ', ' + fmt(s, { hour: 'numeric', minute: '2-digit' }) + '–'
+      + (endDay === day ? '' : endDay + ', ') + fmt(e, { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+  } catch (x) {
+    return '';
+  }
+}
+
+// What a refused booking-mode confirm or reschedule means, from the server's own answer:
+//   'slot'    409 slot_taken — its message plus the clashing booking on the business's clock
+//   'roster'  409 staff_inactive, or a 400 saying the chosen person doesn't do the service or no longer
+//             exists — the roster has moved on; reload the picker
+//   'changed' a 409 whose detail is plain text — wrong_status ("…it was changed by someone else") or the
+//             early "Only a pending appointment can be confirmed; this one is 'X'" — a 404, or a 400 that
+//             only a changed row explains (it gained or lost its staff member elsewhere): this screen's
+//             picture of the row is out of date, so the list is refreshed
+//   'other'   anything else — a bad date, the 503 while the slot engine is unavailable — its words, as they are
+// slot_taken, staff_inactive and service_not_found carry an OBJECT detail, which extractErrorMessage can't
+// read (it falls back to generic text), so their `message` is taken directly. 400s are told apart by their
+// wording (APPT_400_*), since they carry no reason code.
+// THE CLASH SPAN is the other booking's time including ITS buffers, and the backend compares it with THIS
+// appointment's length plus its own buffers — so the two can clash without the times shown overlapping.
+// And an appointment nobody is assigned to blocks every staff member, which is why the advice is only
+// "another time", never "someone else": the 409 doesn't say whose booking is in the way.
+function _apptBookingFailure(e, tz) {
+  if (!e || !e.status) return { kind: 'other', text: 'Couldn’t reach the server. Check your connection and try again.' };
+  var text = e.message || 'Could not update this appointment. Please try again.';
+  var d = e.data && e.data.detail;
+  if (d && typeof d === 'object' && !Array.isArray(d)) {
+    var said = (typeof d.message === 'string' && d.message) ? d.message : text;
+    if (d.reason === 'slot_taken') {
+      var span = _apptSpanText(d.conflict_start, d.conflict_end, tz);
+      return { kind: 'slot', text: _apptSentence(said)
+        + (span ? ' It runs into a booking on ' + span + ' — buffer time on either appointment counts.' : '')
+        + ' Pick another time.' };
+    }
+    if (d.reason === 'staff_inactive') return { kind: 'roster', text: said };
+    return { kind: 'other', text: said };
+  }
+  if (e.status === 409 || e.status === 404) return { kind: 'changed', text: text };
+  if (e.status === 400 && APPT_400_ROSTER.test(text)) return { kind: 'roster', text: text };
+  if (e.status === 400 && APPT_400_STALE_ROW.test(text)) return { kind: 'changed', text: text };
+  return { kind: 'other', text: text };
+}
+
+// The server's words end without a full stop as often as with one; this lets a sentence follow them.
+function _apptSentence(t) {
+  t = String(t || '').trim();
+  return /[.!?…]$/.test(t) ? t : t + '.';
+}
+
+// Whether the customer hears about this. The backend's send_appointment_notification emails them on
+// confirm, decline, reschedule and cancel, in both modes, and sends nothing when the appointment has no
+// customer_email (it strips the value first, as this does) — so the sentence depends on the row alone.
+function _apptNotifyText(row) {
+  var email = String((row && row.customer_email) || '').trim();
+  return email
+    ? 'We’ll email the customer at ' + email + ' to let them know.'
+    : 'They didn’t leave an email address, so they won’t be told automatically — let them know yourself.';
 }
 
 // PART B — confirm. Inline under the request (not a modal) so the customer's own words and their
 // suggested time stay on screen while the owner picks the slot.
+// Booking mode has its own builder (below), so this one — and the payload it sends — stays as it was.
 function _apptConfirmForm(a) {
+  if (_portalModeOf(APPT_CLIENT_ID) === 'booking') return _apptConfirmFormBooking(a);
   var form = _node('div', 'appt-form');
   form.appendChild(_node('div', 'appt-note', '', 'Pick the slot you can take them. Times are in your business timezone.'));
   var pre = _apptInputParts(a.requested_at);
@@ -1425,7 +1856,90 @@ function _apptConfirmForm(a) {
     // through clients.timezone). new Date(...).toISOString() would re-anchor it to UTC, and any
     // appended offset would be the BROWSER's — either way an owner not sitting in the salon's zone
     // would silently book the wrong hour.
-    _apptPost(a.id, 'confirm', { scheduled_at: dateVal + 'T' + timeVal + ':00' }, go, 'Appointment confirmed.');
+    _apptPost(a.id, 'confirm', { scheduled_at: dateVal + 'T' + timeVal + ':00' }, go, 'Appointment confirmed.')
+      .then(function(e) { _apptConfirmDrift(form, a, e, dateInput, timeInput); });
+  });
+  var cancel = _node('button', 'btn btn-ghost', '', 'Cancel');
+  cancel.addEventListener('click', _apptCloseForms);
+  actions.appendChild(go);
+  actions.appendChild(cancel);
+  form.appendChild(actions);
+  setTimeout(function() { dateInput.focus(); }, 0);
+  return form;
+}
+
+// The log form was refused the way only booking mode refuses, and the mode turns out to be booking now:
+// swap in the booking form, keeping the date and time and showing the refusal there (the toast has gone).
+async function _apptConfirmDrift(form, a, e, dateInput, timeInput) {
+  if (!(await _apptModeDrift(APPT_CLIENT_ID, e)) || !form.isConnected) return;
+  var next = _apptConfirmFormBooking(a, { date: dateInput.value, time: timeInput.value, error: _apptBookingFailure(e, APPT_TZ).text });
+  next.setAttribute('data-mode', form.getAttribute('data-mode') || 'confirm');
+  form.replaceWith(next);
+}
+
+// PART B, booking mode — the same form plus the staff picker. Errors show inline rather than in a toast: a
+// slot clash has to stay readable while another time is picked, and a 2.4-second toast doesn't allow that.
+// carry: { date, time, error } when this replaces a log form whose submit showed the mode had changed.
+function _apptConfirmFormBooking(a, carry) {
+  var form = _node('div', 'appt-form');
+  form.appendChild(_node('div', 'appt-note', '', 'Pick the slot you can take them and who will do it. Times are in your business timezone.'));
+  var err = _calError();
+  form.appendChild(err);
+  if (carry && carry.error) _calShowError(err, carry.error);
+  var pre = _apptInputParts(a.requested_at);
+  var dateInput = _apptInput('date', carry ? carry.date : (pre ? pre.date : ''));
+  var timeInput = _apptInput('time', carry ? carry.time : (pre ? pre.time : ''));
+  var fields = _node('div', 'appt-form-row');
+  fields.appendChild(_apptField('Date', dateInput));
+  fields.appendChild(_apptField('Time', timeInput));
+  form.appendChild(fields);
+
+  var go = _node('button', 'btn btn-primary', '', 'Confirm appointment');
+  var busy = false, picker = null;
+  function sync() { if (picker && !busy) go.disabled = !picker.ready(); }
+  picker = _staffPicker({
+    clientId: APPT_CLIENT_ID, row: a, purpose: 'confirm', onChange: sync,
+    // Nobody can be offered. If booking was switched off elsewhere, nobody needs choosing: swap in the log
+    // form, keeping the date and time typed so far.
+    onBlocked: function() {
+      _portalModeReread(APPT_CLIENT_ID).then(function(m) {
+        if (m !== 'log' || busy || !form.isConnected) return;
+        var next = _apptConfirmForm(a);
+        var ni = next.querySelectorAll('input');
+        ni[0].value = dateInput.value;
+        ni[1].value = timeInput.value;
+        next.setAttribute('data-mode', form.getAttribute('data-mode') || 'confirm');
+        form.replaceWith(next);
+      });
+    },
+  });
+  form.appendChild(picker.el);
+  sync();
+
+  var actions = _node('div', 'appt-actions');
+  go.addEventListener('click', function() {
+    var dateVal = dateInput.value, timeVal = timeInput.value;
+    if (!dateVal || !timeVal) { _calShowError(err, 'Pick a date and a time first.'); return; }
+    if (!picker.ready()) { _calShowError(err, 'Choose who will do it first.'); return; }
+    err.classList.remove('show');
+    busy = true;
+    // The same naive local datetime as the log form above — see the note there.
+    _apptPost(a.id, 'confirm', _apptBookingBody(dateVal + 'T' + timeVal + ':00', picker), go, 'Appointment confirmed.', function(e) {
+      var f = _apptBookingFailure(e, APPT_TZ);
+      if (f.kind === 'changed') {
+        // Someone else got there first. The refresh redraws the list — this form with it — so the
+        // server's words go in a toast.
+        showToast(f.text, 'error');
+        refreshAppointments('Couldn’t refresh the list. Reload the page to see where this request stands.');
+        return;
+      }
+      _calShowError(err, f.text);
+      if (f.kind === 'roster') picker.reload();
+    }).then(function(e) {
+      // Only after a refusal. After a success the button stays disabled: if the list refresh failed, this
+      // form is still on screen under a request the server has already confirmed.
+      if (e) { busy = false; sync(); }
+    });
   });
   var cancel = _node('button', 'btn btn-ghost', '', 'Cancel');
   cancel.addEventListener('click', _apptCloseForms);
@@ -1599,6 +2113,10 @@ async function _schRequest(method, path, body, fallback) {
   } catch (e) {
     if (e && e.message === 'Unauthorized') throw e;   // authedFetch is already reloading the page
     throw new Error("Couldn't reach the server. Check your connection and try again.");
+  } finally {
+    // A write to the roster or to who does which service — even a failed one, which may have landed —
+    // makes every confirm / reschedule staff picker re-read it next time. See _staffPickTouched.
+    if (_staffPickTouched(method, path)) _staffPickForget();
   }
   var data = await res.json().catch(function() { return null; });
   if (!res.ok) {
@@ -3212,6 +3730,7 @@ async function _schRefreshMode(st) {
     if (_schStale(st) || ticket !== st.modeTicket) return;
     st.mode = data;
     st.modeLoadErr = null;
+    _portalModeSet(st.clientId, data.appointment_mode);   // the confirm / reschedule forms follow it
   } catch (e) {
     if (_schStale(st) || ticket !== st.modeTicket) return;
     st.modeLoadErr = e.message || 'Could not load your booking settings.';
@@ -3235,6 +3754,7 @@ async function _schSetMode(st, mode) {
     // any read sent before this answer from overwriting it.
     var now = (data.appointment_mode === 'booking' || data.appointment_mode === 'log') ? data.appointment_mode : mode;
     st.mode = Object.assign({}, st.mode, { appointment_mode: now });
+    _portalModeSet(st.clientId, now);
     if (now === 'booking' && data.changed === true) st.mode.ready = true;   // its readiness guard just passed
     st.mode.booking_live_but_not_ready = (now === 'booking' && st.mode.ready !== true);
     ++st.modeTicket;
@@ -3252,6 +3772,7 @@ async function _schSetMode(st, mode) {
       // same renderer — the owner sees exactly what is left, not just "no".
       var cur = d.current_mode === 'booking' ? 'booking' : 'log';
       st.mode = { appointment_mode: cur, ready: false, checks: d.checks, missing: Array.isArray(d.missing) ? d.missing : [], booking_live_but_not_ready: cur === 'booking' };
+      _portalModeSet(st.clientId, cur);
       st.modeErr = { mode: mode, refused: true, text: typeof d.message === 'string' ? d.message : 'Not ready for direct booking yet.' };
     } else {
       st.modeErr = { mode: mode, refused: false, text: e.message || 'Could not change direct booking. Please try again.' };
@@ -3473,15 +3994,18 @@ async function _calCall(method, path, body, fallback) {
   if (!res.ok) {
     var err = new Error(extractErrorMessage(data, fallback));
     err.status = res.status;
+    err.data = data;   // a booking-mode refusal's detail is an object (slot_taken and its clash span)
     throw err;
   }
   return data || {};
 }
 
 // This client's IANA zone, from the same client record the Dashboard reads. A zone that Intl doesn't know
-// comes back as a problem to show, not a fallback — see TIMEZONE above.
+// comes back as a problem to show, not a fallback — see TIMEZONE above. The record also refreshes the
+// shared direct-booking mode the confirm and reschedule forms follow.
 async function _calZone(clientId) {
   var rec = await _calCall('GET', '/api/clients/' + encodeURIComponent(clientId), undefined, 'Could not load your business details.');
+  _portalModeFromRecord(clientId, rec);
   var tz = rec && rec.timezone;
   if (_apptTzValid(tz)) return { tz: tz };
   return {
@@ -4379,7 +4903,7 @@ function _calOpen(st, row, kind, opener) {
   var onKey = function(e) {
     if (e.key === 'Escape') { e.preventDefault(); _calCloseModal(st, true); return; }
     if (e.key !== 'Tab') return;
-    var f = Array.prototype.filter.call(card.querySelectorAll('button, a[href], input, textarea'), function(x) { return !x.disabled && x.offsetParent !== null; });
+    var f = Array.prototype.filter.call(card.querySelectorAll('button, a[href], input, select, textarea'), function(x) { return !x.disabled && x.offsetParent !== null; });
     if (!f.length) return;
     var here = card.contains(document.activeElement);
     if (!here) { e.preventDefault(); f[0].focus(); return; }                       // focus had escaped: bring it back
@@ -4397,7 +4921,9 @@ function _calOpen(st, row, kind, opener) {
 // Dashboard's cards too, because they show the same appointments. Written fresh rather than reusing
 // _apptPost: that one only POSTs (cancel is a DELETE), only reports failure in a 2.4-second toast, and
 // only refreshes the Dashboard.
-async function _calAct(st, btn, errEl, method, path, body, okMsg, rowId) {
+// Resolves to null, or to the error when the server refused (e.status, e.data). onFail, when given, takes
+// over showing that refusal once the button is restored — the booking form reads it itself.
+async function _calAct(st, btn, errEl, method, path, body, okMsg, rowId, onFail) {
   var orig = btn.textContent;
   btn.disabled = true;
   btn.textContent = 'Working…';
@@ -4410,15 +4936,21 @@ async function _calAct(st, btn, errEl, method, path, body, okMsg, rowId) {
   try {
     await _calCall(method, path, body, 'Could not update this appointment. Please try again.');
   } catch (e) {
-    if (_calStale(st)) return;                                     // RULE 2
+    if (_calStale(st)) return null;                                // RULE 2
+    if (typeof onFail === 'function') {
+      btn.disabled = false;
+      btn.textContent = orig;
+      onFail(e);
+      return e;
+    }
     var msg = e.message || 'Could not update this appointment. Please try again.';
     if (errEl.isConnected) _calShowError(errEl, msg); else showToast(msg, 'error');
     btn.disabled = false;
     btn.textContent = orig;
     if (btn.isConnected) btn.focus();
-    return;
+    return e;
   }
-  if (_calStale(st)) return;                                       // RULE 2
+  if (_calStale(st)) return null;                                  // RULE 2
   // Record what the server just did, before refetching. Every one of these four actions moves the row out
   // of 'pending' (or out of the calendar), so leaving it in the local lists would draw the appointment
   // twice — solid and as a ghost request — for as long as the refetch takes, and for good if it fails.
@@ -4431,16 +4963,19 @@ async function _calAct(st, btn, errEl, method, path, body, okMsg, rowId) {
   _calRenderBody(st);
   _calRefresh(st, true);
   if (APPT_CLIENT_ID && APPT_CLIENT_ID === st.clientId) refreshAppointments();
+  return null;
 }
 
 // CONFIRM a request, or RESCHEDULE a confirmed appointment: pick a date and a time on the business's clock.
+// Booking mode has its own builder (_calTimeFormBooking), so this one — and its payload — stays as it was.
 function _calTimeForm(st, row, mode, backTo) {
+  if (_portalModeOf(st.clientId) === 'booking') return _calTimeFormBooking(st, row, mode, backTo);
   var confirming = mode === 'confirm';
   var form = _node('div', 'sch-form');
   var err = _calError();
   form.appendChild(err);
   form.appendChild(_node('div', 'sch-note', '', (confirming ? 'Pick the time you can take them.' : 'Pick the new time.')
-    + ' Times are your business’s local time (' + st.tz + '). The customer isn’t told automatically — let them know yourself.'));
+    + ' Times are your business’s local time (' + st.tz + '). ' + _apptNotifyText(row)));
   var src = confirming ? row.requested_at : row.scheduled_at;
   var srcMs = src ? Date.parse(src) : NaN;
   var pre = !isNaN(srcMs) ? _calInputParts(st, srcMs) : null;
@@ -4467,7 +5002,115 @@ function _calTimeForm(st, row, mode, backTo) {
     var naive = dv + 'T' + tv + ':00';
     if (!confirming && pre && naive === pre.date + 'T' + pre.time + ':00') { _calShowError(err, 'That’s the time it’s already booked for.'); return; }
     _calAct(st, go, err, 'POST', '/api/appointments/' + encodeURIComponent(row.id) + '/' + (confirming ? 'confirm' : 'reschedule'),
-      { scheduled_at: naive }, confirming ? 'Appointment confirmed.' : 'Appointment moved.', row.id);
+      { scheduled_at: naive }, confirming ? 'Appointment confirmed.' : 'Appointment moved.', row.id)
+      .then(function(e) { _calTimeFormDrift(st, form, row, mode, backTo, e, dateI, timeI); });
+  });
+  back.addEventListener('click', function() { form.remove(); if (backTo && backTo.isConnected) backTo.focus(); });
+  acts.appendChild(go);
+  acts.appendChild(back);
+  form.appendChild(acts);
+  setTimeout(function() { dateI.focus(); }, 0);
+  return form;
+}
+
+// The log form was refused the way only booking mode refuses, and the mode turns out to be booking now:
+// swap in the booking form, keeping the date and time and showing the refusal there.
+async function _calTimeFormDrift(st, form, row, mode, backTo, e, dateI, timeI) {
+  if (!(await _apptModeDrift(st.clientId, e)) || _calStale(st) || !form.isConnected) return;
+  var next = _calTimeFormBooking(st, row, mode, backTo, {
+    date: dateI.value, time: String(timeI.value || '').slice(0, 5), error: _apptBookingFailure(e, st.tz).text,
+  });
+  next.setAttribute('data-mode', form.getAttribute('data-mode') || mode);
+  form.replaceWith(next);
+}
+
+// CONFIRM or RESCHEDULE in booking mode: the same date and time, plus the shared staff picker — read-only on
+// a reschedule of an appointment that already has someone. Refusals are read by _apptBookingFailure:
+// a slot clash shows its span on the business's clock, a roster refusal reloads the picker, and "changed by
+// someone else" refreshes the calendar and the Dashboard and stops this form being sent again.
+// carry: { date, time, error } when this replaces a log form whose submit showed the mode had changed.
+function _calTimeFormBooking(st, row, mode, backTo, carry) {
+  var confirming = mode === 'confirm';
+  var form = _node('div', 'sch-form');
+  var err = _calError();
+  form.appendChild(err);
+  if (carry && carry.error) _calShowError(err, carry.error);
+  form.appendChild(_node('div', 'sch-note', '', (confirming ? 'Pick the time you can take them and who will do it.' : 'Pick the new time.')
+    + ' Times are your business’s local time (' + st.tz + '). ' + _apptNotifyText(row)));
+  var src = confirming ? row.requested_at : row.scheduled_at;
+  var srcMs = src ? Date.parse(src) : NaN;
+  var pre = !isNaN(srcMs) ? _calInputParts(st, srcMs) : null;
+  var dateI = _apptInput('date', carry ? carry.date : (pre ? pre.date : ''));
+  var timeI = _apptInput('time', carry ? carry.time : (pre ? pre.time : ''));
+  var fields = _node('div', 'sch-row');
+  var gd = _apptField('Date', dateI), gt = _apptField('Time', timeI);
+  dateI.id = 'cal-f-date';
+  timeI.id = 'cal-f-time';
+  gd.firstChild.htmlFor = dateI.id;
+  gt.firstChild.htmlFor = timeI.id;
+  fields.appendChild(gd);
+  fields.appendChild(gt);
+  form.appendChild(fields);
+
+  var go = _calButton('btn btn-primary', confirming ? 'Confirm appointment' : 'Move appointment');
+  var busy = false, picker = null;
+  function sync() { if (picker && !busy) go.disabled = !picker.ready(); }
+  var svcKnown = row.service_id ? st.services.map[row.service_id] : null;
+  picker = _staffPicker({
+    clientId: st.clientId,
+    row: row,
+    purpose: confirming ? 'confirm' : 'reschedule',
+    serviceName: _calServiceName(st, row.service_id),
+    serviceActive: svcKnown ? svcKnown.active : undefined,
+    staffName: function(id) {
+      var s = st.staff.map[id];
+      return s && s.name ? s.name + (s.active ? '' : ' (no longer on the team)') : null;
+    },
+    onChange: sync,
+    // Nobody can be offered. If booking was switched off elsewhere, nobody needs choosing: swap in the log
+    // form, keeping the date and time typed so far.
+    onBlocked: function() {
+      _portalModeReread(st.clientId).then(function(m) {
+        if (m !== 'log' || busy || _calStale(st) || !form.isConnected) return;
+        var next = _calTimeForm(st, row, mode, backTo);
+        next.querySelector('#cal-f-date').value = dateI.value;
+        next.querySelector('#cal-f-time').value = timeI.value;
+        next.setAttribute('data-mode', form.getAttribute('data-mode') || mode);
+        form.replaceWith(next);
+      });
+    },
+  });
+  form.appendChild(picker.el);
+  sync();
+
+  var acts = _node('div', 'appt-actions');
+  var back = _calButton('btn btn-ghost', 'Cancel');
+  go.addEventListener('click', function() {
+    var dv = dateI.value, tv = String(timeI.value || '').slice(0, 5);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dv) || !/^\d{2}:\d{2}$/.test(tv)) { _calShowError(err, 'Pick a date and a time.'); return; }
+    var naive = dv + 'T' + tv + ':00';   // naive local, exactly as the log form sends it — see the note there
+    if (!confirming && pre && naive === pre.date + 'T' + pre.time + ':00') { _calShowError(err, 'That’s the time it’s already booked for.'); return; }
+    if (!picker.ready()) { _calShowError(err, 'Choose who will do it first.'); return; }
+    busy = true;
+    _calAct(st, go, err, 'POST', '/api/appointments/' + encodeURIComponent(row.id) + '/' + (confirming ? 'confirm' : 'reschedule'),
+      _apptBookingBody(naive, picker), confirming ? 'Appointment confirmed.' : 'Appointment moved.', row.id, function(e) {
+        var f = _apptBookingFailure(e, st.tz);
+        if (f.kind === 'changed') {
+          // Someone else got there first. Say so, refresh everything that shows this appointment, and keep
+          // this form from being sent again on what is now a stale picture (busy stays true).
+          var said = _apptSentence(f.text) + ' The calendar has been refreshed — close this to see where it stands now.';
+          if (err.isConnected) _calShowError(err, said); else showToast(said, 'error');
+          go.disabled = true;
+          _calRefresh(st, true);
+          if (APPT_CLIENT_ID && APPT_CLIENT_ID === st.clientId) refreshAppointments('Couldn’t refresh the Dashboard. Reload the page to see where this appointment stands.');
+          return;
+        }
+        busy = false;
+        if (err.isConnected) _calShowError(err, f.text); else showToast(f.text, 'error');
+        if (f.kind === 'roster') picker.reload();
+        sync();
+        if (go.isConnected && !go.disabled) go.focus();
+      });
   });
   back.addEventListener('click', function() { form.remove(); if (backTo && backTo.isConnected) backTo.focus(); });
   acts.appendChild(go);
@@ -4481,7 +5124,9 @@ function _calDeclineForm(st, row, backTo) {
   var form = _node('div', 'sch-form');
   var err = _calError();
   form.appendChild(err);
-  form.appendChild(_node('div', 'sch-note', '', 'This ends the request and they won’t be booked in. It can’t be undone, and the customer isn’t told automatically.'));
+  // The reason line matters now the note says an email goes out: the backend never puts the reason in it.
+  form.appendChild(_node('div', 'sch-note', '', 'This ends the request and they won’t be booked in. It can’t be undone. ' + _apptNotifyText(row)
+    + ' The reason below is for your records only — it’s never sent to the customer.'));
   var reason = _apptInput('text', '');
   reason.placeholder = 'e.g. Fully booked that week';
   reason.maxLength = 300;
@@ -4510,7 +5155,7 @@ function _calCancelForm(st, row, backTo) {
   var form = _node('div', 'sch-form');
   var err = _calError();
   form.appendChild(err);
-  form.appendChild(_node('div', 'sch-note', '', 'Cancel this appointment? It stays in your records as cancelled and the time frees up. The customer isn’t told automatically — let them know yourself.'));
+  form.appendChild(_node('div', 'sch-note', '', 'Cancel this appointment? It stays in your records as cancelled and the time frees up. ' + _apptNotifyText(row)));
   var acts = _node('div', 'appt-actions');
   var go = _calButton('btn btn-ghost sch-danger', 'Cancel appointment');
   var keep = _calButton('btn btn-ghost', 'Keep it');

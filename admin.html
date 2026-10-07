@@ -858,13 +858,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div class="card">
         <div class="card-header"><div class="card-title" id="appt-today-title">Today</div><span class="lead-status status-booked" id="appt-today-badge">Loading...</span></div>
         <div id="appt-today-list"><div style="padding:12px 0;font-size:12px;color:var(--text3);">Loading appointments...</div></div>
-        <div style="padding-top:14px;border-top:1px solid var(--border);">
-          <div style="font-size:13px;font-weight:500;margin-bottom:10px;">+ Book new appointment</div>
-          <div class="form-group"><label class="form-label">Client name</label><input class="form-input" id="new-appt-name" placeholder="Full name"></div>
-          <div class="grid-2"><div class="form-group"><label class="form-label">Date</label><input class="form-input" type="date" value="2026-03-26"></div><div class="form-group"><label class="form-label">Time</label><input class="form-input" type="time" value="10:00"></div></div>
-          <div class="form-group"><label class="form-label">Type</label><select class="form-input"><option>Discovery call</option><option>Onboarding</option><option>Strategy session</option><option>Demo</option><option>Follow-up</option></select></div>
-          <button class="btn btn-primary btn-sm" style="width:100%;" onclick="bookAppt()">Book appointment</button>
-        </div>
+        <!-- Removed the "+ Book new appointment" form: its button called bookAppt(), a demo stub that toasted
+             "Appointment booked" and saved nothing (the backend's POST /book it would have needed was deleted
+             2026-10-06). Re-add only with a real endpoint behind it. -->
       </div>
     </div>
   </div>
@@ -1175,7 +1171,9 @@ Warm regards,
 <script>
 // ═══════ NAVIGATION ═══════
 const PAGE_TITLES = {dashboard:'Dashboard',analytics:'Analytics',clients:'Client Portal',onboarding:'Client Onboarding',builder:'Website Builder',chatbot:'AI Chatbot',appointments:'Appointments',leads:'Leads',voice:'Voice AI',email:'Email AI',crm:'CRM',sms:'SMS & Reviews',billing:'Billing'};
-const PAGE_CTAS   = {dashboard:'+ New Client',analytics:'Export Report',clients:'+ Onboard Client',onboarding:'Save Draft',builder:'Publish Site',chatbot:'Deploy Bot',appointments:'+ Book',leads:'+ Add Lead',voice:'Activate',email:'Send Reply',crm:'+ Add Contact',sms:'Activate',billing:'+ Invoice'};
+// A page with no entry gets no top-bar button (nav hides it). Appointments has none: its "+ Book" ran the
+// bookAppt() demo stub, which reported a booking it never made.
+const PAGE_CTAS   = {dashboard:'+ New Client',analytics:'Export Report',clients:'+ Onboard Client',onboarding:'Save Draft',builder:'Publish Site',chatbot:'Deploy Bot',leads:'+ Add Lead',voice:'Activate',email:'Send Reply',crm:'+ Add Contact',sms:'Activate',billing:'+ Invoice'};
 
 window.nav = function(page, el) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -1186,7 +1184,10 @@ window.nav = function(page, el) {
   const titleEl = document.getElementById('page-title');
   const ctaEl = document.getElementById('top-cta');
   if (titleEl) titleEl.textContent = PAGE_TITLES[page] || page;
-  if (ctaEl) ctaEl.textContent = PAGE_CTAS[page] || 'Action';
+  if (ctaEl) {
+    ctaEl.textContent = PAGE_CTAS[page] || '';
+    ctaEl.hidden = !PAGE_CTAS[page];
+  }
   window.scrollTo(0,0);
 }
 
@@ -1205,7 +1206,6 @@ function handleCTA() {
   if (active === 'onboarding') { toast('Progress saved as draft!'); return; }
   if (active === 'builder') { publishSite(); return; }
   if (active === 'chatbot') { toast('✅ Chatbot deployed!'); return; }
-  if (active === 'appointments') { bookAppt(); return; }
   if (active === 'clients') { nav('onboarding',null); return; }
   nav('onboarding', null);
 }
@@ -2290,13 +2290,6 @@ function buildCal(apptDays) {
   }
 }
 buildCal();
-
-function bookAppt() {
-  const n = document.getElementById('new-appt-name');
-  if (!n || !n.value.trim()) { toast('Please enter a client name.','error'); return; }
-  toast('✅ Appointment booked for ' + n.value + '!');
-  n.value = '';
-}
 
 // ═══════ VOICE AI ═══════
 const script = [
