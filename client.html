@@ -1444,7 +1444,7 @@ async function refreshAppointments(failMsg) {
 
 var PORTAL_MODE = { clientId: null, mode: null };   // read only through _portalModeOf
 var STAFF_PICK = null;                              // the roster cache — see _staffPickData
-var STAFF_PICK_TTL = 30 * 60 * 1000;                // long on purpose: see _staffPickData
+var STAFF_PICK_TTL = 5 * 60 * 1000;                 // see _staffPickData
 var _staffPickSeq = 0;
 
 // The backend's 400s carry no reason code, so these match its wording (routes/appointments.py). If that
@@ -1501,18 +1501,32 @@ async function _apptModeDrift(clientId, e) {
   return (await _portalModeReread(clientId)) === 'booking';
 }
 
-// The active roster and — only when a row has a service — which services each person performs. No endpoint
-// answers "who performs service X", so the mappings cost one GET per active staff member, all from the same
-// 120-an-hour per-IP read allowance the Scheduling and Calendar tabs draw on: a salon of 12 pays 13 reads
-// per refill. Hence ONE cache shared by every picker, refilled only when it has reason to be wrong:
+// The active roster and — only when a row has a service — who does which service. Two reads, both from the
+// shared 120-an-hour per-IP scheduling allowance: GET /{cid}/staff and GET /{cid}/staff-services, the latter
+// the whole mapping in one answer (see _schMappingOf for its contract). ONE cache shared by every picker,
+// refilled only when it has reason to be wrong:
 //   * a roster or who-does-what write on the Scheduling tab (_staffPickTouched, in _schRequest);
 //   * a refusal saying the roster moved on (staff_inactive, "does not perform", a deleted staff member);
 //   * the picker's own Try again / Check again;
-//   * otherwise, after 30 minutes — the backstop for changes made on another device. Until then such a change
+//   * otherwise, after 5 minutes — the backstop for changes made on another device. Until then such a change
 //     costs at most one refused confirm (the server checks every choice), which itself refills the cache.
 // Promises are cached rather than results, so two pickers opened together share one set of requests, and a
 // failed read is dropped so the next attempt starts fresh.
 function _staffPickForget() { STAFF_PICK = null; }
+
+// GET /{cid}/staff-services → {mapping: {staff_id: [service_id, …]}}. CONTRACT: only staff with at least one
+// service appear, so a person missing from it performs nothing; inactive staff and services are included as
+// they are. This turns the answer into "every person in `people` → their list", missing meaning []. Looked up
+// as own properties only, so nothing the server sends can read a built-in off an object.
+function _schMappingOf(data, people) {
+  var raw = data && typeof data.mapping === 'object' && data.mapping ? data.mapping : {};
+  var map = Object.create(null);
+  people.forEach(function(p) {
+    var ids = Object.prototype.hasOwnProperty.call(raw, p.id) ? raw[p.id] : null;
+    map[p.id] = Array.isArray(ids) ? ids.slice() : [];
+  });
+  return map;
+}
 
 // Writes that can change who is on the team or who does which service. Hours, days off, services and the
 // mode can't, so they leave the cache alone.
@@ -1540,15 +1554,11 @@ function _staffPickData(clientId, needLinks) {
   }
   if (!needLinks) return c.staff.then(function(staff) { return { staff: staff, links: null }; });
   if (!c.links) {
-    var links = c.links = c.staff.then(function(staff) {
-      return Promise.all(staff.map(function(s) {
-        return _schRequest('GET', 'staff/' + encodeURIComponent(s.id) + '/services', undefined, 'Could not load who does which service.');
-      })).then(function(all) {
-        var map = Object.create(null);
-        all.forEach(function(r, i) { map[staff[i].id] = Array.isArray(r.service_ids) ? r.service_ids : []; });
-        return map;
-      });
-    });
+    // Fired alongside the roster read, not after it: the two don't depend on each other.
+    var links = c.links = Promise.all([
+      c.staff,
+      _schRequest('GET', encodeURIComponent(clientId) + '/staff-services', undefined, 'Could not load who does which service.'),
+    ]).then(function(r) { return _schMappingOf(r[1], r[0]); });
     links.catch(function() { if (c.links === links) c.links = null; });
   }
   return Promise.all([c.staff, c.links]).then(function(r) { return { staff: r[0], links: r[1] }; });
@@ -2317,15 +2327,20 @@ async function _schSubmit(st, btn, errEl, send, okMsg, refresh) {
 }
 
 // ── loading ──
-// Each person's current services, in parallel. Returns false if the answers arrived stale.
-async function _schLoadMappings(st, people) {
-  var results = await Promise.all(people.map(function(p) {
-    return _schRequest('GET', 'staff/' + encodeURIComponent(p.id) + '/services', undefined, 'Could not load who performs what.');
-  }));
+// Who performs what, for every person in `people`, from the one mapping read (someone the mapping doesn't
+// name performs nothing). Because one answer now covers the whole roster, two guards keep a slow answer from
+// undoing a newer one: only the NEWEST read is applied (st.mapTicket), and a row whose own save is in flight
+// is written only by that save's own re-read (`owner`) — anyone else's read may have been served before that
+// PUT landed. Returns false if the answer arrived stale; true otherwise, including when a newer read
+// superseded this one (that read's caller applies and draws it).
+async function _schLoadMappings(st, people, owner) {
+  if (!people.length) return true;                  // nobody to ask about: no read, as before
+  var ticket = ++st.mapTicket;
+  var data = await _schRequest('GET', encodeURIComponent(st.clientId) + '/staff-services', undefined, 'Could not load who performs what.');
   if (_schStale(st)) return false;
-  people.forEach(function(p, i) {
-    st.saved[p.id] = Array.isArray(results[i].service_ids) ? results[i].service_ids.slice() : [];
-  });
+  if (ticket !== st.mapTicket) return true;
+  var map = _schMappingOf(data, people);
+  people.forEach(function(p) { if (p.id === owner || !st.saving[p.id]) st.saved[p.id] = map[p.id]; });
   return true;
 }
 
@@ -2341,10 +2356,11 @@ async function _schReloadStaff(st) {
   var data = await _schRequest('GET', encodeURIComponent(st.clientId) + '/staff', undefined, 'Could not load your team.');
   if (_schStale(st)) return;
   var staff = Array.isArray(data.staff) ? data.staff : [];
-  // Read the current services of anyone not seen before (a just-added team member) before showing them,
-  // so their Save button is never working from a guess.
+  // Someone not seen before (a just-added team member) needs their services read before they are shown, so
+  // their Save button is never working from a guess. The one read answers for the whole roster, so everyone
+  // is brought up to date by it (bar anyone mid-save); when nobody is new, nothing is read, as before.
   var fresh = staff.filter(function(p) { return !(p.id in st.saved); });
-  if (fresh.length && !(await _schLoadMappings(st, fresh))) return;
+  if (fresh.length && !(await _schLoadMappings(st, staff))) return;
   st.staff = staff;
   _schRenderStaff(st);
   _schRenderMap(st);
@@ -2359,6 +2375,7 @@ async function _schLoad(clientId) {
     services: [],
     staff: [],
     saved: Object.create(null),     // staff id → service ids the server says they perform
+    mapTicket: 0,                   // only the newest who-performs-what answer is ever applied
     pending: Object.create(null),   // staff id → ticked ids not saved yet (survives re-renders)
     saving: Object.create(null),    // staff id → true while their PUT is in flight
     mapErr: Object.create(null),    // staff id → the last save error for their block
@@ -2397,7 +2414,7 @@ async function _schLoad(clientId) {
     var services = Array.isArray(lists[0].services) ? lists[0].services : [];
     var staff = Array.isArray(lists[1].staff) ? lists[1].staff : [];
     st.tz = lists[2];
-    // Sections 4-6 start now, alongside the mapping reads. Each keeps its own loading and error state
+    // Sections 4-6 start now, alongside the one mapping read. Each keeps its own loading and error state
     // and draws itself once the frame exists, so a failure there never blocks sections 1-3. The cost is
     // constant: the mode, plus ONE person's hours and days off — not every person's.
     st.staff = staff;
@@ -2897,6 +2914,8 @@ async function _schSaveMapping(st, p, ids) {
   try {
     var data = await _schRequest('PUT', 'staff/' + encodeURIComponent(p.id) + '/services', { service_ids: ids }, 'Could not save these services. Please try again.');
     if (_schStale(st)) return;
+    // The PUT's service_ids ECHOES the request (de-duplicated); it is not read back from the table. On a 200
+    // it is what was just inserted, so it stands until the re-read below replaces it with the server's view.
     st.saved[p.id] = Array.isArray(data.service_ids) ? data.service_ids.slice() : ids.slice();
     delete st.pending[p.id];
     showToast('Saved services for ' + (p.name || 'this team member') + '.', 'success');
@@ -2904,15 +2923,17 @@ async function _schSaveMapping(st, p, ids) {
     if (_schStale(st)) return;
     st.mapErr[p.id] = e.message || 'Could not save these services. Please try again.';
     mayHaveChanged = !(e.status >= 400 && e.status < 500);   // a 4xx is refused before anything is touched
-    // The server's replace isn't atomic. Re-read what is actually saved, so "Unsaved changes" is measured
-    // against the truth; the ticks on screen stay put so Save can simply be pressed again.
-    try {
-      var fresh = await _schRequest('GET', 'staff/' + encodeURIComponent(p.id) + '/services', undefined, '');
-      if (_schStale(st)) return;
-      if (Array.isArray(fresh.service_ids)) st.saved[p.id] = fresh.service_ids.slice();
-    } catch (e2) {
-      if (_schStale(st)) return;
-    }
+  }
+  // ONE re-read of the whole mapping, after a success and after a failure alike. The server's replace isn't
+  // atomic, so after a failure this is the only way to know what is actually saved; after a success it
+  // confirms the echo and brings everyone else's row up to date too — except anyone whose own save is still
+  // in flight, whom only their own re-read may write. "Unsaved changes" is then measured against the truth,
+  // and the ticks on screen stay put so Save can simply be pressed again. If this read fails, what is
+  // already held stands.
+  try {
+    if (!(await _schLoadMappings(st, st.staff, p.id))) return;
+  } catch (e2) {
+    if (_schStale(st)) return;
   }
   st.saving[p.id] = false;
   _schRenderMap(st);
