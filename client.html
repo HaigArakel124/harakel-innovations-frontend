@@ -136,6 +136,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .bot-toggle:hover{color:var(--accent);}
 .bot-hint{font-size:11px;color:var(--text3);margin-top:10px;line-height:1.5;}
 
+/* ── PHONE & NOVA ── */
+.rt-line{font-size:12px;color:var(--text2);margin-bottom:12px;overflow-wrap:anywhere;}
+.rt-line strong{color:var(--text);font-weight:600;}
+.rt-opts{display:flex;flex-direction:column;gap:8px;}
+.rt-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);cursor:pointer;}
+.rt-opt.on{border-color:rgba(108,99,255,0.55);background:var(--accent-glow);}
+.rt-opt.locked{cursor:not-allowed;}
+.rt-opt.locked .rt-opt-title,.rt-opt.locked .rt-opt-text{color:var(--text3);}
+.rt-opt:focus-within{outline:2px solid var(--accent2);outline-offset:1px;}
+.rt-opt input{width:14px;height:14px;margin:2px 0 0;flex-shrink:0;accent-color:var(--accent);}
+.rt-opt input:disabled{cursor:not-allowed;}
+.rt-opt-body{flex:1;min-width:0;}
+.rt-opt-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rt-opt-title{font-size:13px;font-weight:600;}
+.rt-opt-text{font-size:12px;color:var(--text2);margin-top:2px;line-height:1.45;overflow-wrap:anywhere;}
+.rt-pill{display:inline-block;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.rt-pill.now{background:var(--green-dim);color:var(--green);}
+.rt-pill.soon{background:var(--amber-dim);color:var(--amber);}
+.rt-pill.saving{background:var(--accent-glow);color:var(--accent2);}
+.rt-note{font-size:12px;color:var(--text2);line-height:1.5;margin-top:10px;}
+.rt-status{font-size:11px;color:var(--text3);margin-top:8px;}
+
 /* ── SCHEDULING SETUP ── */
 /* Rows, inputs and buttons copy the appointment-request look (.appt-req / .appt-form) so both tabs read as
    one product. Forms are .sch-form, not .appt-form, because _apptCloseForms() removes every .appt-form in
@@ -639,6 +661,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
+    <!-- Phone & Nova: who answers the salon's calls. Built by _rtRender once the Dashboard's data is in. -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">Phone &amp; Nova</div></div>
+      <div id="rt-wrap">
+        <div class="skeleton" style="height:46px;border-radius:8px;"></div>
+      </div>
+    </div>
+
     <!-- Competitor Intel -->
     <div class="card">
       <div class="card-header">
@@ -1062,6 +1092,7 @@ async function loadDashboardData(clientId, clientInfo) {
   loadCompetitors(clientId);
   loadCoachHistory(clientId);
   loadMissedCalls(clientId);
+  _rtBegin(clientId);   // the Phone & Nova card: "Checking…" at once, and never left blank (see _rtBegin)
   // Fetch me (modules — kept as the chatbot entitlement fallback) + leads + appointments +
   // chatbot install status, in one batch so the card resolves on the same page load.
   var [meRes, leadsRes, apptsRes, botRes, clientRes] = await Promise.allSettled([
@@ -1124,11 +1155,13 @@ async function loadDashboardData(clientId, clientInfo) {
   // the zone abbreviation beside them — would show in the wrong city's hours. Each sign-in starts from
   // "unknown"; only a successful read of THIS client's record sets it.
   APPT_TZ = null;
+  var rtLine = null;   // the salon's own number, for the Phone & Nova card
   if (clientRes.status === 'fulfilled' && clientRes.value.ok) {
     try {
       var cRec = await clientRes.value.json();
       if (_apptTzValid(cRec && cRec.timezone)) APPT_TZ = cRec.timezone;
       _portalModeFromRecord(clientId, cRec);   // the same record says whether direct booking is on
+      rtLine = cRec ? cRec.twilio_phone_number : null;
     } catch (e) { /* leave APPT_TZ null and fall back to the browser zone */ }
   }
 
@@ -1165,6 +1198,16 @@ async function loadDashboardData(clientId, clientInfo) {
     botInfo = { module_enabled: chatbotEntitledFallback, activity_check_failed: true, client_id: clientId };
   }
   _renderChatbotCard(botInfo);
+
+  // ── Phone & Nova ──
+  // The plan decides whether to ask about call routing at all. voice_ai comes from /me; a NULL modules column
+  // is a known answer (nothing is included), as the backend's own gate reads it. Only a failed /me leaves the
+  // plan unknown — neither sign-in path carries modules today; clientInfo.modules is read in case one ever
+  // does — and then the card says so and offers a Retry that asks again.
+  var voiceEnt = null;
+  if (meRes.status === 'fulfilled' && meRes.value.ok && me && typeof me === 'object') voiceEnt = !!(me.modules && me.modules.voice_ai);
+  else if (clientInfo && clientInfo.modules && typeof clientInfo.modules === 'object') voiceEnt = !!clientInfo.modules.voice_ai;
+  _rtLoad(clientId, voiceEnt, rtLine);
 }
 
 // ── Chatbot install card ─────────────────────────────────────
@@ -1294,6 +1337,301 @@ function _renderChatbotCard(info) {
 
   wrap.textContent = '';
   wrap.appendChild(frag);
+}
+
+// ── Phone & Nova card (call routing) ─────────────────────────
+// Who answers the salon's calls: Nova every time, or the owner's phone first with Nova as the backup
+// (clients.call_routing_mode, read and set through GET/PUT /api/voice/{id}/routing). Built like the chatbot
+// card above and bound by the same rule — it never claims more than the data supports:
+//   * the PLAN says whether phone answering is included at all: modules.voice_ai from /me. A row whose
+//     modules column is NULL is a known answer (nothing is included), as the backend's own gate reads it;
+//     only a failed /me leaves the plan unknown, and then the card says so and offers a Retry. The routing
+//     endpoint itself doesn't check the plan, so this card must.
+//   * the SERVER says which mode is current, whether "ring me first" may be chosen by this account right
+//     now (owner_first_available — off for every salon until call routing step 4 ships; Harakel can set it
+//     for testing) and whether a mobile number it can dial is on file (owner_phone_on_file). With
+//     owner_first current but no such number, the backend sends every call to Nova — and the card says so.
+//   * after a change, what is shown is the server's answer, never the option that was clicked; a refusal
+//     is shown in the server's own words and the current mode is re-read.
+//   * it is never blank: "Checking…" from the first moment (_rtBegin), and a watchdog turns a check that
+//     never comes back into a state with a Retry.
+// "Ring me first" is never sent while owner_first_available is false — the server would answer 403 — so an
+// owner_first already stored on a locked account is shown as current but cannot be re-submitted. The
+// current option's radio stays enabled even then: a checked radio can't be re-chosen, and leaving it is how
+// a keyboard user reaches the Nova option (a group whose checked radio is disabled can't be tabbed into).
+// XSS: every server value (the mode, the salon line, error text) reaches the page through textContent.
+var RT = null;                               // the card's state; replaced wholesale by every _rtBegin / _rtLoad
+var RT_MODES = ['nova_only', 'owner_first'];
+var RT_OPTIONS = [
+  { mode: 'nova_only', title: 'Nova answers every call', text: 'Every call goes straight to Nova, your AI receptionist.' },
+  { mode: 'owner_first', title: 'Ring me first, then Nova', text: 'Your phone rings first; if you don’t pick up, Nova takes the call.' },
+];
+var RT_WATCHDOG_MS = 10000;                  // how long "Checking…" may last before the card offers a Retry instead
+var _rtSeq = 0;
+
+function _rtStale(st) { return st !== RT || st.clientId !== PORTAL_CLIENT_ID; }
+
+// "+16625082673" → "(662) 508-2673". Anything that isn't a ten-digit North American number is shown as it is
+// rather than dropped.
+function _rtFmtLine(p) {
+  var s = String(p == null ? '' : p).trim();
+  if (!s) return '';
+  var m = /^[\d\s()+.-]+$/.test(s) ? s.replace(/[^\d]/g, '').match(/^1?(\d{3})(\d{3})(\d{4})$/) : null;
+  return m ? '(' + m[1] + ') ' + m[2] + '-' + m[3] : s;
+}
+
+// The server's answer, checked: the mode must be one this page knows, or the answer is unusable.
+function _rtParse(data) {
+  if (!data || typeof data !== 'object') return null;
+  if (RT_MODES.indexOf(data.call_routing_mode) === -1) return null;
+  return { mode: data.call_routing_mode, available: data.owner_first_available === true, phoneOnFile: data.owner_phone_on_file === true };
+}
+
+function _rtSentence(t) { t = String(t || ''); return t.charAt(0).toUpperCase() + t.slice(1); }
+
+// What the server's answer means for the caller, in one sentence — from the answer, never from the click.
+function _rtOutcome(d) {
+  if (d.mode !== 'owner_first') return 'Nova now answers every call.';
+  return d.phoneOnFile ? 'Your phone now rings first.' : 'Ring me first is on, but with no mobile number we can dial on file, Nova answers every call for now.';
+}
+
+// A fresh state for the card. The previous one is replaced wholesale, its watchdog with it.
+function _rtState(clientId, entitled, line) {
+  if (RT && RT.watchdog) clearTimeout(RT.watchdog);
+  return RT = { clientId: clientId, entitled: entitled, line: _rtFmtLine(line), phase: 'checking', data: null, err: null, note: '', failText: null, busy: false, pendingMode: null, ticket: 0, refocus: false, watchdog: null, el: null };
+}
+
+// If this state is still "Checking…" when the timer fires, onFire changes it to a state with a Retry.
+function _rtWatch(st, onFire) {
+  if (st.watchdog) clearTimeout(st.watchdog);
+  st.watchdog = setTimeout(function() {
+    st.watchdog = null;
+    if (_rtStale(st) || st.phase !== 'checking') return;
+    onFire();
+    _rtRender(st);
+  }, RT_WATCHDOG_MS);
+}
+
+// The Dashboard load's first act for this card: "Checking…" at once. If the load never reaches _rtLoad (an
+// earlier response whose body won't parse aborts loadDashboardData), the watchdog turns the card into
+// "couldn't check your plan" with a Retry that asks /me and the routing itself.
+function _rtBegin(clientId) {
+  var st = _rtState(clientId, null, null);
+  _rtRender(st);
+  _rtWatch(st, function() { st.phase = 'plan-unknown'; });
+}
+
+// Called from loadDashboardData with what the sign-in already knows: whether the plan includes phone
+// answering (true / false / null = couldn't tell) and the salon's own number from the client record.
+function _rtLoad(clientId, entitled, line) {
+  var st = _rtState(clientId, entitled, line);
+  if (entitled === false) st.phase = 'not-included';
+  else if (entitled !== true) st.phase = 'plan-unknown';
+  _rtRender(st);
+  if (st.phase === 'checking') _rtFetch(st);
+}
+
+// One request, the Calendar's generic way (_calCall): the backend's own words on failure, with e.status.
+function _rtCall(method, clientId, body, fallback) {
+  return _calCall(method, '/api/voice/' + encodeURIComponent(clientId) + '/routing', body, fallback);
+}
+
+async function _rtFetch(st) {
+  var ticket = ++st.ticket;
+  if (st.phase !== 'ready') {
+    st.phase = 'checking';
+    _rtRender(st);
+    _rtWatch(st, function() { st.phase = 'failed'; st.failText = 'the server took too long to answer.'; });
+  }
+  var parsed = null, failText = null;
+  try {
+    parsed = _rtParse(await _rtCall('GET', st.clientId, undefined, 'the server didn’t say why.'));
+    if (!parsed) failText = 'the server sent an answer this page doesn’t understand.';
+  } catch (e) {
+    if (e && e.message === 'Unauthorized') return;   // authedFetch is already reloading the page
+    failText = e.message || 'the server didn’t say why.';
+  }
+  if (_rtStale(st) || ticket !== st.ticket) return;     // signed out, or a newer read or change supersedes this
+  if (st.watchdog) { clearTimeout(st.watchdog); st.watchdog = null; }
+  if (parsed) { st.data = parsed; st.phase = 'ready'; st.failText = null; }
+  else if (st.data) { if (!st.err) st.err = _rtSentence(failText) + ' Showing what it has on record.'; }   // a re-read failed: keep what was shown
+  else { st.phase = 'failed'; st.failText = failText; }
+  _rtRender(st);
+}
+
+// Retry. When the plan couldn't be read at sign-in, ask about it again before asking about routing.
+async function _rtRetry(st) {
+  st.err = null;
+  st.note = '';
+  st.refocus = true;
+  if (st.entitled === true) { _rtFetch(st); return; }
+  var ticket = ++st.ticket;
+  st.phase = 'checking';
+  _rtRender(st);
+  _rtWatch(st, function() { st.phase = 'plan-unknown'; });
+  var ent = null;
+  try {
+    var res = await authedFetch(API + '/api/client-auth/me');
+    if (res.ok) {
+      var me = await res.json();
+      if (me && typeof me === 'object') ent = !!(me.modules && me.modules.voice_ai);   // NULL modules = nothing included
+    }
+  } catch (e) {
+    if (e && e.message === 'Unauthorized') return;
+  }
+  if (_rtStale(st) || ticket !== st.ticket) return;
+  if (st.watchdog) { clearTimeout(st.watchdog); st.watchdog = null; }
+  st.entitled = ent;
+  if (ent === false) { st.phase = 'not-included'; _rtRender(st); return; }
+  if (ent !== true) { st.phase = 'plan-unknown'; _rtRender(st); return; }
+  _rtFetch(st);
+}
+
+// A choice. Nothing is sent for the current mode, and "ring me first" is never sent unless the server said it
+// may be chosen and a number is on file — the control is disabled in those cases, so this is belt-and-braces.
+async function _rtSet(st, mode) {
+  var d = st.data;
+  if (!d || st.busy || RT_MODES.indexOf(mode) === -1 || mode === d.mode
+      || (mode === 'owner_first' && !(d.available && d.phoneOnFile))) { _rtRender(st); return; }
+  ++st.ticket;                             // a read still in flight is now out of date: its answer will be dropped
+  st.busy = true;
+  st.pendingMode = mode;
+  st.err = null;
+  st.note = '';
+  st.refocus = true;                       // the control is rebuilt under the user; focus goes back when it returns
+  _rtRender(st);
+  var parsed = null, err = null;
+  try {
+    parsed = _rtParse(await _rtCall('PUT', st.clientId, { call_routing_mode: mode }, 'Could not change who answers your calls. Please try again.'));
+    if (!parsed) err = 'The server sent an answer this page doesn’t understand. Showing what it has on record.';
+  } catch (e) {
+    if (e && e.message === 'Unauthorized') return;
+    err = e.message || 'Could not change who answers your calls. Please try again.';
+  }
+  if (_rtStale(st)) return;
+  st.busy = false;
+  st.pendingMode = null;
+  if (parsed) {
+    st.data = parsed;                      // the server's answer, never the option that was clicked
+    st.err = null;
+    var said = _rtOutcome(parsed);
+    st.note = 'Saved. ' + said;
+    _rtRender(st);
+    showToast(said, 'success');
+    return;
+  }
+  st.err = err;
+  _rtRender(st);
+  _rtFetch(st);                            // what is actually current now, in case anything changed
+}
+
+function _rtRender(st) {
+  var wrap = document.getElementById('rt-wrap');
+  if (!wrap || _rtStale(st)) return;
+  if (!st.el) {
+    // Built once per state: the body is rebuilt on every render, but the error and status lines are updated
+    // in place, so a screen reader hears "Saving…" and the outcome as changes to a region it already knows.
+    var body = _node('div', 'rt-body');
+    var errEl = _node('div', 'sch-error');
+    errEl.setAttribute('role', 'alert');
+    var statusEl = _node('div', 'rt-status');
+    statusEl.setAttribute('aria-live', 'polite');
+    wrap.textContent = '';
+    wrap.appendChild(body);
+    wrap.appendChild(errEl);
+    wrap.appendChild(statusEl);
+    st.el = { body: body, err: errEl, status: statusEl };
+  }
+  var frag = document.createDocumentFragment();
+  function status(dotCls, heading, text) {
+    var row = _node('div', 'bot-status');
+    row.appendChild(_node('div', 'bot-dot ' + dotCls));
+    var col = _node('div');
+    col.appendChild(_node('div', '', 'font-size:13px;font-weight:500;', heading));
+    if (text) col.appendChild(_node('div', '', 'font-size:11px;color:var(--text3);margin-top:2px;', text));
+    row.appendChild(col);
+    return row;
+  }
+  function retryBox(text) {
+    var box = _node('div', 'mc-error');
+    box.appendChild(_node('span', '', '', text));
+    var b = _node('button', '', '', 'Retry');
+    b.type = 'button';
+    b.addEventListener('click', function() { _rtRetry(st); });
+    box.appendChild(b);
+    return box;
+  }
+  if (st.phase === 'checking') {
+    frag.appendChild(status('off', 'Checking…', 'Looking up who answers your calls.'));
+  } else if (st.phase === 'not-included') {
+    frag.appendChild(status('off', 'Phone answering isn’t included in your current plan.'));
+  } else if (st.phase === 'plan-unknown') {
+    frag.appendChild(retryBox('We couldn’t check your plan just now, so we can’t show your phone settings yet.'));
+  } else if (st.phase === 'failed') {
+    frag.appendChild(retryBox('Couldn’t load your phone settings — ' + st.failText));
+  } else {
+    var d = st.data;
+    var noNumber = d.mode === 'owner_first' && !d.phoneOnFile;   // the backend sends every call to Nova in this state
+    if (st.line) {
+      var line = _node('div', 'rt-line', '', 'Your salon line: ');
+      line.appendChild(_node('strong', '', '', st.line));
+      frag.appendChild(line);
+    }
+    var group = _node('div', 'rt-opts');
+    group.setAttribute('role', 'radiogroup');
+    group.setAttribute('aria-label', 'Who answers your calls');
+    var name = 'rt-mode-' + (++_rtSeq);
+    RT_OPTIONS.forEach(function(o) {
+      var current = o.mode === d.mode;
+      var locked = o.mode === 'owner_first' && !d.available;
+      var noPhone = o.mode === 'owner_first' && d.available && !d.phoneOnFile;
+      var selectable = !locked && !noPhone;
+      var label = _node('label', 'rt-opt' + (current ? ' on' : '') + (!selectable && !current ? ' locked' : ''));
+      var input = document.createElement('input');
+      input.type = 'radio';
+      input.name = name;
+      input.value = o.mode;
+      input.checked = current;
+      // Disabled = out of the tab order and impossible to choose. Never the current one (see the header).
+      input.disabled = (!selectable && !current) || st.busy;
+      input.addEventListener('change', function() { if (input.checked) _rtSet(st, o.mode); });
+      label.appendChild(input);
+      var body = _node('div', 'rt-opt-body');
+      var head = _node('div', 'rt-opt-head');
+      head.appendChild(_node('span', 'rt-opt-title', '', o.title));
+      if (current) head.appendChild(_node('span', 'rt-pill now', '', noNumber && o.mode === 'owner_first' ? 'Current — Nova answering' : 'Current'));
+      if (locked) head.appendChild(_node('span', 'rt-pill soon', '', 'Coming soon'));
+      if (st.pendingMode === o.mode) head.appendChild(_node('span', 'rt-pill saving', '', 'Saving…'));
+      body.appendChild(head);
+      var text = o.text;
+      if (locked && !current) text += ' Not available yet — Nova answers every call for now.';
+      if (noPhone && !current) text += ' Needs a US or Canada mobile number on file that we can dial — contact Harakel to add or correct yours.';
+      body.appendChild(_node('div', 'rt-opt-text', '', text));
+      label.appendChild(body);
+      group.appendChild(label);
+    });
+    frag.appendChild(group);
+    // Only what the answer supports: it says the mode is on and can't be chosen here, not who turned it on.
+    if (d.mode === 'owner_first' && !d.available) {
+      frag.appendChild(_node('div', 'rt-note', '', 'Ring me first is on for your account. It can’t be chosen from here yet, but you can switch to Nova any time.'));
+    }
+    if (noNumber) {
+      frag.appendChild(_node('div', 'rt-note', '', 'No mobile number we can dial is on file, so Nova is answering every call for now.'));
+    }
+  }
+  st.el.body.textContent = '';
+  st.el.body.appendChild(frag);
+  var errText = st.phase === 'ready' && st.err ? st.err : '';
+  if (st.el.err.textContent !== errText) st.el.err.textContent = errText;
+  st.el.err.classList.toggle('show', !!errText);
+  var statusText = st.phase !== 'ready' ? '' : (st.busy ? 'Saving…' : st.note);
+  if (st.el.status.textContent !== statusText) st.el.status.textContent = statusText;
+  if (st.refocus) {
+    // Focus was on a control this render replaced: put it on the current option, else the first that can be
+    // chosen, else the Retry. While saving nothing is focusable, so it is restored on the render after.
+    var f = st.el.body.querySelector('input:checked:not(:disabled)') || st.el.body.querySelector('input:not(:disabled)') || st.el.body.querySelector('button');
+    if (f) { f.focus(); st.refocus = false; }
+  }
 }
 
 // ── Appointments ─────────────────────────────────────────────
