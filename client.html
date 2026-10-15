@@ -5855,6 +5855,28 @@ var MC_CURRENT_TEMPLATE = null;          // server value (null = use default)
 var MC_EXPANDED_ID = null;                // single missed_call_id currently expanded
 var MC_CONVO_CACHE = {};                  // conversation_id -> {conversation, messages}
 
+// Why a missed call was NOT texted (missed_calls.auto_text_skipped_reason, backend migration 025).
+// ANY reason, listed or not, renders as "not texted", never as a failed text. Never render the raw value.
+var MC_SKIP_LABELS = {
+  existing_open_conversation: 'not texted — already in a conversation',
+  not_entitled: 'not texted — text-back is off',
+  no_caller_id: 'not texted — private or international number',
+  owner_self: 'not texted — your own phone',
+  opted_out: 'not texted — caller opted out of texts'   // written once E1e-4 ships
+};
+// Twilio's placeholders for a hidden caller ID (Twilio support article 223179988; "anonymous" since 2023).
+var MC_WITHHELD = {
+  'anonymous': 'Private number', '+266696687': 'Private number', '+7378742833': 'Restricted number',
+  '+2562533': 'Blocked number', '+8656696': 'Unknown number', '+86282452253': 'Number unavailable', '+464': 'No caller ID'
+};
+function _mcHas(obj, k) { return Object.prototype.hasOwnProperty.call(obj, k); }
+function _mcSkipLabel(reason) { return _mcHas(MC_SKIP_LABELS, reason) ? MC_SKIP_LABELS[reason] : 'not texted'; }
+function _mcCallerLabel(p) {
+  var k = String(p == null ? '' : p).trim().toLowerCase();
+  if (/^\d+$/.test(k)) k = '+' + k;
+  return _mcHas(MC_WITHHELD, k) ? MC_WITHHELD[k] : _mcFmtPhone(p);
+}
+
 function _mcFmtPhone(p) {
   if (!p) return '';
   var s = String(p).replace(/[^\d+]/g, '');
@@ -5933,7 +5955,7 @@ async function refreshMissedCalls() {
 function _renderMissedCalls(rows) {
   var wrap = document.getElementById('mc-list-wrap');
   if (!rows || rows.length === 0) {
-    wrap.innerHTML = '<div class="empty">No missed calls yet. When a customer calls and you don\'t pick up, they\'ll be auto-texted and appear here.</div>';
+    wrap.innerHTML = '<div class="empty">No missed calls yet. Calls nobody picks up appear here, with whether the caller was texted.</div>';
     return;
   }
   wrap.innerHTML = '<div class="mc-list">' + rows.map(_renderMcRow).join('') + '</div>';
@@ -5948,9 +5970,9 @@ function _renderMissedCalls(rows) {
 function _renderMcRow(r) {
   var statusCls = (r.call_status || '').replace(/[^a-z\-]/g, '');
   var sentCls, sentTxt;
-  if (r.auto_text_skipped_reason === 'existing_open_conversation') {
+  if (r.auto_text_skipped_reason) {
     sentCls = 'skipped';
-    sentTxt = 'skipped — existing thread';
+    sentTxt = _mcSkipLabel(r.auto_text_skipped_reason);
   } else if (r.auto_text_sent) {
     sentCls = 'sent';
     sentTxt = 'auto-text sent ✓';
@@ -5963,7 +5985,7 @@ function _renderMcRow(r) {
     + '<div class="mc-row-head" data-mc-id="' + _esc(r.id) + '" data-convo-id="' + _esc(r.conversation_id || '') + '">'
     +   '<div class="mc-row-main">'
     +     '<div class="mc-line1">'
-    +       '<span class="mc-phone">' + _esc(_mcFmtPhone(r.caller_phone)) + '</span>'
+    +       '<span class="mc-phone">' + _esc(_mcCallerLabel(r.caller_phone)) + '</span>'
     +       '<span class="mc-time">' + _esc(_mcRelTime(r.created_at)) + '</span>'
     +     '</div>'
     +     '<div class="mc-line2">'
