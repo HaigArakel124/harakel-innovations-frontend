@@ -91,6 +91,14 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 .toggle.on{background:var(--accent);border-color:var(--accent);}
 .toggle::after{content:'';width:14px;height:14px;background:white;border-radius:50%;position:absolute;top:2px;left:2px;transition:transform 0.2s;}
 .toggle.on::after{transform:translateX(18px);}
+.toggle-row.mod-locked{opacity:0.5;}
+.toggle[aria-disabled="true"]{cursor:default;}
+.toggle:focus-visible{outline:2px solid var(--accent2);outline-offset:2px;}
+.toggle.mod-nostate{background:transparent;border-style:dashed;}
+.toggle.mod-nostate::after{display:none;}
+.mod-mark{font-size:10px;color:var(--amber);margin-left:6px;}
+.mod-mark-flag{color:var(--pink);}
+#mod-save:disabled,#mod-undo:disabled{opacity:0.45;cursor:default;transform:none;}
 
 /* STATUS */
 .lead-status{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap;}
@@ -572,13 +580,14 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <button class="btn btn-ghost btn-sm" style="color:var(--pink);" onclick="confirmResetClientPassword()">Reset password</button>
       </div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Active modules</div>
-      <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle" id="toggle-website_builder" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">AI Chatbot</div></div><div class="toggle" id="toggle-chatbot" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Appointments</div></div><div class="toggle" id="toggle-appointments" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Voice AI</div></div><div class="toggle" id="toggle-voice_ai" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Email AI</div></div><div class="toggle" id="toggle-email_ai" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">SMS & Reviews</div></div><div class="toggle" id="toggle-sms_reviews" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">CRM</div></div><div class="toggle" id="toggle-crm" onclick="this.classList.toggle('on')"></div></div>
+      <!-- Module editor (E1d): rows are built by _paintModules() from GET /api/clients/{id}/modules. -->
+      <div id="mod-rows"></div>
+      <div id="mod-msg" class="toggle-desc" style="margin-top:6px;">Select a client to see its modules.</div>
+      <div id="mod-notices"></div>
+      <div style="display:flex;gap:6px;margin-top:10px;">
+        <button class="btn btn-primary btn-sm" id="mod-save" style="display:none;" disabled onclick="saveModules()">Save modules</button>
+        <button class="btn btn-ghost btn-sm" id="mod-undo" style="display:none;" disabled onclick="undoModules()">Undo changes</button>
+      </div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">White-label branding</div>
         <div class="form-group"><label class="form-label">Brand name shown to customers</label><input class="form-input" style="font-size:12px;" id="d-bot-name" value=""></div>
@@ -1492,9 +1501,15 @@ function _updateCRM(leads, ls) {
 const clients = {};
 var _selectedClientId = null;
 function selectClient(el, id) {
+  // Before anything changes: unsaved module edits for another client need an explicit discard
+  // (Cancel keeps the current client selected), and a save in flight blocks the switch.
+  if (!_modMayLeave(id)) return;
   document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   _selectedClientId = id;
+  // The module card follows the selection from the server (never from the cached list row).
+  // Re-clicking the same client keeps an unsaved draft or a save in flight as it is.
+  if (!(_modState && _modState.clientId === id && (_modState.saving || _modIsDirty(_modState)))) _loadModules(id);
   const c = clients[id] || (window._apiClients && window._apiClients[id]);
   if (!c) return;
   const logo = c.logo || (c.business_name || 'CL').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
@@ -2562,14 +2577,353 @@ function _updateDashboardAppts(appts) {
   el.appendChild(frag);
 }
 
-var _moduleKeys = ['website_builder','chatbot','appointments','voice_ai','email_ai','sms_reviews','crm'];
-function _updateClientSidebar(c) {
-  var mods = (c && c.modules && typeof c.modules === 'object') ? c.modules : {};
-  _moduleKeys.forEach(function(key) {
-    var t = document.getElementById('toggle-' + key);
-    if (!t) return;
-    t.classList.toggle('on', mods[key] === true);
+// ═══════ MODULE EDITOR (E1d) ═══════
+// The one audited way to switch a client's modules: GET /api/clients/{id}/modules, edit a local
+// draft, PUT {modules, expected_before}. Keys, locks and requirements always come from the GET
+// (never typed here); only the labels and the lock captions live in this page (decision Q8).
+// Every server or user string reaches the DOM through textContent (_node) or attributes.
+// The _mod* functions up to _modSaveOutcome are pure (no DOM, no globals) so they can be tested
+// outside the browser; _modState and everything after them is the DOM side.
+var _MOD_LABELS = {
+  chatbot: 'AI Chatbot', leads: 'Lead Inbox', crm: 'CRM', appointments: 'Appointments',
+  competitor_intel: 'Competitor Research', voice_ai: 'Voice AI receptionist', email_ai: 'Email AI',
+  sms_reviews: 'Texting & reviews', ai_coach: 'AI Business Coach', website_builder: 'Website Builder',
+  voice_orders: 'Phone order taking'
+};
+var _MOD_LOCK_CAPTIONS = {
+  comes_with_chatbot: 'Comes with the AI Chatbot',
+  not_available_yet: 'Not available yet',
+  not_switchable_yet: "Can't be switched yet"
+};
+var _MOD_PHONE_KEYS = ['voice_ai', 'sms_reviews'];   // turning one on with no number on file gets a confirm line
+var _MOD_RELOAD_MSG = 'Could not save. Reloading the current modules.';
+
+function _modHas(obj, key) {
+  return obj !== null && typeof obj === 'object' && Object.prototype.hasOwnProperty.call(obj, key);
+}
+function _modIsPlainObject(v) {
+  return v !== null && typeof v === 'object' && !Array.isArray(v);
+}
+function _modLabel(key) {
+  return _modHas(_MOD_LABELS, key) ? _MOD_LABELS[key] : String(key);
+}
+// One GET 200 / PUT 200 / modules_changed `current` body -> the editor's state, or null when any
+// part the editor relies on is missing or the wrong type (the card then fails closed, read-only).
+function _modParseState(data) {
+  if (!_modIsPlainObject(data)) return null;
+  var keys = data.module_keys, locks = data.module_locks, requires = data.module_requires, mods = data.modules;
+  if (!Array.isArray(keys) || keys.length === 0) return null;
+  if (!_modIsPlainObject(locks) || !_modIsPlainObject(requires) || !_modIsPlainObject(mods)) return null;
+  var server = {}, seen = {};
+  for (var i = 0; i < keys.length; i++) {
+    var k = keys[i];
+    if (typeof k !== 'string' || k === '' || k === '__proto__' || _modHas(seen, k)) return null;
+    if (!_modHas(mods, k) || typeof mods[k] !== 'boolean') return null;
+    seen[k] = true;
+    server[k] = mods[k];
+  }
+  // expected_before must be the server object exactly as loaded: no extra keys either.
+  if (Object.keys(mods).length !== keys.length) return null;
+  var lockCopy = {}, reqCopy = {};
+  Object.keys(locks).forEach(function(k) { lockCopy[k] = locks[k]; });
+  var reqOk = Object.keys(requires).every(function(k) {
+    reqCopy[k] = requires[k];
+    return _modHas(seen, k) && typeof requires[k] === 'string' && _modHas(seen, requires[k]);
   });
+  if (!reqOk) return null;
+  var draft = {};
+  keys.forEach(function(k) { draft[k] = server[k]; });
+  var notices = Array.isArray(data.notices) ? data.notices.filter(function(n) {
+    return _modIsPlainObject(n) && typeof n.text === 'string' && n.text !== '';
+  }).map(function(n) { return n.text; }) : [];
+  var phone = _modIsPlainObject(data.phone) ? data.phone : {};
+  return {
+    keys: keys.slice(), locks: lockCopy, requires: reqCopy, server: server, draft: draft,
+    phone: { on_file: phone.on_file === true }, canEdit: data.can_edit === true, notices: notices,
+    saving: false, flagged: []
+  };
+}
+// GET answer -> {state} or {error}. A 404 that is not the handler's own "Client not found" means
+// the route itself is missing (backend not deployed): the editor is unavailable.
+function _modLoadOutcome(status, data) {
+  if (status === 200) {
+    var st = _modParseState(data);
+    return st ? { state: st } : { error: 'Could not load module rules' };
+  }
+  if (status === 404) {
+    var detail = _modIsPlainObject(data) ? data.detail : undefined;
+    return { error: detail === 'Client not found' ? 'Client not found.' : 'Module editor unavailable' };
+  }
+  return { error: 'Could not load module rules' };
+}
+// A key may change only when it is not locked and this page has a label for it (fail closed).
+function _modEditable(st, key) {
+  return !_modHas(st.locks, key) && _modHas(_MOD_LABELS, key);
+}
+// The PUT body: every module_keys key; a key that is not editable always sends the server's value.
+function _modSaveBody(st) {
+  var modules = {}, before = {};
+  st.keys.forEach(function(k) {
+    before[k] = st.server[k];
+    modules[k] = _modEditable(st, k) ? st.draft[k] === true : st.server[k];
+  });
+  return { modules: modules, expected_before: before };
+}
+function _modDiff(server, modules, keys) {
+  var on = [], off = [];
+  keys.forEach(function(k) {
+    if (modules[k] !== server[k]) (modules[k] === true ? on : off).push(k);
+  });
+  return { on: on, off: off };
+}
+function _modIsDirty(st) {
+  if (!st || !Array.isArray(st.keys)) return false;
+  var d = _modDiff(st.server, _modSaveBody(st).modules, st.keys);
+  return d.on.length + d.off.length > 0;
+}
+// Mirror of the server's requirement rule over the WHOLE draft (decision Q4): a key that is on
+// while the key it requires is off. Keys come back in module_keys order.
+function _modRequirementProblems(st) {
+  var modules = _modSaveBody(st).modules;
+  return st.keys.filter(function(k) {
+    return _modHas(st.requires, k) && modules[k] === true && modules[st.requires[k]] !== true;
+  });
+}
+function _modRequirementText(st, problems) {
+  return problems.map(function(k) {
+    return _modLabel(k) + ' needs the ' + _modLabel(st.requires[k]);
+  }).join('. ');
+}
+function _modCanSave(st) {
+  return !!st && Array.isArray(st.keys) && st.canEdit === true && !st.saving &&
+    _modIsDirty(st) && _modRequirementProblems(st).length === 0;
+}
+// Everything one row shows. Locked rows: their lock caption only; not_available_yet hides the
+// state, every other lock shows the STORED state read-only (founder decision 2026-10-15).
+function _modRowView(st, key) {
+  var serverOn = st.server[key] === true;
+  var flagged = st.flagged.indexOf(key) !== -1 || _modRequirementProblems(st).indexOf(key) !== -1;
+  var view = { key: key, label: _modLabel(key), locked: true, interactive: false, showState: true,
+               on: serverOn, caption: 'Locked', dirty: false, flagged: flagged };
+  if (_modHas(st.locks, key)) {
+    var reason = st.locks[key];
+    if (typeof reason === 'string' && _modHas(_MOD_LOCK_CAPTIONS, reason)) view.caption = _MOD_LOCK_CAPTIONS[reason];
+    view.showState = reason !== 'not_available_yet';
+    return view;
+  }
+  if (!_modHas(_MOD_LABELS, key)) return view;
+  view.locked = false;
+  view.on = st.draft[key] === true;
+  view.dirty = view.on !== serverOn;
+  view.interactive = st.canEdit === true && !st.saving;
+  view.caption = _modHas(st.requires, key) ? 'Needs ' + _modLabel(st.requires[key]) : '';
+  return view;
+}
+// The confirm() text for a save, or '' when nothing would change.
+function _modConfirmText(st, name) {
+  var d = _modDiff(st.server, _modSaveBody(st).modules, st.keys);
+  if (d.on.length + d.off.length === 0) return '';
+  var lines = ['Save module changes for ' + name + '?', ''];
+  if (d.on.length) lines.push('Turn ON: ' + d.on.map(function(k) { return _modLabel(k); }).join(', '));
+  if (d.off.length) lines.push('Turn OFF: ' + d.off.map(function(k) { return _modLabel(k); }).join(', '));
+  var phoneOn = d.on.some(function(k) { return _MOD_PHONE_KEYS.indexOf(k) !== -1; });
+  if (phoneOn && !(st.phone && st.phone.on_file === true)) {
+    lines.push('', 'This client has no phone number - nothing will be bought.');
+  }
+  lines.push('', 'Plan label and price are not changed.');
+  return lines.join('\n');
+}
+// 409 by detail.code -> what the editor does next: 'rerender' (from detail.current, local edits
+// discarded), 'reget' (local edits discarded) or 'keep' (draft kept, detail.keys rows marked).
+function _mod409Action(detail) {
+  if (!_modIsPlainObject(detail) || typeof detail.code !== 'string') return { kind: 'reget', message: _MOD_RELOAD_MSG };
+  var msg = (typeof detail.message === 'string' && detail.message) ? detail.message : '';
+  if (detail.code === 'modules_changed') {
+    var cur = _modParseState(detail.current);
+    if (!cur) return { kind: 'reget', message: msg || _MOD_RELOAD_MSG };
+    return { kind: 'rerender', message: msg || 'These modules were changed elsewhere. Showing the current settings.', state: cur };
+  }
+  if (detail.code === 'module_requires') {
+    var keys = Array.isArray(detail.keys) ? detail.keys.filter(function(k) { return typeof k === 'string'; }) : [];
+    return { kind: 'keep', message: msg || 'A module needs another module switched on. Nothing was saved.', keys: keys };
+  }
+  if (detail.code === 'module_locked' || detail.code === 'catalogue_changing') {
+    return { kind: 'reget', message: msg || _MOD_RELOAD_MSG };
+  }
+  return { kind: 'reget', message: _MOD_RELOAD_MSG };
+}
+// PUT answer (status 0 = network error) -> {kind, message, type, state?, keys?}.
+function _modSaveOutcome(status, data) {
+  var detail = _modIsPlainObject(data) ? data.detail : undefined;
+  if (status === 200) {
+    var st = _modParseState(data);
+    var said = (_modIsPlainObject(data) && data.changed === false) ? 'No change' : 'Saved';
+    return st ? { kind: 'saved', message: said, type: '', state: st } : { kind: 'reget', message: said, type: '' };
+  }
+  if (status === 409) {
+    var act = _mod409Action(detail);
+    act.type = 'error';
+    return act;
+  }
+  if (status === 400 || status === 422) {
+    var text = (typeof detail === 'string' && detail) ? detail : 'Could not save: the server did not accept these changes.';
+    return { kind: 'keep', message: text, type: 'error', keys: [] };
+  }
+  if (status === 403) return { kind: 'keep', message: 'Only an admin can change modules.', type: 'error', keys: [] };
+  if (status === 404) return { kind: 'keep', message: 'Client not found.', type: 'error', keys: [] };
+  // 503, any other status, or no answer at all: the write is atomic, so re-read what is stored.
+  var t = (typeof detail === 'string' && detail) ? detail : 'Could not confirm the change. Reloading.';
+  return { kind: 'reget', message: t, type: 'error' };
+}
+
+var _modState = null;   // {clientId, loading?, error?, keys, locks, requires, server, draft, phone, canEdit, notices, saving, flagged}
+var _modSeq = 0;        // bumps per GET; an answer for an older GET (or another client) is dropped
+
+function _modMayLeave(nextId) {
+  var st = _modState;
+  if (!st || st.clientId === nextId) return true;
+  if (st.saving) { toast('Still saving modules. Try again in a moment.', 'error'); return false; }
+  return !_modIsDirty(st) || confirm('Discard unsaved module changes?');
+}
+
+async function _loadModules(id) {
+  var seq = ++_modSeq;
+  _modState = { clientId: id, loading: true };
+  _paintModules();
+  var status = 0, data = null;
+  try {
+    var res = await authFetch(API_URL + '/api/clients/' + encodeURIComponent(id) + '/modules');
+    status = res.status;
+    try { data = await res.json(); } catch (e) { data = null; }
+  } catch (e) { status = 0; }
+  if (seq !== _modSeq || _selectedClientId !== id) return;   // stale: the selection moved on
+  if (status === 401) return;                                  // authFetch already logged us out
+  var out = _modLoadOutcome(status, data);
+  _modState = out.state ? Object.assign(out.state, { clientId: id }) : { clientId: id, error: out.error };
+  _paintModules();
+}
+
+function _modRowEl(v) {
+  var row = _node('div', 'toggle-row' + (v.locked ? ' mod-locked' : ''));
+  var left = _node('div');
+  var label = _node('div', 'toggle-label', null, v.label);
+  if (v.dirty) label.appendChild(_node('span', 'mod-mark', null, '• unsaved'));
+  if (v.flagged) label.appendChild(_node('span', 'mod-mark mod-mark-flag', null, '• check'));
+  left.appendChild(label);
+  if (v.caption) left.appendChild(_node('div', 'toggle-desc', null, v.caption));
+  row.appendChild(left);
+  var sw = _node('div', v.showState ? (v.on ? 'toggle on' : 'toggle') : 'toggle mod-nostate');
+  sw.dataset.module = v.key;
+  sw.setAttribute('aria-label', v.label);
+  if (v.showState) {
+    sw.setAttribute('role', 'switch');
+    sw.setAttribute('aria-checked', v.on ? 'true' : 'false');
+  }
+  if (v.interactive) {
+    sw.tabIndex = 0;
+    sw.addEventListener('click', function() { _modToggle(v.key); });
+    sw.addEventListener('keydown', function(e) {
+      if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') { e.preventDefault(); _modToggle(v.key); }
+    });
+  } else {
+    sw.tabIndex = -1;
+    sw.setAttribute('aria-disabled', 'true');
+  }
+  row.appendChild(sw);
+  return row;
+}
+
+function _paintModules() {
+  var rowsEl = document.getElementById('mod-rows');
+  var msgEl = document.getElementById('mod-msg');
+  var noticesEl = document.getElementById('mod-notices');
+  var saveBtn = document.getElementById('mod-save');
+  var undoBtn = document.getElementById('mod-undo');
+  if (!rowsEl || !msgEl || !noticesEl || !saveBtn || !undoBtn) return;
+  var st = _modState;
+  var ready = !!st && Array.isArray(st.keys);
+  rowsEl.textContent = '';
+  noticesEl.textContent = '';
+  var msg = '';
+  if (!st) msg = 'Select a client to see its modules.';
+  else if (st.loading) msg = 'Loading modules...';
+  else if (!ready) msg = st.error || 'Could not load module rules';
+  else {
+    st.keys.forEach(function(key) { rowsEl.appendChild(_modRowEl(_modRowView(st, key))); });
+    st.notices.forEach(function(text) { noticesEl.appendChild(_node('div', 'toggle-desc', 'margin-top:6px;', text)); });
+    var problems = _modRequirementProblems(st);
+    if (problems.length) msg = _modRequirementText(st, problems);
+  }
+  msgEl.textContent = msg;
+  msgEl.style.display = msg ? '' : 'none';
+  var editable = ready && st.canEdit === true;
+  saveBtn.style.display = editable ? '' : 'none';
+  undoBtn.style.display = editable ? '' : 'none';
+  saveBtn.textContent = ready && st.saving ? 'Saving...' : 'Save modules';
+  saveBtn.disabled = !(ready && _modCanSave(st));
+  undoBtn.disabled = !(editable && !st.saving && _modIsDirty(st));
+}
+
+function _modToggle(key) {
+  var st = _modState;
+  if (!st || !Array.isArray(st.keys) || st.saving || st.canEdit !== true || !_modEditable(st, key)) return;
+  st.draft[key] = st.draft[key] !== true;
+  st.flagged = [];
+  _paintModules();
+  // The rows were rebuilt: put keyboard focus back on the same switch.
+  var sws = document.querySelectorAll('#mod-rows .toggle');
+  for (var i = 0; i < sws.length; i++) { if (sws[i].dataset.module === key) { sws[i].focus(); break; } }
+}
+
+function undoModules() {
+  var st = _modState;
+  if (!st || !Array.isArray(st.keys) || st.saving) return;
+  st.keys.forEach(function(k) { st.draft[k] = st.server[k]; });
+  st.flagged = [];
+  _paintModules();
+}
+
+function saveModules() {
+  var st = _modState;
+  if (!_modCanSave(st)) return;
+  var c = window._apiClients && window._apiClients[st.clientId];
+  var text = _modConfirmText(st, (c && (c.business_name || c.name)) || 'this client');
+  if (!text || !confirm(text)) return;
+  _doSaveModules(st);
+}
+
+async function _doSaveModules(st) {
+  var body = _modSaveBody(st);
+  st.saving = true;
+  _paintModules();
+  var status = 0, data = null;
+  try {
+    var res = await authFetch(API_URL + '/api/clients/' + encodeURIComponent(st.clientId) + '/modules', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    status = res.status;
+    try { data = await res.json(); } catch (e) { data = null; }
+  } catch (e) { status = 0; }
+  st.saving = false;
+  if (_modState !== st) return;   // the card was reloaded meanwhile; that answer wins
+  if (status === 401) { _paintModules(); return; }
+  var act = _modSaveOutcome(status, data);
+  if (act.kind === 'saved' || act.kind === 'rerender') {
+    _modState = Object.assign(act.state, { clientId: st.clientId });
+    var cached = window._apiClients && window._apiClients[st.clientId];
+    if (act.kind === 'saved' && cached) cached.modules = Object.assign({}, act.state.server);
+    _paintModules();
+  } else if (act.kind === 'keep') {
+    st.flagged = act.keys || [];
+    _paintModules();
+  } else {
+    _paintModules();
+    _loadModules(st.clientId);
+  }
+  toast(act.message, act.type);
+}
+
+function _updateClientSidebar(c) {
   var botNameEl = document.getElementById('d-bot-name');
   if (botNameEl) botNameEl.value = c.bot_name || c.business_name || '';
 }
@@ -2632,6 +2986,7 @@ function _updateClientPortal(clientsList) {
   document.getElementById('d-name').textContent = first.business_name || 'Client';
   document.getElementById('d-url').textContent = first.website || (first.business_name || 'client').toLowerCase().replace(/\s+/g,'') + '.com';
   _updateClientSidebar(first);
+  _loadModules(first.id);
 }
 
 // Every dashboard data card/list starts resolved in a zero-state so nothing can hang on
