@@ -1,5 +1,7 @@
 /*!
- * Harakel Innovations — Chatbot Widget v1.0
+ * Harakel Innovations — Chatbot Widget v1.1
+ * v1.1: no bubble when the client is unknown or its chat is switched off; "Unavailable" mid-chat.
+ *
  * Embed on any website with:
  *
  *   <script>
@@ -27,12 +29,15 @@
   var SESSION_ID  = 'hk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
 
   var DEFAULT_COLOR = '#6c63ff';
+  // Same neutral text the server sends with available:false; used only if its response is empty.
+  var UNAVAILABLE_TEXT = "Sorry, chat isn't available right now. Please contact the business directly.";
 
   var botName    = cfg.bot_name    || 'Aria';
   var brandColor = cfg.brand_color || DEFAULT_COLOR;
   var greeting   = '';   // set from the client's public config; falls back to the default in init()
   var isOpen     = false;
   var leadCaptured = false;
+  var unavailable  = false;   // set once the server says chat is off; never cleared
 
   /* ── Helpers ─────────────────────────────────────────────────────────────── */
   function esc(s) {
@@ -93,6 +98,7 @@
       '#hk-bot-name{font-size:14px;font-weight:600;color:#f0f0f5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '#hk-status{font-size:11px;color:#00d9a3;display:flex;align-items:center;gap:4px;}',
       '#hk-status-dot{width:6px;height:6px;border-radius:50%;background:#00d9a3;flex-shrink:0;}',
+      '#hk-status.hk-off{color:#5a5a72;}#hk-status.hk-off #hk-status-dot{background:#5a5a72;}',
       '#hk-close{background:transparent;border:none;cursor:pointer;',
       'color:#5a5a72;font-size:18px;line-height:1;padding:4px;transition:color .15s;',
       'display:flex;align-items:center;justify-content:center;flex-shrink:0;}',
@@ -227,6 +233,20 @@
     if (msgs) msgs.scrollTop = msgs.scrollHeight;
   }
 
+  // The server switched chat off mid-session. A calm, final state: no error
+  // styling and no retry prompt, because retrying would get the same answer.
+  function setUnavailable() {
+    unavailable = true;
+    var input   = document.getElementById('hk-input');
+    var sendBtn = document.getElementById('hk-send');
+    var status  = document.getElementById('hk-status');
+    input.disabled    = true;
+    input.placeholder = 'Chat unavailable';
+    sendBtn.disabled  = true;
+    status.classList.add('hk-off');
+    status.lastChild.nodeValue = 'Unavailable';   // the text node after #hk-status-dot
+  }
+
   /* ── Send ────────────────────────────────────────────────────────────────── */
   function sendMessage(text) {
     text = (text || '').trim();
@@ -255,6 +275,14 @@
       return res.json();
     })
     .then(function (data) {
+      // Unknown client or chat switched off. Strict check: an older backend
+      // never sends available:false, so v1.1 behaves exactly like v1.0 there.
+      if (data && data.available === false) {
+        showTyping(false);
+        appendMsg(data.response || UNAVAILABLE_TEXT, 'bot');
+        setUnavailable();
+        return;
+      }
       showTyping(false);
       appendMsg(data.response || "I didn't catch that — could you rephrase?", 'bot');
       if (data.lead_captured && !leadCaptured) leadCaptured = true;
@@ -264,6 +292,7 @@
       appendMsg("Sorry, I'm having trouble connecting right now. Please try again in a moment.", 'bot');
     })
     .finally(function () {
+      if (unavailable) return;   // setUnavailable() owns the controls from here
       sendBtn.disabled = false;
       document.getElementById('hk-input').focus();
     });
@@ -344,17 +373,23 @@
     // init() runs from .finally(), so the widget renders once with final branding
     // (no restyle flash) — but that also means a hung request would mean no widget
     // at all, hence the abort timeout below.
-    var ctrl  = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 4000);
+    // A 404 (unknown or deleted client) or chat_available === false renders
+    // nothing. A timeout, network error or 503 still renders, as in v1.0; the
+    // message endpoint enforces the switch either way.
+    var ctrl   = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer  = setTimeout(function () { if (ctrl) ctrl.abort(); }, 4000);
+    var hidden = false;
 
     fetch(API_URL + '/public/clients/' + encodeURIComponent(CLIENT_ID) + '/public-config',
           ctrl ? { signal: ctrl.signal } : undefined)
       .then(function (res) {
+        if (res.status === 404) { hidden = true; return null; }
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
       })
       .then(function (data) {
         if (!data) return;
+        if (data.chat_available === false) hidden = true;
         if (data.bot_name         && !cfg.bot_name)    botName    = data.bot_name;
         if (data.brand_color      && !cfg.brand_color) brandColor = data.brand_color;
         if (data.chatbot_greeting)                     greeting   = data.chatbot_greeting;
@@ -364,7 +399,14 @@
         // can't fail silently the way the old admin-only /api/clients/ call did.
         console.warn('[HarakelChatbot] Could not load public config, using defaults:', e && e.message);
       })
-      .finally(function () { clearTimeout(timer); init(); });
+      .finally(function () {
+        clearTimeout(timer);
+        if (hidden) {
+          console.info('[HarakelChatbot] Chat is not enabled for this site.');
+          return;
+        }
+        init();
+      });
   }
 
   if (document.readyState === 'loading') {
