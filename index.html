@@ -9,11 +9,11 @@ if (HERO_MODE === 'procedural') document.documentElement.classList.add('hero-pro
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Harakel Innovations — Your AI Front Desk</title>
-<meta name="description" content="Harakel answers your missed calls, captures every lead, and books appointments 24/7 — AI chatbot, voice AI, missed-call text-back, CRM, SMS & reviews. Setup included, month-to-month.">
+<meta name="description" content="Harakel answers your calls, captures every lead, and texts back missed callers 24/7 — AI chatbot, voice AI, missed-call text-back, SMS & reviews. Setup included, month-to-month.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://www.harakel-innovations.com/">
 <meta property="og:title" content="Harakel Innovations — Your AI Front Desk">
-<meta property="og:description" content="Your AI front desk. Never miss another customer. Calls answered, leads captured, appointments booked — 24/7.">
+<meta property="og:description" content="Your AI front desk. Never miss another customer. Calls answered, leads captured, missed callers texted back — 24/7.">
 <meta name="twitter:card" content="summary">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -196,6 +196,7 @@ html.js .phone.anim .typing-msg{transition:none;}
 .price-features li{display:flex;align-items:flex-start;gap:9px;font-size:13px;color:var(--text2);padding:5px 0;line-height:1.4;}
 .price-features li .check{width:16px;height:16px;border-radius:50%;background:var(--green-dim);color:var(--green);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
 .price-card.featured .price-features li .check{background:var(--accent-glow);color:var(--accent2);}
+.soon{display:inline-block;flex-shrink:0;white-space:nowrap;vertical-align:middle;font-size:11px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;line-height:1.4;color:var(--text2);border:1px solid var(--border2);border-radius:999px;padding:1px 7px;}
 .price-card .btn{width:100%;}
 .pricing-more{text-align:center;margin-top:30px;}
 .pricing-more a{font-size:14px;color:var(--accent2);text-decoration:none;}
@@ -309,7 +310,7 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
     <div>
       <div class="hero-badge">✦ AI business automation</div>
       <h1>Your AI front desk.<br><span class="grad">Never miss another customer.</span></h1>
-      <p class="hero-sub">Harakel answers your missed calls, captures every lead, and books appointments 24/7 — so your business keeps growing even when nobody can pick up the phone.</p>
+      <p class="hero-sub">Harakel answers your calls, captures every lead, and texts back missed callers 24/7 — so your business keeps growing even when nobody can pick up the phone.</p>
       <div class="hero-ctas">
         <a href="mailto:andrew@harakel-innovations.com" class="btn btn-primary btn-lg">Book a call</a>
         <a href="/signup" class="btn btn-ghost btn-lg">Get started</a>
@@ -328,11 +329,11 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
               <div><div class="call-title" id="call-title">Missed call</div><div class="call-num">(555) 014-2391</div></div>
             </div>
             <div class="sms-thread">
-              <div class="sms-msg out first" id="msg1"><span id="msg1-text">Hi! Sorry we missed your call — this is the AI assistant for Your Business. Want me to book you a time? I can get you in this week.</span></div>
+              <div class="sms-msg out first" id="msg1"><span id="msg1-text">Hi! Sorry we missed your call — this is the AI assistant for Your Business. Want me to have the team find you a time this week?</span></div>
               <div class="typing-msg" id="typing" aria-hidden="true"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>
               <div class="sms-msg in" id="msg2">Yes — tomorrow afternoon?</div>
-              <div class="sms-msg out" id="msg3">Done — you're booked for 2:30 PM tomorrow. See you then!</div>
-              <div class="booked-chip" id="booked-chip">✓ Appointment booked</div>
+              <div class="sms-msg out" id="msg3">Done — I've passed your request to the team. They'll confirm shortly.</div>
+              <div class="booked-chip" id="booked-chip">✓ Request captured</div>
             </div>
           </div>
         </div>
@@ -402,7 +403,7 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
   <div class="wrap">
     <div class="section-head reveal">
       <h2>Everything your front desk does — automated</h2>
-      <p>One platform that answers, books, follows up, and remembers. Tailored to your business during onboarding.</p>
+      <p>One platform that answers, follows up, and remembers. Tailored to your business during onboarding.</p>
     </div>
     <div class="features-grid">
       <div class="feature-card reveal" style="--d:0s;">
@@ -413,22 +414,22 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
       <div class="feature-card reveal" style="--d:.06s;">
         <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><line x1="17" y1="1" x2="23" y2="7"/><line x1="23" y1="1" x2="17" y2="7"/></svg></div>
         <h3>Missed-Call Text-Back</h3>
-        <p>When a call goes unanswered, your AI texts the caller back within seconds — so the conversation, and the booking, never goes cold.</p>
+        <p>When a call goes unanswered, your AI texts the caller back within seconds — so the conversation, and the customer, never goes cold.</p>
       </div>
       <div class="feature-card reveal" style="--d:.12s;">
         <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg></div>
-        <h3>Smart Appointments</h3>
-        <p>Customers book straight into your calendar, and reminders go out automatically. Fewer back-and-forths, fewer no-shows.</p>
+        <h3>Appointment Calendar</h3>
+        <p>All your appointments in one calendar in your portal. AI booking is coming soon.</p>
       </div>
       <div class="feature-card reveal" style="--d:.18s;">
         <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <h3>Built-in CRM</h3>
-        <p>Every customer, conversation, and lead in one place — with a pipeline that tracks each one from first hello to booked.</p>
+        <h3><span class="soon">Coming soon</span> Built-in CRM</h3>
+        <p>Coming soon: every customer, conversation, and lead in one place, with a pipeline to track each one.</p>
       </div>
       <div class="feature-card reveal" style="--d:.24s;">
         <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/><path d="M15.05 5A5 5 0 0 1 19 8.95"/><path d="M15.05 1A9 9 0 0 1 23 8.94"/></svg></div>
         <h3>Voice AI Receptionist</h3>
-        <p>An AI that answers the phone when you can't — politely, accurately, and ready to take the booking.</p>
+        <p>An AI that answers the phone when you can't — politely and accurately — and makes sure no caller goes unanswered.</p>
       </div>
       <div class="feature-card reveal" style="--d:.3s;">
         <div class="feature-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div>
@@ -456,7 +457,7 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
       </div>
       <div class="step reveal" style="--d:.16s;">
         <div class="step-num">3</div>
-        <div><h3>Your AI gets to work.</h3><p>Answering, capturing, and booking — around the clock, from day one.</p></div>
+        <div><h3>Your AI gets to work.</h3><p>Answering, capturing, and following up — around the clock, from day one.</p></div>
       </div>
     </div>
   </div>
@@ -504,7 +505,8 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
         <ul class="price-features">
           <li><span class="check">✓</span> AI chatbot</li>
           <li><span class="check">✓</span> Lead capture</li>
-          <li><span class="check">✓</span> CRM &amp; appointments</li>
+          <li><span class="check">✓</span> Appointment calendar</li>
+          <li><span class="soon">Coming soon</span> CRM</li>
           <li><span class="check">✓</span> Competitor research tool</li>
         </ul>
         <a href="/signup?plan=starter" class="btn btn-ghost">Get started</a>
@@ -527,12 +529,13 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
           <li><span class="check">✓</span> Everything in Starter</li>
           <li><span class="check">✓</span> Voice AI receptionist</li>
           <li><span class="check">✓</span> SMS &amp; review automation</li>
-          <li><span class="check">✓</span> Email automation</li>
+          <li><span class="soon">Coming soon</span> Email automation</li>
           <li><span class="check">✓</span> AI business coach</li>
         </ul>
         <a href="/signup?plan=pro" class="btn btn-ghost">Get started</a>
       </div>
     </div>
+    <p class="reveal" style="text-align:center;font-size:12px;color:var(--text3);margin-top:22px;">Texting features switch on once your number's carrier registration is approved, typically 1–3 weeks.</p>
     <div class="pricing-more reveal"><a href="/pricing">See full pricing →</a></div>
   </div>
 </section>
@@ -546,7 +549,7 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
     <div class="faq reveal">
       <div class="faq-item">
         <h3><button class="faq-q" aria-expanded="false" aria-controls="faq-a1">Do I need technical skills?<span class="fi" aria-hidden="true">+</span></button></h3>
-        <div class="faq-a" id="faq-a1"><div class="faq-a-inner"><p>No. We set everything up for you — the AI, the booking flow, the website widget. If you can answer a few questions about your business, you're set.</p></div></div>
+        <div class="faq-a" id="faq-a1"><div class="faq-a-inner"><p>No. We set everything up for you — the AI, the appointment calendar, the website widget. If you can answer a few questions about your business, you're set.</p></div></div>
       </div>
       <div class="faq-item">
         <h3><button class="faq-q" aria-expanded="false" aria-controls="faq-a2">How fast is setup?<span class="fi" aria-hidden="true">+</span></button></h3>
@@ -588,7 +591,7 @@ html.motion-ok .reveal.in{opacity:1;transform:none;}
     <div class="footer-grid">
       <div>
         <div class="footer-logo">Harakel Innovations</div>
-        <p class="footer-tag">AI business automation — calls answered, leads captured, appointments booked.</p>
+        <p class="footer-tag">AI business automation — calls answered, leads captured, missed callers texted back.</p>
       </div>
       <div class="footer-col">
         <h4>Product</h4>
