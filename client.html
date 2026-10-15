@@ -1088,6 +1088,9 @@ function showDashboard(clientInfo, mustChangePassword) {
   initPortalTabs(clientInfo && clientInfo.client_id);
 }
 
+// A module counts as included only when it is a real JSON true — never a truthy string like "false".
+function _modOn(m, k) { return !!m && typeof m === 'object' && m[k] === true; }
+
 async function loadDashboardData(clientId, clientInfo) {
   loadCompetitors(clientId);
   loadCoachHistory(clientId);
@@ -1183,9 +1186,9 @@ async function loadDashboardData(clientId, clientInfo) {
   var chatbotEntitledFallback = false;
   if (meRes.status === 'fulfilled' && meRes.value.ok) {
     var me = await meRes.value.json();
-    chatbotEntitledFallback = !!(me.modules && me.modules.chatbot);
+    chatbotEntitledFallback = _modOn(me && me.modules, 'chatbot');
   } else if (clientInfo && clientInfo.modules) {
-    chatbotEntitledFallback = !!clientInfo.modules.chatbot;
+    chatbotEntitledFallback = _modOn(clientInfo.modules, 'chatbot');
   }
 
   var botInfo = null;
@@ -1205,8 +1208,8 @@ async function loadDashboardData(clientId, clientInfo) {
   // plan unknown — neither sign-in path carries modules today; clientInfo.modules is read in case one ever
   // does — and then the card says so and offers a Retry that asks again.
   var voiceEnt = null;
-  if (meRes.status === 'fulfilled' && meRes.value.ok && me && typeof me === 'object') voiceEnt = !!(me.modules && me.modules.voice_ai);
-  else if (clientInfo && clientInfo.modules && typeof clientInfo.modules === 'object') voiceEnt = !!clientInfo.modules.voice_ai;
+  if (meRes.status === 'fulfilled' && meRes.value.ok && me && typeof me === 'object') voiceEnt = _modOn(me.modules, 'voice_ai');
+  else if (clientInfo && clientInfo.modules && typeof clientInfo.modules === 'object') voiceEnt = _modOn(clientInfo.modules, 'voice_ai');
   _rtLoad(clientId, voiceEnt, rtLine);
 }
 
@@ -1343,10 +1346,11 @@ function _renderChatbotCard(info) {
 // Who answers the salon's calls: Nova every time, or the owner's phone first with Nova as the backup
 // (clients.call_routing_mode, read and set through GET/PUT /api/voice/{id}/routing). Built like the chatbot
 // card above and bound by the same rule — it never claims more than the data supports:
-//   * the PLAN says whether phone answering is included at all: modules.voice_ai from /me. A row whose
-//     modules column is NULL is a known answer (nothing is included), as the backend's own gate reads it;
-//     only a failed /me leaves the plan unknown, and then the card says so and offers a Retry. The routing
-//     endpoint itself doesn't check the plan, so this card must.
+//   * the PLAN says whether phone answering is included at all: /me's strict voice_ai flag (only a real
+//     true counts — see _modOn). A row whose modules column is NULL is a known answer (nothing is included),
+//     as the backend's own gate reads it; only a failed /me leaves the plan unknown, and then the card says
+//     so and offers a Retry. The backend enforces the plan too (the routing GET's nova_available, the
+//     routing PUT's 403).
 //   * the SERVER says which mode is current, whether "ring me first" may be chosen by this account right
 //     now (owner_first_available — off for every salon until call routing step 4 ships; Harakel can set it
 //     for testing) and whether a mobile number it can dial is on file (owner_phone_on_file). With
@@ -1474,7 +1478,7 @@ async function _rtRetry(st) {
     var res = await authedFetch(API + '/api/client-auth/me');
     if (res.ok) {
       var me = await res.json();
-      if (me && typeof me === 'object') ent = !!(me.modules && me.modules.voice_ai);   // NULL modules = nothing included
+      if (me && typeof me === 'object') ent = _modOn(me.modules, 'voice_ai');   // NULL modules = nothing included
     }
   } catch (e) {
     if (e && e.message === 'Unauthorized') return;

@@ -572,12 +572,12 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <button class="btn btn-ghost btn-sm" style="color:var(--pink);" onclick="confirmResetClientPassword()">Reset password</button>
       </div>
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Active modules</div>
-      <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle on" id="toggle-website_builder" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">AI Chatbot</div></div><div class="toggle on" id="toggle-chatbot" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Appointments</div></div><div class="toggle on" id="toggle-appointments" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Voice AI</div></div><div class="toggle on" id="toggle-voice_ai" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">Email AI</div></div><div class="toggle on" id="toggle-email_ai" onclick="this.classList.toggle('on')"></div></div>
-      <div class="toggle-row"><div><div class="toggle-label">SMS & Reviews</div></div><div class="toggle on" id="toggle-sms_reviews" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Website Builder</div></div><div class="toggle" id="toggle-website_builder" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">AI Chatbot</div></div><div class="toggle" id="toggle-chatbot" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Appointments</div></div><div class="toggle" id="toggle-appointments" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Voice AI</div></div><div class="toggle" id="toggle-voice_ai" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">Email AI</div></div><div class="toggle" id="toggle-email_ai" onclick="this.classList.toggle('on')"></div></div>
+      <div class="toggle-row"><div><div class="toggle-label">SMS & Reviews</div></div><div class="toggle" id="toggle-sms_reviews" onclick="this.classList.toggle('on')"></div></div>
       <div class="toggle-row"><div><div class="toggle-label">CRM</div></div><div class="toggle" id="toggle-crm" onclick="this.classList.toggle('on')"></div></div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">White-label branding</div>
@@ -1505,7 +1505,7 @@ function selectClient(el, id) {
   document.getElementById('d-logo').style.background = grad;
   document.getElementById('d-name').textContent = name;
   document.getElementById('d-url').textContent = url;
-  if (c.modules) _updateClientSidebar(c);
+  _updateClientSidebar(c);
   toast('Viewing: ' + name);
 }
 
@@ -2564,11 +2564,11 @@ function _updateDashboardAppts(appts) {
 
 var _moduleKeys = ['website_builder','chatbot','appointments','voice_ai','email_ai','sms_reviews','crm'];
 function _updateClientSidebar(c) {
-  var mods = c.modules || {};
+  var mods = (c && c.modules && typeof c.modules === 'object') ? c.modules : {};
   _moduleKeys.forEach(function(key) {
     var t = document.getElementById('toggle-' + key);
     if (!t) return;
-    if (mods[key]) { t.classList.add('on'); } else { t.classList.remove('on'); }
+    t.classList.toggle('on', mods[key] === true);
   });
   var botNameEl = document.getElementById('d-bot-name');
   if (botNameEl) botNameEl.value = c.bot_name || c.business_name || '';
