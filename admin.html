@@ -99,6 +99,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 .mod-mark{font-size:10px;color:var(--amber);margin-left:6px;}
 .mod-mark-flag{color:var(--pink);}
 #mod-save:disabled,#mod-undo:disabled{opacity:0.45;cursor:default;transform:none;}
+#pid-save:disabled,#pid-remove:disabled{opacity:0.45;cursor:default;transform:none;}
+#pid-open{text-decoration:none;display:inline-block;} #pid-open:not([href]){opacity:0.45;cursor:default;pointer-events:none;}
 
 /* STATUS */
 .lead-status{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;white-space:nowrap;}
@@ -587,6 +589,26 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div style="display:flex;gap:6px;margin-top:10px;">
         <button class="btn btn-primary btn-sm" id="mod-save" style="display:none;" disabled onclick="saveModules()">Save modules</button>
         <button class="btn btn-ghost btn-sm" id="mod-undo" style="display:none;" disabled onclick="undoModules()">Undo changes</button>
+      </div>
+      <!-- Google Place ID (E1e-2b): admin only, painted by _paintPlaceId(). No maxlength on purpose:
+           a silently truncated paste could still pass the pattern and save the wrong business. -->
+      <div id="pid-block" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Google Place ID</div>
+        <input class="form-input" style="font-size:12px;" id="pid-input" value="" autocomplete="off" spellcheck="false" aria-label="Google Place ID" oninput="_pidInput()">
+        <div class="toggle-desc" style="margin-top:6px;">Used for review requests. Nothing is sent without it.</div>
+        <div id="pid-status" class="toggle-desc" style="margin-top:6px;display:none;"></div>
+        <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+          <a class="btn btn-ghost btn-sm" id="pid-open" target="_blank" rel="noopener noreferrer" aria-disabled="true">Open review page</a>
+          <button class="btn btn-primary btn-sm" id="pid-save" disabled onclick="savePlaceId()">Save</button>
+          <button class="btn btn-ghost btn-sm" id="pid-remove" style="display:none;color:var(--pink);" onclick="askRemovePlaceId()">Remove</button>
+        </div>
+        <div id="pid-confirm" style="display:none;margin-top:8px;">
+          <div class="toggle-desc">Remove this Place ID? Review requests will stop for this salon.</div>
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <button class="btn btn-ghost btn-sm" style="color:var(--pink);" onclick="removePlaceId()">Yes, remove</button>
+            <button class="btn btn-ghost btn-sm" onclick="cancelRemovePlaceId()">Cancel</button>
+          </div>
+        </div>
       </div>
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">White-label branding</div>
@@ -1501,6 +1523,11 @@ function _updateCRM(leads, ls) {
 const clients = {};
 var _selectedClientId = null;
 function selectClient(el, id) {
+  // A Place ID save in flight blocks the switch, as a module save does.
+  if (_pidState && _pidState.saving && _pidState.clientId !== id) {
+    toast('Still saving the Place ID. Try again in a moment.', 'error');
+    return;
+  }
   // Before anything changes: unsaved module edits for another client need an explicit discard
   // (Cancel keeps the current client selected), and a save in flight blocks the switch.
   if (!_modMayLeave(id)) return;
@@ -1510,6 +1537,8 @@ function selectClient(el, id) {
   // The module card follows the selection from the server (never from the cached list row).
   // Re-clicking the same client keeps an unsaved draft or a save in flight as it is.
   if (!(_modState && _modState.clientId === id && (_modState.saving || _modIsDirty(_modState)))) _loadModules(id);
+  // The Place ID block follows the selection: another client starts from ITS saved value.
+  if (!_pidState || _pidState.clientId !== id) _resetPlaceId(id);
   const c = clients[id] || (window._apiClients && window._apiClients[id]);
   if (!c) return;
   const logo = c.logo || (c.business_name || 'CL').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
@@ -2923,6 +2952,166 @@ async function _doSaveModules(st) {
   toast(act.message, act.type);
 }
 
+// ═══════ GOOGLE PLACE ID (E1e-2b) ═══════
+// The salon's Google Place ID is the ONLY source of every review link (E1e-2): with none saved,
+// no review request (email or text) is sent. PATCH /api/clients/{id} is admin-only, so the block
+// shows for the admin role only. _PID_RE mirrors the backend's whole-value rule; the backend never
+// trims or repairs, so the page trims and sends only a value that already passes. Every value
+// reaches the DOM through .value / .textContent / setAttribute, never innerHTML.
+var _PID_RE = /^[A-Za-z0-9_-]{10,255}$/;
+var _PID_REVIEW_BASE = 'https://search.google.com/local/writereview?placeid=';
+var _PID_REMOVED_MSG = 'Removed — review requests will not send for this salon';
+
+var _pidState = null;   // {clientId, known, saved, saving ('save'|'remove'|false), confirming, status, statusType}
+
+function _pidIsAdmin() {
+  return (localStorage.getItem('hk_role') || '').toLowerCase().trim() === 'admin';
+}
+// The saved value after a 200: the server's row when it carries the field, else what was sent.
+function _pidSavedFrom(data, sent) {
+  var row = _modIsPlainObject(data) ? data.client : null;
+  if (_modHas(row, 'google_place_id')) return typeof row.google_place_id === 'string' ? row.google_place_id : '';
+  return sent === null ? '' : sent;
+}
+// PATCH answer (status 0 = no answer) -> {ok, saved} or {ok:false, message}.
+function _pidSaveOutcome(status, data, sent) {
+  if (status === 200) return { ok: true, saved: _pidSavedFrom(data, sent) };
+  var detail = _modIsPlainObject(data) ? data.detail : undefined;
+  if (typeof detail === 'string' && detail) return { ok: false, message: detail };
+  if (status === 403) return { ok: false, message: 'Only an admin can change the Place ID.' };
+  if (status === 404) return { ok: false, message: 'Client not found.' };
+  if (status === 400 || status === 422) return { ok: false, message: 'The server did not accept this Place ID. Nothing was saved.' };
+  return { ok: false, message: 'Could not confirm the change. Reload to see the saved Place ID.' };
+}
+
+// Every client selection starts the block from THAT client's saved value, with no status. A row
+// without the field (not an admin read) leaves the block hidden rather than claiming "none saved".
+function _resetPlaceId(id) {
+  var c = window._apiClients && window._apiClients[id];
+  var saved = (c && typeof c.google_place_id === 'string') ? c.google_place_id : '';
+  _pidState = { clientId: id, known: _modHas(c, 'google_place_id'), saved: saved,
+                saving: false, confirming: false, status: '', statusType: '' };
+  var input = document.getElementById('pid-input');
+  if (input) input.value = saved;
+  _paintPlaceId();
+}
+
+function _paintPlaceId() {
+  var block = document.getElementById('pid-block');
+  var input = document.getElementById('pid-input');
+  var statusEl = document.getElementById('pid-status');
+  var openEl = document.getElementById('pid-open');
+  var saveBtn = document.getElementById('pid-save');
+  var removeBtn = document.getElementById('pid-remove');
+  var confirmEl = document.getElementById('pid-confirm');
+  if (!block || !input || !statusEl || !openEl || !saveBtn || !removeBtn || !confirmEl) return;
+  var st = _pidState;
+  var show = !!st && st.known === true && _pidIsAdmin();
+  block.style.display = show ? '' : 'none';
+  if (!show) return;
+  var value = input.value.trim();
+  var valid = _PID_RE.test(value);
+  // Checked BEFORE saving: the link follows the current input, not the saved value.
+  if (valid) {
+    openEl.setAttribute('href', _PID_REVIEW_BASE + encodeURIComponent(value));
+    openEl.removeAttribute('aria-disabled');
+  } else {
+    openEl.removeAttribute('href');
+    openEl.setAttribute('aria-disabled', 'true');
+  }
+  input.disabled = !!st.saving;
+  saveBtn.disabled = !!st.saving || st.confirming || !valid || value === st.saved;
+  removeBtn.style.display = (st.saved !== '' && !st.confirming) ? '' : 'none';
+  removeBtn.disabled = !!st.saving;
+  confirmEl.style.display = st.confirming ? '' : 'none';
+  var msg = st.status, isError = st.statusType === 'error';
+  if (st.saving) msg = st.saving === 'remove' ? 'Removing...' : 'Saving...';
+  else if (!msg) {
+    if (value !== '' && !valid) msg = "Not a valid Place ID: 10-255 letters, digits, '-' or '_'.";
+    else if (value === '' && st.saved !== '') msg = 'To clear the saved Place ID, use Remove.';
+    else if (st.saved === '') msg = 'None saved. Review requests will not send for this salon.';
+    else if (value === st.saved && !_PID_RE.test(st.saved)) msg = 'The saved value is not a valid Place ID, so review requests will not send.';
+  }
+  statusEl.textContent = msg || '';
+  statusEl.style.color = (isError && !st.saving) ? 'var(--pink)' : '';
+  statusEl.style.display = msg ? '' : 'none';
+}
+
+function _pidInput() {
+  var st = _pidState;
+  if (!st || st.saving) return;
+  st.status = '';
+  st.statusType = '';
+  st.confirming = false;
+  _paintPlaceId();
+}
+
+function savePlaceId() {
+  var st = _pidState;
+  var input = document.getElementById('pid-input');
+  if (!st || st.saving || !input || !_pidIsAdmin()) return;
+  var value = input.value.trim();
+  if (!_PID_RE.test(value) || value === st.saved) return;
+  _doPlaceIdPatch(st, value);
+}
+
+// In-page confirmation (no native dialog): Remove reveals "Yes, remove" / "Cancel" in the block.
+function askRemovePlaceId() {
+  var st = _pidState;
+  if (!st || st.saving || st.saved === '') return;
+  st.confirming = true;
+  st.status = '';
+  st.statusType = '';
+  _paintPlaceId();
+}
+function cancelRemovePlaceId() {
+  var st = _pidState;
+  if (!st || st.saving) return;
+  st.confirming = false;
+  _paintPlaceId();
+}
+function removePlaceId() {
+  var st = _pidState;
+  if (!st || st.saving || !st.confirming || st.saved === '' || !_pidIsAdmin()) return;
+  _doPlaceIdPatch(st, null);
+}
+
+async function _doPlaceIdPatch(st, value) {
+  st.saving = value === null ? 'remove' : 'save';
+  st.confirming = false;
+  st.status = '';
+  st.statusType = '';
+  _paintPlaceId();
+  var status = 0, data = null;
+  try {
+    var res = await authFetch(API_URL + '/api/clients/' + encodeURIComponent(st.clientId), {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ google_place_id: value })
+    });
+    status = res.status;
+    try { data = await res.json(); } catch (e) { data = null; }
+  } catch (e) { status = 0; }
+  st.saving = false;
+  if (status === 401) { _paintPlaceId(); return; }   // authFetch already logged us out
+  var out = _pidSaveOutcome(status, data, value);
+  // The cached row feeds the next selection, so it follows a success even if the block moved on.
+  var cached = window._apiClients && window._apiClients[st.clientId];
+  if (out.ok && cached) cached.google_place_id = out.saved === '' ? null : out.saved;
+  if (_pidState !== st) return;   // the block was reset meanwhile (the client list reloaded)
+  if (out.ok) {
+    st.saved = out.saved;
+    var input = document.getElementById('pid-input');
+    if (input) input.value = st.saved;
+    st.status = st.saved === '' ? _PID_REMOVED_MSG : 'Saved';
+    st.statusType = '';
+  } else {
+    st.status = out.message;
+    st.statusType = 'error';
+    toast(out.message, 'error');
+  }
+  _paintPlaceId();
+}
+
 function _updateClientSidebar(c) {
   var botNameEl = document.getElementById('d-bot-name');
   if (botNameEl) botNameEl.value = c.bot_name || c.business_name || '';
@@ -2987,6 +3176,7 @@ function _updateClientPortal(clientsList) {
   document.getElementById('d-url').textContent = first.website || (first.business_name || 'client').toLowerCase().replace(/\s+/g,'') + '.com';
   _updateClientSidebar(first);
   _loadModules(first.id);
+  _resetPlaceId(first.id);
 }
 
 // Every dashboard data card/list starts resolved in a zero-state so nothing can hang on
