@@ -1,0 +1,8 @@
+# Vercel publishes ONLY what this list allows (allowlist). Everything else in
+# the repo (CLAUDE.md, .claude/, scripts/, docs) is never uploaded or served.
+# A new public file type must be added here on purpose.
+/*
+!*.html
+!assets
+!chatbot-widget.js
+!vercel.json

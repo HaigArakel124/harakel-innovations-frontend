@@ -1,4 +1,5 @@
-.claude/
+.claude/*
+!.claude/settings.json
 .env
 .env.local
 .DS_Store

@@ -1,0 +1,18 @@
+#!/bin/sh
+# Harakel guard. Turned on once per machine with:
+#   git config core.hooksPath scripts/git-hooks
+# Claude Code may push feature branches. Only the founder moves main,
+# because pushing main deploys production (Vercel for this repo).
+# Claude Code sets CLAUDECODE=1 and CLAUDE_CODE_CHILD_SESSION=1 in every
+# command it runs, so a push to main from Claude Code is refused here.
+if [ -n "$CLAUDECODE" ] || [ -n "$CLAUDE_CODE_CHILD_SESSION" ]; then
+  while read local_ref local_sha remote_ref remote_sha; do
+    case "$remote_ref" in
+      refs/heads/main|refs/heads/master)
+        echo "BLOCKED by scripts/git-hooks/pre-push: Claude Code may not push main (main = production deploy). The founder ships main from a plain PowerShell window." >&2
+        exit 1
+        ;;
+    esac
+  done
+fi
+exit 0

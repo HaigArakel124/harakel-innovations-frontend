@@ -1,0 +1,2 @@
+# Git hooks must keep LF line endings (Git for Windows runs them with sh).
+scripts/git-hooks/* text eol=lf
