@@ -93,8 +93,10 @@
   footer { border-top: 1px solid var(--border); padding: 28px 48px; display: flex; align-items: center; justify-content: space-between; }
   footer .footer-logo { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; background: linear-gradient(135deg, #6c63ff, #00d9a3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   footer p { font-size: 12px; color: var(--text3); }
-  footer p a { color: var(--text3); text-decoration: none; }
-  footer p a:hover { color: var(--text2); }
+  footer p a { color: var(--text2); text-decoration: none; }
+  footer p a:hover { color: var(--text); }
+  /* Room under the footer so the fixed chat bubble (bottom-right) never covers its links. */
+  footer { padding-bottom: 104px; }
 </style>
 </head>
 <body>
