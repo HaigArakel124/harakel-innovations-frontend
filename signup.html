@@ -295,6 +295,19 @@ function phoneSane(v){ return (v.match(/\d/g)||[]).length >= 7; }
 function phoneDigits(v){ return (String(v).match(/\d/g)||[]).join(''); }
 function bizPhoneOk(v){ var d=phoneDigits(v); return d.length===10 || (d.length===11 && d.charAt(0)==='1'); }
 
+// Client-side mirror of the backend's to_e164_nanp (routes/_phone.py). The server records SMS
+// consent only for a number it can turn into +1 and ten digits, so a ticked box must pass the same
+// rule: with "+", only +1 and ten digits; otherwise 10 digits, or 11 starting with 1; and the area
+// code and the exchange both start with 2-9. Change both together.
+function smsPhoneOk(v){
+  var t=String(v).trim(), d=phoneDigits(t), n;
+  if(t.charAt(0)==='+'){ if(!(d.length===11 && d.charAt(0)==='1')) return false; n=d.slice(1); }
+  else if(d.length===11 && d.charAt(0)==='1') n=d.slice(1);
+  else if(d.length===10) n=d;
+  else return false;
+  return '01'.indexOf(n.charAt(0))<0 && '01'.indexOf(n.charAt(3))<0;
+}
+
 function validateStep(n){
   clearError();
   if(n===1){
@@ -308,8 +321,8 @@ function validateStep(n){
     if(!val('phone')) return fail('Please enter your business phone number.', 'phone');
     if(!bizPhoneOk(val('phone'))) return fail('That business phone number doesn\'t look right. Please enter all 10 digits, including the area code.', 'phone');
     if(val('owner_phone') && !phoneSane(val('owner_phone'))) return fail('That mobile number looks too short — please check it.', 'owner_phone');
-    // US/Canada numbers only, which matches what the server will accept for texts.
-    if(smsConsentChecked() && !bizPhoneOk(val('owner_phone'))) return fail('Add your mobile number, or untick the text box.', 'owner_phone');
+    // North American (+1) numbers only, by the server's own rule (smsPhoneOk above).
+    if(smsConsentChecked() && !smsPhoneOk(val('owner_phone'))) return fail('Add your mobile number, or untick the text box.', 'owner_phone');
   }
   if(n===4){
     if(!SELECTED_PLAN) return fail('Please choose a plan to continue.');
