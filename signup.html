@@ -91,6 +91,11 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:0 48px
 .skip-link{background:none;border:none;color:var(--text3);font-size:13px;cursor:pointer;font-family:inherit;text-decoration:underline;padding:4px;}
 .skip-link:hover{color:var(--text2);}
 
+/* ── Footer line under the card. Links open a new tab so the half-filled form survives. ── */
+.legal-foot{margin-top:20px;text-align:center;font-size:12px;color:var(--text3);}
+.legal-foot a{color:var(--text3);text-decoration:none;}
+.legal-foot a:hover{color:var(--text2);}
+
 @media (max-width:600px){
   nav{padding:0 20px;}
   .nav-links{display:none;}
@@ -234,6 +239,7 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:0 48px
       </div>
     </div>
   </div>
+  <footer class="legal-foot">© 2026 Harakel Innovations · <a href="/privacy" target="_blank" rel="noopener">Privacy</a> · <a href="/terms" target="_blank" rel="noopener">Terms</a></footer>
 </section>
 
 <script>
