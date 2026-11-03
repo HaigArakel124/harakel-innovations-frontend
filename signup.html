@@ -58,6 +58,12 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:0 48px
 .form-group select{appearance:none;cursor:pointer;}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
 
+/* ── SMS consent: its own box, unchecked, never bundled with anything else (A2P1) ── */
+.consent{display:flex;align-items:flex-start;gap:10px;margin:-4px 0 16px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.consent input{flex-shrink:0;width:16px;height:16px;margin-top:2px;accent-color:var(--accent);cursor:pointer;}
+.consent label{font-size:12px;color:var(--text2);line-height:1.55;cursor:pointer;}
+.consent a{color:var(--accent2);}
+
 /* ── Plan options ── */
 .plan-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
 .plan-option{position:relative;background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--radius);padding:18px;cursor:pointer;transition:border-color .15s,background .15s;}
@@ -186,7 +192,11 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:0 48px
       <div class="form-group">
         <label>Your mobile <span class="opt">(optional)</span></label>
         <input type="tel" id="owner_phone" placeholder="(555) 123-4567" autocomplete="tel">
-        <div class="form-hint">Personal number for account notifications — never shown to your customers.</div>
+        <div class="form-hint">Optional. Never shown to your customers. We text it only if you tick the box below.</div>
+      </div>
+      <div class="consent">
+        <input type="checkbox" id="sms_consent" autocomplete="off">
+        <label for="sms_consent">Yes, text me account notifications from Harakel Innovations (signup confirmation, setup and service alerts) at the mobile number above. Message frequency varies. Msg &amp; data rates may apply. Reply HELP for help, STOP to opt out. Consent is not a condition of purchase. <a href="/terms" target="_blank" rel="noopener">Terms</a> · <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></label>
       </div>
     </div>
 
@@ -247,6 +257,10 @@ var API = 'https://web-production-608a8.up.railway.app';
 var TOTAL_STEPS = 4;
 var currentStep = 1;
 var SELECTED_PLAN = null;
+// The SMS consent wording above is version harakel-owner-sms-v1. Any change to that wording
+// is a new version id, here and in the backend's SMS_CONSENT_VERSIONS (A2P1 section 2).
+var SMS_CONSENT_VERSION = 'harakel-owner-sms-v1';
+function smsConsentChecked(){ var el=document.getElementById('sms_consent'); return !!(el && el.checked); }
 
 function val(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
 function escapeHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -294,6 +308,8 @@ function validateStep(n){
     if(!val('phone')) return fail('Please enter your business phone number.', 'phone');
     if(!bizPhoneOk(val('phone'))) return fail('That business phone number doesn\'t look right. Please enter all 10 digits, including the area code.', 'phone');
     if(val('owner_phone') && !phoneSane(val('owner_phone'))) return fail('That mobile number looks too short — please check it.', 'owner_phone');
+    // US/Canada numbers only, which matches what the server will accept for texts.
+    if(smsConsentChecked() && !bizPhoneOk(val('owner_phone'))) return fail('Add your mobile number, or untick the text box.', 'owner_phone');
   }
   if(n===4){
     if(!SELECTED_PLAN) return fail('Please choose a plan to continue.');
@@ -326,7 +342,7 @@ function selectPlan(plan){
 }
 
 function renderReview(){
-  var rows=[['Business',val('business_name')],['Address',val('address')],['Industry',val('industry')],['Name',val('owner_name')],['Email',val('email')],['Business phone',val('phone')],['Your mobile',val('owner_phone')]]
+  var rows=[['Business',val('business_name')],['Address',val('address')],['Industry',val('industry')],['Name',val('owner_name')],['Email',val('email')],['Business phone',val('phone')],['Your mobile',val('owner_phone')],['Texts to your mobile',smsConsentChecked()?'Yes':'No']]
     .filter(function(r){ return r[1]; });
   var html=rows.map(function(r){ return '<div class="review-row"><span>'+r[0]+'</span><strong>'+escapeHtml(r[1])+'</strong></div>'; }).join('');
   document.getElementById('review').innerHTML = html || '<div class="review-empty">Go back to add your details.</div>';
@@ -336,6 +352,7 @@ async function submitSignup(){
   if(!validateStep(4)) return;
   var btn=document.getElementById('next-btn');
   btn.disabled=true; btn.textContent='Starting checkout...';
+  var smsConsent=smsConsentChecked();
   var body={
     plan:SELECTED_PLAN,
     business_name:val('business_name'),
@@ -343,6 +360,7 @@ async function submitSignup(){
     email:val('email'),
     phone:val('phone'),
     owner_phone:val('owner_phone')||null,
+    sms_consent:smsConsent,
     industry:val('industry')||null,
     address:val('address')||null,
     website:val('website')||null,
@@ -351,6 +369,7 @@ async function submitSignup(){
     success_url:'https://www.harakel-innovations.com/client?welcome=true',
     cancel_url:'https://www.harakel-innovations.com/pricing',
   };
+  if(smsConsent) body.sms_consent_version=SMS_CONSENT_VERSION;
   try{
     var res=await fetch(API+'/api/billing/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!res.ok){
