@@ -266,8 +266,8 @@ var SMS_CONSENT_VERSION = 'harakel-owner-sms-v1';
 function smsConsentChecked(){ var el=document.getElementById('sms_consent'); return !!(el && el.checked); }
 
 function val(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
-function escapeHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
-function showError(msg){ var e=document.getElementById('form-error'); e.innerHTML=msg; e.style.display='block'; }
+// Plain text only: server and form text is never parsed as HTML. Returns the box so a caller can append a link.
+function showError(msg){ var e=document.getElementById('form-error'); e.textContent=msg; e.style.display='block'; return e; }
 function clearError(){ var e=document.getElementById('form-error'); e.style.display='none'; e.textContent=''; }
 function fail(msg, focusId){ showError(msg); if(focusId){var el=document.getElementById(focusId); if(el) el.focus();} return false; }
 
@@ -363,14 +363,28 @@ function selectPlan(plan){
 function renderReview(){
   var rows=[['Business',val('business_name')],['Address',val('address')],['Industry',val('industry')],['Name',val('owner_name')],['Email',val('email')],['Business phone',val('phone')],['Your mobile',val('owner_phone')],['Texts to your mobile',smsConsentChecked()?'Yes':'No']]
     .filter(function(r){ return r[1]; });
-  var html=rows.map(function(r){ return '<div class="review-row"><span>'+r[0]+'</span><strong>'+escapeHtml(r[1])+'</strong></div>'; }).join('');
-  document.getElementById('review').innerHTML = html || '<div class="review-empty">Go back to add your details.</div>';
+  var box=document.getElementById('review');
+  box.textContent='';
+  rows.forEach(function(r){
+    var row=document.createElement('div'); row.className='review-row';
+    var label=document.createElement('span'); label.textContent=r[0];
+    var value=document.createElement('strong'); value.textContent=r[1];
+    row.appendChild(label); row.appendChild(value); box.appendChild(row);
+  });
+  if(!rows.length){ var empty=document.createElement('div'); empty.className='review-empty'; empty.textContent='Go back to add your details.'; box.appendChild(empty); }
+}
+
+// True from the click that sends the signup until it fails or the page leaves for Stripe Checkout.
+var signupPending=false;
+function resetNextBtn(){
+  var btn=document.getElementById('next-btn');
+  signupPending=false; btn.disabled=false; btn.textContent=(currentStep===TOTAL_STEPS)?'Continue to payment':'Continue';
 }
 
 async function submitSignup(){
   if(!validateStep(4)) return;
   var btn=document.getElementById('next-btn');
-  btn.disabled=true; btn.textContent='Starting checkout...';
+  signupPending=true; btn.disabled=true; btn.textContent='Starting checkout...';
   var smsConsent=smsConsentChecked();
   var body={
     plan:SELECTED_PLAN,
@@ -394,8 +408,13 @@ async function submitSignup(){
     if(!res.ok){
       var err=await res.json().catch(function(){return {};});
       if(res.status===409){
-        showError('An account with this email already exists. <a href="#" onclick="goToStep(2);document.getElementById(\'email\').focus();return false;" style="color:var(--accent2);text-decoration:underline;">Use a different email</a>');
-        btn.disabled=false; btn.textContent='Continue to payment'; return;
+        var box=showError('An account with this email already exists. ');
+        var link=document.createElement('a');
+        link.href='#'; link.textContent='Use a different email';
+        link.style.color='var(--accent2)'; link.style.textDecoration='underline';
+        link.addEventListener('click', function(ev){ ev.preventDefault(); goToStep(2); document.getElementById('email').focus(); });
+        box.appendChild(link);
+        resetNextBtn(); return;
       }
       throw new Error(extractErrorMessage(err,'Something went wrong. Please try again.'));
     }
@@ -404,7 +423,7 @@ async function submitSignup(){
     window.location.href=data.checkout_url;
   }catch(e){
     showError(e.message||'Something went wrong. Please try again.');
-    btn.disabled=false; btn.textContent='Continue to payment';
+    resetNextBtn();
   }
 }
 
@@ -413,6 +432,14 @@ async function submitSignup(){
   if(p==='starter'||p==='pro') selectPlan(p);
   goToStep(1);
 })();
+
+// Back from Stripe Checkout. The browser may hand back this page exactly as it was left, from its
+// back-forward cache (event.persisted), with the button still disabled on "Starting checkout...";
+// Firefox can also carry a disabled button over a reload. The form values come back either way, so
+// put the button back as goToStep leaves it. A signup still waiting on the server is left alone.
+window.addEventListener('pageshow', function(ev){
+  if(ev.persisted || !signupPending) resetNextBtn();
+});
 </script>
 </body>
 </html>
