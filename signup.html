@@ -431,6 +431,7 @@ async function submitSignup(){
   var p=(new URLSearchParams(location.search).get('plan')||'').toLowerCase();
   if(p==='starter'||p==='pro') selectPlan(p);
   goToStep(1);
+  resetNextBtn();   // Firefox can carry a disabled button over a reload; don't wait for pageshow
 })();
 
 // Back from Stripe Checkout. The browser may hand back this page exactly as it was left, from its
