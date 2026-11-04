@@ -268,6 +268,13 @@ function smsConsentChecked(){ var el=document.getElementById('sms_consent'); ret
 function val(id){ var el=document.getElementById(id); return el ? el.value.trim() : ''; }
 // Plain text only: server and form text is never parsed as HTML. Returns the box so a caller can append a link.
 function showError(msg){ var e=document.getElementById('form-error'); e.textContent=msg; e.style.display='block'; return e; }
+function appendErrorLink(box, text, href, onClick){
+  var a=document.createElement('a');
+  a.href=href; a.textContent=text;
+  a.style.color='var(--accent2)'; a.style.textDecoration='underline';
+  if(onClick) a.addEventListener('click', onClick);
+  box.appendChild(a);
+}
 function clearError(){ var e=document.getElementById('form-error'); e.style.display='none'; e.textContent=''; }
 function fail(msg, focusId){ showError(msg); if(focusId){var el=document.getElementById(focusId); if(el) el.focus();} return false; }
 
@@ -381,6 +388,24 @@ function resetNextBtn(){
   signupPending=false; btn.disabled=false; btn.textContent=(currentStep===TOTAL_STEPS)?'Continue to payment':'Continue';
 }
 
+// A 409 from /api/billing/signup answers {detail, code}; before the backend's signup-one-checkout step
+// it was a detail string alone. An unknown or missing code shows the server's text when it has some;
+// email_taken, or no text at all, keeps the "Use a different email" link.
+function showSignupConflict(err){
+  var code=err ? err.code : null;
+  var text=(err && typeof err.detail==='string' && err.detail.trim()) ? err.detail : '';
+  if(code==='payment_in_progress'){
+    appendErrorLink(showError((text||'Something went wrong. Please try again.')+' '), 'Contact support', 'mailto:support@harakel-innovations.com');
+  } else if(code==='signup_in_progress'){
+    showError(text||'Something went wrong. Please try again.');
+  } else if(code!=='email_taken' && text){
+    showError(text);
+  } else {
+    appendErrorLink(showError('An account with this email already exists. '), 'Use a different email', '#',
+      function(ev){ ev.preventDefault(); goToStep(2); document.getElementById('email').focus(); });
+  }
+}
+
 async function submitSignup(){
   if(!validateStep(4)) return;
   var btn=document.getElementById('next-btn');
@@ -407,15 +432,7 @@ async function submitSignup(){
     var res=await fetch(API+'/api/billing/signup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!res.ok){
       var err=await res.json().catch(function(){return {};});
-      if(res.status===409){
-        var box=showError('An account with this email already exists. ');
-        var link=document.createElement('a');
-        link.href='#'; link.textContent='Use a different email';
-        link.style.color='var(--accent2)'; link.style.textDecoration='underline';
-        link.addEventListener('click', function(ev){ ev.preventDefault(); goToStep(2); document.getElementById('email').focus(); });
-        box.appendChild(link);
-        resetNextBtn(); return;
-      }
+      if(res.status===409){ showSignupConflict(err); resetNextBtn(); return; }
       throw new Error(extractErrorMessage(err,'Something went wrong. Please try again.'));
     }
     var data=await res.json();
