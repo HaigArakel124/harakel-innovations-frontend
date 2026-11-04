@@ -612,7 +612,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="stat-card accent">
         <div class="stat-icon">◉</div>
         <div class="stat-value" id="stat-leads">—</div>
-        <div class="stat-label">Total leads</div>
+        <div class="stat-label">Recent leads</div>
       </div>
       <div class="stat-card green">
         <div class="stat-icon">◷</div>
@@ -758,7 +758,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 <div class="modal-backdrop" id="mc-modal" onclick="onMcModalBackdropClick(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
     <div class="modal-title">Missed Call Auto-Text Settings</div>
-    <div class="modal-help">When a customer calls and you don't answer, we'll send them this text from your business number. Use <code>{business_name}</code> as a placeholder for your business name.</div>
+    <div class="modal-help">When a customer calls and you don't answer, we try to text them this message from your business number. Until carrier registration for business texting is approved, mobile carriers may block these texts, and we can't confirm delivery. Use <code>{business_name}</code> as a placeholder for your business name.</div>
     <textarea id="mc-template-input" class="modal-textarea" rows="4" oninput="onMcTemplateInput()"></textarea>
     <div class="modal-charcount" id="mc-charcount">0 / 320 characters</div>
     <div class="modal-charhint" id="mc-charhint">Save is disabled — please trim the message to 320 characters or fewer.</div>
@@ -1119,7 +1119,7 @@ async function loadDashboardData(clientId, clientInfo) {
     var leads = ld.leads || [];
     statLeads.textContent = ld.count !== undefined ? ld.count : leads.length;
     if (leads.length === 0) {
-      leadsEl.innerHTML = '<div class="empty">No leads yet — your chatbot is ready to capture them.</div>';
+      leadsEl.innerHTML = '<div class="empty">No leads yet. Visitors who leave their details with your chatbot show up here.</div>';
     } else {
       // Lead fields are written by the public chatbot, so rows are built from DOM nodes and every
       // server value goes in via textContent (the same pattern as _coachAppendMessage below).
@@ -1160,13 +1160,13 @@ async function loadDashboardData(clientId, clientInfo) {
   // the zone abbreviation beside them — would show in the wrong city's hours. Each sign-in starts from
   // "unknown"; only a successful read of THIS client's record sets it.
   APPT_TZ = null;
-  var rtLine = null;   // the salon's own number, for the Phone & Nova card
+  var rtLine = null, rtLineKnown = false;   // the salon's own number, for the Phone & Nova card; known = the client record was read
   if (clientRes.status === 'fulfilled' && clientRes.value.ok) {
     try {
       var cRec = await clientRes.value.json();
       if (_apptTzValid(cRec && cRec.timezone)) APPT_TZ = cRec.timezone;
       _portalModeFromRecord(clientId, cRec);   // the same record says whether direct booking is on
-      rtLine = cRec ? cRec.twilio_phone_number : null;
+      rtLine = cRec ? cRec.twilio_phone_number : null; rtLineKnown = !!cRec;
     } catch (e) { /* leave APPT_TZ null and fall back to the browser zone */ }
   }
 
@@ -1212,7 +1212,7 @@ async function loadDashboardData(clientId, clientInfo) {
   var voiceEnt = null;
   if (meRes.status === 'fulfilled' && meRes.value.ok && me && typeof me === 'object') voiceEnt = _modOn(me.modules, 'voice_ai');
   else if (clientInfo && clientInfo.modules && typeof clientInfo.modules === 'object') voiceEnt = _modOn(clientInfo.modules, 'voice_ai');
-  _rtLoad(clientId, voiceEnt, rtLine);
+  _rtLoad(clientId, voiceEnt, rtLine, rtLineKnown);
 }
 
 // ── Chatbot install card ─────────────────────────────────────
@@ -1429,8 +1429,8 @@ function _rtBegin(clientId) {
 
 // Called from loadDashboardData with what the sign-in already knows: whether the plan includes phone
 // answering (true / false / null = couldn't tell) and the salon's own number from the client record.
-function _rtLoad(clientId, entitled, line) {
-  var st = _rtState(clientId, entitled, line);
+function _rtLoad(clientId, entitled, line, lineKnown) {
+  var st = _rtState(clientId, entitled, line); st.noLine = lineKnown === true && !st.line;   // record read, no salon line: no call can reach Nova
   if (entitled === false) st.phase = 'not-included';
   else if (entitled !== true) st.phase = 'plan-unknown';
   _rtRender(st);
@@ -1582,7 +1582,7 @@ function _rtRender(st) {
       var line = _node('div', 'rt-line', '', 'Your salon line: ');
       line.appendChild(_node('strong', '', '', st.line));
       frag.appendChild(line);
-    }
+    } else if (st.noLine) frag.appendChild(_node('div', 'rt-note', '', 'Your salon line isn’t set up yet, so no calls reach Nova. What you choose below applies once your line is set up.'));
     var group = _node('div', 'rt-opts');
     group.setAttribute('role', 'radiogroup');
     group.setAttribute('aria-label', 'Who answers your calls');
@@ -2825,10 +2825,10 @@ function _schRenderAll(st) {
   var root = document.getElementById('sch-root');
   root.textContent = '';
   root.removeAttribute('aria-busy');
-  var svc = _schSection('Services', 'What customers can book, how long each one takes, and its price if you want it published.', 'Add service', function(slot) {
+  var svc = _schSection('Services', 'The services you offer, how long each one takes, and its price if you want to record one.', 'Add service', function(slot) {
     _schToggle(slot, 'add', function() { return _schServiceForm(st, null); });
   });
-  var team = _schSection('Team', 'The people customers can book with.', 'Add team member', function(slot) {
+  var team = _schSection('Team', 'The people who take appointments.', 'Add team member', function(slot) {
     _schToggle(slot, 'add', function() { return _schStaffForm(st, null); });
   });
   var map = _schSection('Who does what', 'Tick the services each person performs, then press Save. Only people ticked for a service are offered for it.', null, null);
@@ -2837,7 +2837,7 @@ function _schRenderAll(st) {
     var p = _schPerson(st);
     if (p && (p.id in st.exc)) _schToggle(slot, 'add', function() { return _schExcForm(st, p); });
   });
-  var mode = _schSection('Direct booking', 'Let customers book open times themselves, instead of sending you a request to confirm.', null, null);
+  var mode = _schSection('Direct booking', 'For letting customers book open times themselves, instead of sending you a request to confirm. Your chatbot and Nova can’t book appointments yet, so this setting doesn’t change anything customers see today.', null, null);
   var drift = _node('div');   // holds the fixed warning bar while booking is on but nobody is bookable
   st.el = {
     services: svc.body, staff: team.body, map: map.body,
@@ -2978,7 +2978,7 @@ function _schServiceForm(st, s) {
     _schField('Buffer after (min)', f.after),
   ]));
   form.appendChild(_node('div', 'sch-hint', 'margin:-4px 0 10px;', 'Buffers keep prep or clean-up time free around the appointment. Leave them blank for none.'));
-  form.appendChild(_schField('Price in dollars (optional)', f.price, 'Leave blank to keep the price unpublished — blank is not the same as 0. Enter 0 only if it is genuinely free.'));
+  form.appendChild(_schField('Price in dollars (optional)', f.price, 'Leave blank if you don’t want to record a price — blank is not the same as 0. Enter 0 only if it is genuinely free.'));
   form.appendChild(_schField('Description (optional)', f.desc));
 
   var actions = _node('div', 'appt-actions');
@@ -3008,7 +3008,7 @@ function _schRenderStaff(st) {
   var body = st.el.staff;
   body.textContent = '';
   if (!st.staff.length) {
-    body.appendChild(_node('div', 'empty sch-empty', '', 'No team members yet. Use “Add team member” to add everyone customers can book with — even if that’s just you. Only a name is required.'));
+    body.appendChild(_node('div', 'empty sch-empty', '', 'No team members yet. Use “Add team member” to add everyone who takes appointments — even if that’s just you. Only a name is required.'));
     return;
   }
   var f = document.createDocumentFragment();
@@ -4185,7 +4185,7 @@ function _schRenderMode(st) {
   if (drift) {
     var warning = _node('div', 'sch-drift');
     warning.appendChild(_node('div', 'sch-drift-title', '', 'Direct booking is on, but nobody can be booked'));
-    warning.appendChild(_node('div', 'sch-drift-text', '', 'Your AI is telling every customer who asks that nothing is free. Fix what’s missing below, or turn direct booking off so new appointments come to you as requests instead.'));
+    warning.appendChild(_node('div', 'sch-drift-text', '', 'No time can be booked until this is fixed. Fix what’s missing below, or turn direct booking off so new appointments come to you as requests instead.'));
     var offNow = _schButton('btn', st.modeBusy ? 'Working…' : 'Turn off direct booking');
     offNow.disabled = !!st.modeBusy;
     offNow.addEventListener('click', function() { _schSetMode(st, 'log'); });
@@ -4211,8 +4211,8 @@ function _schRenderMode(st) {
   var main = _node('div', 'sch-mode-main');
   main.appendChild(_node('div', 'sch-mode-title', '', st.modeBusy ? 'Direct booking — working…' : on ? 'Direct booking is on' : 'Direct booking is off'));
   main.appendChild(_node('div', 'sch-mode-sub', '',
-    on && drift ? 'But nobody can be booked right now, so every customer is being told there’s no free time.'
-    : on ? 'Customers can book open times themselves. Requests still come in too.'
+    on && drift ? 'But nobody can be booked right now, so no time can be booked.'
+    : on ? 'Your chatbot and Nova can’t book appointments yet, so customers can’t book themselves today.'
     : ready ? 'New appointments come in as requests for you to confirm. Everything below is done, so you can turn on direct booking.'
     : 'New appointments come in as requests for you to confirm. Direct booking can’t be turned on until ' + (unmet ? 'the ' + unmet + ' item' + (unmet === 1 ? '' : 's') + ' marked below ' + (unmet === 1 ? 'is' : 'are') + ' done.' : 'the setup below is complete.')));
   row.appendChild(sw);
@@ -4221,7 +4221,7 @@ function _schRenderMode(st) {
 
   if (st.modeConfirm && !on && ready && !st.modeBusy) {
     var c = _node('div', 'sch-confirm');
-    c.appendChild(_node('div', 'sch-note', '', 'Turn on direct booking? Customers will be able to book any open time straight away through your AI, without you confirming first. Requests still come in too, and you can turn this off at any time.'));
+    c.appendChild(_node('div', 'sch-note', '', 'Turn on direct booking? Your chatbot and Nova can’t book appointments yet, so customers won’t see any change today. You can turn this off at any time.'));
     var acts = _node('div', 'appt-actions');
     var yes = _schButton('btn btn-primary', 'Turn on direct booking');
     var no = _schButton('btn btn-ghost', 'Cancel');
@@ -4285,7 +4285,7 @@ function _schRenderDrift(st, on) {
   bar.setAttribute('role', 'alert');
   var text = _node('div', '', 'flex:1;min-width:0;');
   text.appendChild(_node('strong', '', '', 'Nobody can be booked right now. '));
-  text.appendChild(document.createTextNode('Direct booking is on, so your AI is telling customers nothing is free.'));
+  text.appendChild(document.createTextNode('Direct booking is on, but no time can be booked until this is fixed.'));
   var go = _schButton('btn', 'Fix it');
   go.addEventListener('click', function() { st.el.cards.mode.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   bar.appendChild(text);
@@ -5977,7 +5977,7 @@ function _renderMcRow(r) {
     sentTxt = _mcSkipLabel(r.auto_text_skipped_reason);
   } else if (r.auto_text_sent) {
     sentCls = 'sent';
-    sentTxt = 'auto-text sent ✓';
+    sentTxt = 'auto-text sent — delivery not confirmed';
   } else {
     sentCls = 'failed';
     sentTxt = 'auto-text failed ✗';
