@@ -1838,7 +1838,8 @@ async function submitOnboarding() {
     toast(payload.business_name + ' is now live!');
   } catch (e) {
     _logFail('submitOnboarding failed', e && e.status);
-    toast(e && e.status ? 'Failed to create client: ' + e.message : 'Failed to create client. Please try again.', 'error');
+    // A 401: authFetch already logged us out, so no second message over the login screen.
+    if (!(e && e.status === 401)) toast(e && e.status ? 'Failed to create client: ' + e.message : 'Failed to create client. Please try again.', 'error');
     btn.disabled = false;
     btn.textContent = 'Launch client →';
   }
