@@ -617,7 +617,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="stat-card green">
         <div class="stat-icon">◷</div>
         <div class="stat-value" id="stat-appts">—</div>
-        <div class="stat-label">Appointments</div>
+        <div class="stat-label">All appointments</div>
       </div>
       <div class="stat-card amber">
         <div class="stat-icon">◌</div>
@@ -1520,7 +1520,7 @@ async function _rtSet(st, mode) {
   if (parsed) {
     st.data = parsed;                      // the server's answer, never the option that was clicked
     st.err = null;
-    var said = _rtOutcome(parsed);
+    var said = st.noLine ? 'This applies once your salon line is set up.' : _rtOutcome(parsed);   // no line: no call reaches Nova or your phone yet
     st.note = 'Saved. ' + said;
     _rtRender(st);
     showToast(said, 'success');
@@ -2837,7 +2837,7 @@ function _schRenderAll(st) {
     var p = _schPerson(st);
     if (p && (p.id in st.exc)) _schToggle(slot, 'add', function() { return _schExcForm(st, p); });
   });
-  var mode = _schSection('Direct booking', 'For letting customers book open times themselves, instead of sending you a request to confirm. Your chatbot and Nova can’t book appointments yet, so this setting doesn’t change anything customers see today.', null, null);
+  var mode = _schSection('Direct booking', 'For letting customers book open times themselves, instead of sending you a request to confirm. Your chatbot and Nova can’t book appointments yet, so this setting doesn’t change anything customers see today. It does change how you confirm and move appointments: you pick who does each one, and the time must be free.', null, null);
   var drift = _node('div');   // holds the fixed warning bar while booking is on but nobody is bookable
   st.el = {
     services: svc.body, staff: team.body, map: map.body,
