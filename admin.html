@@ -2097,6 +2097,25 @@ async function getActiveClientId() {
   return first.id;
 }
 
+// One readable line from a FastAPI error body, the same way signup.html's extractErrorMessage reads
+// it: a detail string, the first item of a validation list ("field: msg"), or a {code, message}
+// detail's message. Never the raw object, which would read "[object Object]".
+function _apiErrorText(payload, fallback) {
+  var d = (payload && typeof payload === 'object') ? payload.detail : undefined;
+  if (typeof d === 'string' && d.trim()) return d;
+  if (Array.isArray(d) && d.length) {
+    var f = d[0];
+    if (f && typeof f.msg === 'string') {
+      var loc = Array.isArray(f.loc) ? f.loc.filter(function(x) { return x !== 'body'; }) : [];
+      return loc.length ? loc[loc.length - 1] + ': ' + f.msg : f.msg;
+    }
+    if (typeof f === 'string') return f;
+  }
+  if (d && typeof d === 'object' && typeof d.message === 'string' && d.message.trim()) return d.message;
+  if (payload && typeof payload.message === 'string' && payload.message.trim()) return payload.message;
+  return fallback;
+}
+
 async function publishSite() {
   var btns = document.querySelectorAll('.btn-primary[onclick*="publishSite"], #top-cta');
   btns.forEach(function(b){ b.disabled = true; });
@@ -2113,9 +2132,9 @@ async function publishSite() {
       })
     });
     if (!res.ok) {
-      var errText = '';
-      try { errText = (await res.json()).detail || ''; } catch(e) {}
-      throw new Error(errText || ('HTTP ' + res.status));
+      var errBody = null;
+      try { errBody = await res.json(); } catch(e) {}
+      throw new Error(_apiErrorText(errBody, 'HTTP ' + res.status));
     }
     var json = await res.json();
     showPublishedModal(json.url);
