@@ -388,17 +388,22 @@ function resetNextBtn(){
   signupPending=false; btn.disabled=false; btn.textContent=(currentStep===TOTAL_STEPS)?'Continue to payment':'Continue';
 }
 
-// A 409 from /api/billing/signup answers {detail, code}; before the backend's signup-one-checkout step
-// it was a detail string alone. An unknown or missing code shows the server's text when it has some;
-// email_taken, or no text at all, keeps the "Use a different email" link.
+// A 409 from /api/billing/signup. The backend's signup-one-checkout step answers {detail: <text>, code};
+// the nested {detail: {code, message}} shape is read too. No code (the backend before that step) is
+// email_taken: today's message and its "Use a different email" link. An unknown code shows the server's
+// text when it has some.
 function showSignupConflict(err){
-  var code=err ? err.code : null;
-  var text=(err && typeof err.detail==='string' && err.detail.trim()) ? err.detail : '';
+  var d=err ? err.detail : null;
+  var nested=(d && typeof d==='object') ? d : {};
+  var code=(err && typeof err.code==='string' && err.code) ? err.code : (typeof nested.code==='string' ? nested.code : '');
+  var raw=(typeof d==='string') ? d : (typeof nested.message==='string' ? nested.message : '');
+  var text=raw.trim() ? raw : '';
   if(code==='payment_in_progress'){
-    appendErrorLink(showError((text||'Something went wrong. Please try again.')+' '), 'Contact support', 'mailto:support@harakel-innovations.com');
+    appendErrorLink(showError((text||'Something went wrong. Please try again.')+' Contact support at '),
+      'support@harakel-innovations.com', 'mailto:support@harakel-innovations.com');
   } else if(code==='signup_in_progress'){
     showError(text||'Something went wrong. Please try again.');
-  } else if(code!=='email_taken' && text){
+  } else if(code && code!=='email_taken' && text){
     showError(text);
   } else {
     appendErrorLink(showError('An account with this email already exists. '), 'Use a different email', '#',
