@@ -379,12 +379,13 @@
     var ctrl   = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var timer  = setTimeout(function () { if (ctrl) ctrl.abort(); }, 4000);
     var hidden = false;
+    var failedStatus = 0;
 
     fetch(API_URL + '/public/clients/' + encodeURIComponent(CLIENT_ID) + '/public-config',
           ctrl ? { signal: ctrl.signal } : undefined)
       .then(function (res) {
         if (res.status === 404) { hidden = true; return null; }
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+        if (!res.ok) { failedStatus = res.status; throw new Error('HTTP ' + res.status); }
         return res.json();
       })
       .then(function (data) {
@@ -394,10 +395,13 @@
         if (data.brand_color      && !cfg.brand_color) brandColor = data.brand_color;
         if (data.chatbot_greeting)                     greeting   = data.chatbot_greeting;
       })
-      .catch(function (e) {
+      .catch(function () {
         // Never block rendering: generic branding beats no widget. Warn so this
         // can't fail silently the way the old admin-only /api/clients/ call did.
-        console.warn('[HarakelChatbot] Could not load public config, using defaults:', e && e.message);
+        // Fixed text and the HTTP status only: an exception's message can quote
+        // the response body (a JSON parse error does).
+        console.warn('[HarakelChatbot] Could not load public config, using defaults' +
+                     (failedStatus ? ' (HTTP ' + failedStatus + ')' : '') + '.');
       })
       .finally(function () {
         clearTimeout(timer);

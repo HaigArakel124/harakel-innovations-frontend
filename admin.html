@@ -1252,6 +1252,13 @@ function toast(msg, type) {
   t._timer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
+// The only way this page writes to the console: a fixed tag and, when there is one, the HTTP status.
+// Never a response body, a request payload, form values or an exception: a FastAPI 422 echoes the
+// submitted business name, email and phone, and a JSON parse error quotes the text it choked on.
+function _logFail(tag, status) {
+  console.error('[Harakel] ' + tag + (status ? ': HTTP ' + status : ''));
+}
+
 // ═══════ ANALYTICS CHARTS ═══════
 function buildBars(id, data, color) {
   const wrap = document.getElementById(id);
@@ -1818,8 +1825,11 @@ async function submitOnboarding() {
       body: JSON.stringify(payload),
     });
     if (!res.ok) {
-      var errText = await res.text();
-      throw new Error(errText);
+      var errBody = null;
+      try { errBody = await res.json(); } catch (e) {}
+      var err = new Error(_apiErrorText(errBody, 'HTTP ' + res.status));
+      err.status = res.status;
+      throw err;
     }
     wMark(wStep, 'done');
     document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
@@ -1827,8 +1837,8 @@ async function submitOnboarding() {
     document.getElementById('wiz-footer').style.display = 'none';
     toast(payload.business_name + ' is now live!');
   } catch (e) {
-    console.error('[Harakel] submitOnboarding error:', e);
-    toast('Failed to create client. Please try again.', 'error');
+    _logFail('submitOnboarding failed', e && e.status);
+    toast(e && e.status ? 'Failed to create client: ' + e.message : 'Failed to create client. Please try again.', 'error');
     btn.disabled = false;
     btn.textContent = 'Launch client →';
   }
@@ -1948,7 +1958,7 @@ function _checkCheckoutReturn() {
     _wizNeedsCheckout = false; // payment already complete
     setTimeout(function() { submitOnboarding(); }, 150);
   } catch (e) {
-    console.error('[Harakel] checkout return error:', e);
+    _logFail('checkout return failed');
   }
 }
 
@@ -3226,7 +3236,7 @@ async function loadLiveData() {
 
     // ── Clients first — the single derivation of the active client id ──
     var clientsRes = await authFetch(API_URL + '/api/clients/');
-    if (!clientsRes.ok) throw new Error('clients fetch HTTP ' + clientsRes.status);
+    if (!clientsRes.ok) { var cErr = new Error('clients fetch failed'); cErr.status = clientsRes.status; throw cErr; }
     {
       var cd = await clientsRes.json();
 
@@ -3303,7 +3313,7 @@ async function loadLiveData() {
       var statLeadsChg = document.getElementById('stat-leads-change');
       if (statLeadsChg) statLeadsChg.textContent = newCount + ' new · ' + hotCount + ' hot';
     } else if (leadsRes.status === 'rejected' || (leadsRes.value && !leadsRes.value.ok)) {
-      console.error('[Harakel] leads load failed:', leadsRes.reason || (leadsRes.value && leadsRes.value.status));
+      _logFail('leads load failed', leadsRes.value && leadsRes.value.status);
     }
 
     // ── Lead stats (API returns { total, by_status: {new, hot, ...}, by_source: {...} }) ──
@@ -3351,7 +3361,7 @@ async function loadLiveData() {
       var statApptsChg = document.getElementById('stat-appts-change');
       if (statApptsChg) statApptsChg.textContent = todayAppts.length + ' today';
     } else if (apptsRes.status === 'rejected' || (apptsRes.value && !apptsRes.value.ok)) {
-      console.error('[Harakel] appointments load failed:', apptsRes.reason || (apptsRes.value && apptsRes.value.status));
+      _logFail('appointments load failed', apptsRes.value && apptsRes.value.status);
     }
     } // end if (window.CURRENT_CLIENT_ID) — no clients means the zero-states above simply stand
 
@@ -3361,7 +3371,7 @@ async function loadLiveData() {
 
   } catch (e) {
     // Surface failures instead of swallowing them silently — the zero-states keep the UI usable.
-    console.error('[Harakel] loadLiveData error:', e);
+    _logFail('loadLiveData failed', e && e.status);
     if (typeof toast === 'function') toast('Could not load live dashboard data.', 'error');
   }
 }

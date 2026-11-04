@@ -959,12 +959,14 @@ function _runPortalTabLoader(tab) {
   if (_portalTabLoaded[tab] || typeof fn !== 'function') return;
   _portalTabLoaded[tab] = true;
   // Isolated: a failing loader must never take the rest of sign-in down with it.
+  // The log names the tab (a key from registerPortalTabLoader) and nothing else: an exception can
+  // carry a response body or client values.
   try {
     var p = fn(PORTAL_CLIENT_ID);
-    if (p && typeof p.catch === 'function') p.catch(function(e) { _portalTabLoaded[tab] = false; console.error('[portal] ' + tab + ' loader failed:', e); });
+    if (p && typeof p.catch === 'function') p.catch(function() { _portalTabLoaded[tab] = false; console.error('[portal] ' + tab + ' loader failed'); });
   } catch (e) {
     _portalTabLoaded[tab] = false;
-    console.error('[portal] ' + tab + ' loader failed:', e);
+    console.error('[portal] ' + tab + ' loader failed');
   }
 }
 
