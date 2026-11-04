@@ -5663,7 +5663,7 @@ async function refreshCompetitors() {
     var rows = Array.isArray(data.competitors) ? data.competitors : [];
     var failed = rows.filter(function(r){ return r && r.error; }).length;
     await loadCompetitors(COMP_CLIENT_ID);
-    if (failed) alert('Could not refresh ' + failed + ' of ' + rows.length + ' competitor' + (rows.length === 1 ? '' : 's') + '. ' + (failed === 1 ? 'It keeps its' : 'They keep their') + ' last figures. Please try again later.');
+    if (failed) alert('Could not refresh ' + failed + ' of ' + rows.length + ' competitor' + (rows.length === 1 ? '' : 's') + '. ' + (failed === 1 ? 'Its figures were' : 'Their figures were') + ' not updated. Please try again later.');
   } catch (e) {
     alert('Refresh failed: ' + (e.message || 'please try again.'));
   } finally {
