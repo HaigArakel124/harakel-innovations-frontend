@@ -3215,6 +3215,7 @@ function _updateClientPortal(clientsList) {
   _updateClientSidebar(first);
   _loadModules(first.id);
   _resetPlaceId(first.id);
+  _loadPhone(first.id);
 }
 
 // Every dashboard data card/list starts resolved in a zero-state so nothing can hang on
@@ -3442,7 +3443,16 @@ var _PH_STEP_LINES = {
   a2p_not_configured: 'Texting registration (A2P) is not set up on the platform yet. Use Finish setup once it is.',
   trust_hub_not_approved: 'Waiting for Trust Hub approval. Use Finish setup once it is approved.',
   trust_hub_not_configured: 'Trust Hub is not set up on the platform yet. Use Finish setup once it is.',
-  contract: 'The app stopped at an internal safety check. Nothing more ran; tell the developer.'
+  contract: 'The app stopped at an internal safety check. Nothing more ran; tell the developer.',
+  bad_result: 'The app got an answer it could not read and stopped. Nothing more ran; tell the developer.',
+  actor_not_admin: 'The admin who ran this can no longer buy or release numbers. Nothing more ran.',
+  credentials_missing: 'The platform\'s Twilio credentials are not set up. Nothing was bought; tell the developer.',
+  subaccount_required: 'This step needs the client\'s Twilio subaccount, and none is recorded. Retry.',
+  subaccount_tag_mismatch: 'The client\'s Twilio subaccount carries a different tag. Check the Twilio console.',
+  subaccount_inactive: 'The client\'s Twilio subaccount is not active. Check the Twilio console.',
+  primary_account_refused: 'Twilio refused the platform\'s main account for this step. Check the Twilio console.',
+  primary_sid_malformed: 'The platform\'s Twilio account id is malformed. Tell the developer.',
+  account_sid_malformed: 'A recorded Twilio account id is malformed. Tell the developer.'
 };
 // Refusal codes (detail.code) from every phone route -> one plain-English line each.
 var _PH_REFUSALS = {
@@ -3471,6 +3481,13 @@ var _PH_REFUSALS = {
   number_on_other_client: 'That number is already on another client. Nothing was changed.',
   sid_in_use: 'That SID is already recorded on another setup. Nothing was changed.',
   not_app_managed: 'This number was configured by hand; release it in the Twilio console. Nothing was changed.'
+};
+// Resolve-only refusals (the adopt check reads the SID in the client's subaccount first).
+var _PH_RESOLVE_REFUSALS = {
+  no_subaccount: 'This client has no Twilio subaccount on record, so nothing can be adopted into it. Nothing was changed.',
+  sid_not_in_subaccount: 'That SID is not in this client\'s Twilio subaccount. Check you copied it from the right account. Nothing was changed.',
+  sid_number_mismatch: 'That SID belongs to a different number. Nothing was changed.',
+  twilio_unavailable: 'Twilio could not be asked about that SID just now. Nothing was changed; try again.'
 };
 // Release-only refusals (E1g-3b; codes read from the backend's release route while it was being built).
 var _PH_RELEASE_REFUSALS = {
@@ -3541,6 +3558,7 @@ function _phRefusal(status, data, ctx) {
     }
     if (code === 'shared_platform_number') return 'That is the platform\'s own number; it is never adopted or released. Nothing was changed.';
     if (ctx === 'release' && _modHas(_PH_RELEASE_REFUSALS, code)) return _PH_RELEASE_REFUSALS[code];
+    if (ctx === 'resolve' && _modHas(_PH_RESOLVE_REFUSALS, code)) return _PH_RESOLVE_REFUSALS[code];
     if (_modHas(_PH_REFUSALS, code)) return _PH_REFUSALS[code];
     return 'Refused (code: ' + (_phToken(code) || 'unknown') + '). Nothing was changed.';
   }
@@ -3548,7 +3566,7 @@ function _phRefusal(status, data, ctx) {
     return (typeof detail === 'string' && detail.indexOf('can no longer') !== -1)
       ? 'Your account can no longer buy or release numbers.' : 'Only an admin can buy, release or resolve numbers.';
   }
-  if (status === 404) return ctx === 'release' ? 'Release is not available on the server yet. Nothing was changed.' : 'Client or setup not found. Reload the page.';
+  if (status === 404) return (ctx === 'release' && detail === 'Not Found') ? 'Release is not available on the server yet. Nothing was changed.' : 'Client or setup not found. Reload the page.';
   if (status === 422) return 'The server did not accept this request. Nothing was changed.';
   if (status === 500) return 'Phone setup failed on the server. Reload to see where it stands.';
   if (status === 503) return 'Phone setup could not be confirmed just now. Reload to see where it stands.';
@@ -3659,7 +3677,7 @@ function _phPaintAdmin(body, d) {
     if (d.number_managed !== true) {
       body.appendChild(_phLine('Not managed by the app: this number was set up by hand in Twilio. The app never buys over it or releases it; change it in the Twilio console.'));
     } else {
-      body.appendChild(_phLine('Bought and set up by the app. Calls to this number reach this client.'));
+      body.appendChild(_phLine('Managed by the app (its Twilio SID is on file). Calls to this number reach this client.'));
     }
     if (d.subscription_cancelled === true) {
       body.appendChild(_phLine('Subscription cancelled: this number is still billing.' + (acts.release === true ? ' Release it?' : ''), 'color:var(--pink);'));
@@ -3707,7 +3725,7 @@ function _phPaintAdmin(body, d) {
   if ((Array.isArray(acts.resolve) && acts.resolve.length) || d.reset_status_allowed === true) {
     row.appendChild(_phButton('Resolve...', 'color:var(--amber);', openPhoneResolve));
   }
-  if (acts.release === true && _phE164(number)) row.appendChild(_phButton('Release number...', 'color:var(--pink);', openPhoneRelease));
+  if (acts.release === true && _phE164(s.phone_number)) row.appendChild(_phButton('Release number...', 'color:var(--pink);', openPhoneRelease));
   if (s && s.running === true) row.appendChild(_phButton('Reload', '', function() { _loadPhone(d.client_id || _phState.clientId); }));
   if (row.firstChild) body.appendChild(row);
 }
@@ -3730,6 +3748,7 @@ async function _phAction(kind) {
                         { setup_id: s.id }, kind === 'cancel' ? 'phone setup cancel failed' : 'phone setup retry failed');
   _phBusy = false;
   if (r.status === 401) { _phReset(); return; }
+  if (!_phState || _phState.clientId !== clientId) { _paintPhone(); return; }   // the admin moved to another client
   if (r.status === 200) {
     var out = _modIsPlainObject(r.data) && _modIsPlainObject(r.data.setup) ? r.data.setup : null;
     toast(kind === 'cancel' ? 'Setup cancelled. Nothing was bought.'
@@ -3859,6 +3878,7 @@ function _phAreaInput(dl) {
   var v = dl.el.area.value.replace(/\D/g, '').slice(0, 3);
   if (dl.el.area.value !== v) dl.el.area.value = v;
   if (dl.timer) { clearTimeout(dl.timer); dl.timer = null; }
+  if (dl.quoting) { dl.quoteSeq++; dl.quoting = false; }   // a quote still in flight is for the old box: drop its answer
   if (v.length === 3 && !_phAreaOk(v)) {
     _phSetMsg(dl, _PH_REFUSALS.invalid_area_code, true);
   } else if (v.length === 3 && !(dl.quote && dl.quote.area_code === v)) {
@@ -3894,7 +3914,7 @@ function _phPaintBuy(dl) {
   var price = shown ? _phMoney(q.monthly_price_cents) : '';
   el.price.textContent = price ? 'Monthly cost ' + price + '/month, billed by Twilio to Harakel, from Twilio\'s price list just now. The client\'s price does not change.' : '';
   var b = shown && _modIsPlainObject(q.budget) ? q.budget : null;
-  el.budget.textContent = b && typeof b.used === 'number' && typeof b.max === 'number' ? b.used + ' of ' + b.max + ' used today (purchases in the last 24 h).' : '';
+  el.budget.textContent = !b ? '' : (typeof b.used === 'number' ? b.used : 'Unknown') + ' of ' + (typeof b.max === 'number' ? b.max : 10) + ' used today (purchases in the last 24 h).';
   el.go.textContent = dl.busy ? 'Working... (up to a minute)' : shown && q.dry_run_mode === true ? 'Run the rehearsal' : price ? 'Buy & set up for ' + price + '/month' : 'Buy & set up';
   el.go.disabled = !_phCanBuy(dl);
   el.area.disabled = dl.busy;
@@ -3933,6 +3953,8 @@ async function _phBuyConfirm(dl) {
     _phCloseDialog(true);
     toast(_phRefusal(r.status, r.data), 'error');
   } else {
+    // A refusal the same quote would only meet again: the quote is dropped, so Buy stays disabled.
+    if (code === 'price_above_ceiling' || code === 'not_needed' || code === 'needs_human' || code === 'client_inactive') dl.quote = null;
     _phSetMsg(dl, _phRefusal(r.status, r.data), true);
     _phPaintBuy(dl);
   }
@@ -3981,7 +4003,7 @@ async function _phDialogSend(dl, path, body, tag, ctx, okText) {
   dl.el.cancel.disabled = false;
   if (r.status === 200) {
     _phCloseDialog(true);
-    toast(okText(r.data));
+    toast(okText(r.data), (_modIsPlainObject(r.data) && r.data.ok === false) ? 'error' : '');
   } else {
     _phSetMsg(dl, _phRefusal(r.status, r.data, ctx), true);
     dl.check();
@@ -4056,7 +4078,7 @@ function openPhoneResolve() {
     _phOpenDialog(dl, 'Resolve: reset the number state', 'No number is recorded, but the state says a purchase may have started.');
     var el2 = dl.el;
     el2.body.appendChild(_node('div', 'toggle-desc', 'line-height:1.6;',
-      'Before resetting, check the Twilio console: any number named after this business, and any TWILIO_ORPHANED_NUMBER line in the Railway logs. Reset only if nothing in Twilio belongs to this client.'));
+      'Before resetting, check the Twilio console (the main account and this client\'s subaccount) for any number named after this business or tagged "hk:". Reset only if nothing in Twilio belongs to this client.'));
     if (!name) {
       el2.body.appendChild(_phLine('The business name is not loaded, so this cannot be confirmed here. Reload the page.', 'color:var(--pink);'));
       el2.body.appendChild(_phDialogButtons(dl, 'Reset', '', function() {}));
@@ -4087,7 +4109,7 @@ function openPhoneRelease() {
   var d = st && st.data;
   if (!_phIsAdmin() || _phDlg || _phBusy || !d || !_modHas(d, 'number')) return;
   var s = _modIsPlainObject(d.setup) ? d.setup : null;
-  var number = _phE164(d.number);
+  var number = s ? _phE164(s.phone_number) : '';   // the SETUP's number: the one the release route checks
   if (!s || typeof s.id !== 'string' || !_modIsPlainObject(s.actions) || s.actions.release !== true || !number) return;
   var dl = { kind: 'release', clientId: st.clientId, busy: false };
   _phOpenDialog(dl, 'Release ' + _phFmt(number) + '?', _phBusinessName(st.clientId) || 'This client');
