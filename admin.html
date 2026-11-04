@@ -590,6 +590,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <button class="btn btn-primary btn-sm" id="mod-save" style="display:none;" disabled onclick="saveModules()">Save modules</button>
         <button class="btn btn-ghost btn-sm" id="mod-undo" style="display:none;" disabled onclick="undoModules()">Undo changes</button>
       </div>
+      <!-- Phone number (E1g-4): built by _paintPhone() from GET /api/phone-numbers/{id}. DOM nodes only. -->
+      <div id="phone-block" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Phone number</div>
+        <div id="phone-body"></div>
+      </div>
       <!-- Google Place ID (E1e-2b): admin only, painted by _paintPlaceId(). No maxlength on purpose:
            a silently truncated paste could still pass the pattern and save the wrong business. -->
       <div id="pid-block" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
@@ -1546,6 +1551,8 @@ function selectClient(el, id) {
   if (!(_modState && _modState.clientId === id && (_modState.saving || _modIsDirty(_modState)))) _loadModules(id);
   // The Place ID block follows the selection: another client starts from ITS saved value.
   if (!_pidState || _pidState.clientId !== id) _resetPlaceId(id);
+  // The phone card follows the selection from the server; a dialog open for another client is closed.
+  if (!_phState || _phState.clientId !== id) _loadPhone(id);
   const c = clients[id] || (window._apiClients && window._apiClients[id]);
   if (!c) return;
   const logo = c.logo || (c.business_name || 'CL').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
@@ -3376,6 +3383,735 @@ async function loadLiveData() {
   }
 }
 
+// ═══════ PHONE NUMBER (E1g-4) ═══════
+// The client's Twilio number, from GET /api/phone-numbers/{id} (backend routes/phone_numbers.py, E1g-3a).
+// RULES, each load-bearing:
+//   * Every server value reaches the page through _node()/textContent or an input's .value. No innerHTML.
+//   * Which of Retry / Finish / Cancel / Resolve / Release shows is the SERVER's setup.actions flags (and
+//     reset_status_allowed), never worked out here. The server refuses anything else anyway.
+//   * Buttons only for the admin role AND the admin-shaped answer (it has a "number" key). A sales token
+//     gets the server's digit-free projection, painted as it comes: no digits, no price, no buttons.
+//   * Buy sends the quote's own mode and price (expect_dry_run, confirmed_monthly_cents): never a typed
+//     price. A 409 mode_changed / price_changed is shown and re-quoted, never retried or auto-confirmed.
+//   * Console: _logFail with a fixed tag and the HTTP status only. Never a number, an email or a name.
+var _PH_BASE = API_URL + '/api/phone-numbers/';
+var _phState = null;   // {clientId, loading} | {clientId, status, data}
+var _phSeq = 0;        // bumps per GET; an older answer (or another client's) is dropped
+var _phBusy = false;   // a Retry / Finish / Cancel from the card is in flight
+var _phDlg = null;     // the open dialog: {kind, clientId, busy, el, ...}
+
+var _PH_STEP_LABELS = {
+  subaccount: 'Twilio subaccount', searched: 'Find a number', purchased: 'Buy the number',
+  webhooks: 'Point calls and texts at Harakel', saved: 'Save it on the client',
+  a2p: 'Texting registration (A2P)', trust_hub: 'Trust Hub (caller ID)',
+  detach: 'Detach from texting and Trust Hub', twilio_release: 'Release in Twilio', cleared: 'Clear it from the client'
+};
+var _PH_STATUS_WORDS = { done: 'Done', skipped: 'Skipped', running: 'Running', failed: 'Failed', unknown: 'Not confirmed', waiting: 'Waiting' };
+var _PH_STATUS_CSS = { failed: 'color:var(--pink);', unknown: 'color:var(--amber);', waiting: 'color:var(--amber);', running: 'color:var(--accent2);' };
+// Step error tokens (backend routes/_phone_setup.py) -> one plain-English line each.
+var _PH_STEP_LINES = {
+  dry_run: 'Rehearsal: skipped, nothing was bought.',
+  budget_exceeded: 'Daily purchase limit reached (10 in 24 h). Nothing was bought; Retry later.',
+  client_inactive: 'This client is not active. Nothing was bought.',
+  has_number: 'This client already has a number. Nothing was bought.',
+  kill_switch_on: 'Real purchases are switched off (TWILIO_PROVISIONING_DRY_RUN). Nothing was bought; Retry once they are on.',
+  no_numbers: 'Twilio has no numbers in this area code right now. Nothing was bought; Cancel and buy again with another area code.',
+  not_needed: 'Voice AI and Texting & reviews are both off now. Nothing was bought.',
+  price_above_ceiling: 'Twilio\'s price is above the configured ceiling. Nothing was bought.',
+  price_changed: 'Twilio\'s price went up since it was confirmed. Nothing was bought; Cancel and buy again to confirm the new price.',
+  price_unavailable: 'Twilio\'s price could not be read. Nothing was bought; Retry.',
+  number_unavailable: 'Twilio refused that number (someone else took it). Retry to search again.',
+  number_missing: 'The number is no longer in Twilio. Check the Twilio console.',
+  reconcile_wait: 'Twilio did not confirm the purchase. Retry in 2 minutes. A second number will never be bought.',
+  reconcile_conflict: 'Twilio refused to sell this number again: the first attempt may have bought it. Retry checks again; nothing more will be bought until this is resolved.',
+  reconcile_foreign: 'The number is in Twilio under another name. Check the Twilio console, then Resolve.',
+  reconcile_multiple: 'More than one number carries this setup\'s tag. Release the extra one in the Twilio console, then Resolve.',
+  reconcile_bad_number: 'Twilio\'s record for this attempt does not match. Check the Twilio console, then Resolve.',
+  shared_platform_number: 'That is the platform\'s own number; it is never used for one client.',
+  sid_number_mismatch: 'The number and its SID do not match in Twilio. Check the Twilio console, then Resolve.',
+  number_on_other_client: 'This number is already on another client. Check the Twilio console.',
+  webhooks_not_applied: 'Twilio did not apply the call and text settings. Retry.',
+  subaccount_wait: 'Twilio did not confirm the client\'s subaccount. Retry in 2 minutes.',
+  subaccount_missing: 'The client\'s Twilio subaccount is missing. Check the Twilio console.',
+  subaccount_multiple: 'More than one Twilio subaccount carries this client\'s tag. Check the Twilio console.',
+  subaccount_foreign: 'A Twilio subaccount with this client\'s tag is not one of ours. Check the Twilio console.',
+  subaccount_suspended: 'The client\'s Twilio subaccount is suspended. Check the Twilio console.',
+  subaccount_closed: 'The client\'s Twilio subaccount is closed. Check the Twilio console.',
+  twilio_bad_answer: 'Twilio sent an answer the app could not read. Retry.',
+  a2p_not_approved: 'Waiting for texting registration (A2P) approval. Use Finish setup once it is approved.',
+  a2p_not_configured: 'Texting registration (A2P) is not set up on the platform yet. Use Finish setup once it is.',
+  trust_hub_not_approved: 'Waiting for Trust Hub approval. Use Finish setup once it is approved.',
+  trust_hub_not_configured: 'Trust Hub is not set up on the platform yet. Use Finish setup once it is.',
+  contract: 'The app stopped at an internal safety check. Nothing more ran; tell the developer.'
+};
+// Refusal codes (detail.code) from every phone route -> one plain-English line each.
+var _PH_REFUSALS = {
+  has_number: 'This client already has a number. Nothing was claimed.',
+  not_needed: 'Voice AI and Texting & reviews are both off, so no number is needed. Nothing was claimed.',
+  open_setup_exists: 'A setup is already open for this client. Use the card\'s Retry instead. Nothing new was claimed.',
+  needs_human: 'This client\'s number state needs a human check first (Resolve). Nothing was claimed.',
+  client_inactive: 'This client is not active. Nothing was claimed.',
+  price_above_ceiling: 'Twilio\'s price is above the configured ceiling. Nothing was claimed.',
+  price_unavailable: 'Twilio\'s price could not be read just now. Nothing was claimed; try again.',
+  twilio_unavailable: 'Twilio could not be searched just now. Nothing was claimed; try again.',
+  invalid_area_code: 'An area code is three digits, 2-9 first, and not N11 (like 411 or 911).',
+  no_area_code: 'No area code could be read from the client\'s phone numbers. Enter one.',
+  invalid_price: 'The confirmed price was out of range. Nothing was claimed; close and buy again.',
+  nothing_to_retry: 'There is no open setup to retry. Showing where it stands now.',
+  setup_changed: 'The setup changed since the card loaded. Nothing was run. Showing where it stands now.',
+  setup_in_progress: 'This setup is running right now. Wait a moment, then reload.',
+  not_cancellable: 'This setup cannot be cancelled (a purchase was attempted or a number is held): Retry, Resolve or Release it instead.',
+  not_open: 'This setup is not open any more. Showing where it stands now.',
+  invalid_setup_id: 'The setup id was not accepted. Reload the card.',
+  invalid_resolution: 'Type the number as 10 digits (and paste a PN SID to adopt). Nothing was changed.',
+  nothing_to_resolve: 'There is nothing to resolve on this setup now. Nothing was changed.',
+  confirm_mismatch: 'The number typed does not match. Nothing was changed.',
+  client_has_number: 'This client already has a number. Nothing was changed.',
+  live_setup_exists: 'A live setup is still open for this client: resolve that one instead. Nothing was changed.',
+  number_on_other_client: 'That number is already on another client. Nothing was changed.',
+  sid_in_use: 'That SID is already recorded on another setup. Nothing was changed.',
+  not_app_managed: 'This number was configured by hand; release it in the Twilio console. Nothing was changed.'
+};
+// Release-only refusals (E1g-3b; codes read from the backend's release route while it was being built).
+var _PH_RELEASE_REFUSALS = {
+  twilio_unavailable: 'Twilio could not be asked about this number just now. Nothing was released; try again.',
+  invalid_confirm_number: 'Type the number as 10 digits. Nothing was released.',
+  setup_not_found: 'That setup does not belong to this client. Reload the card. Nothing was released.',
+  no_number: 'This client has no phone number to release.',
+  already_released: 'This number was already released. Reload the card.',
+  client_number_differs: 'The client now holds a different number. Reload the card. Nothing was released.',
+  not_releasable: 'This setup cannot be released. Reload the card.',
+  confirm_mismatch: 'The number typed is not this setup\'s number. Nothing was released.',
+  primary_account_number: 'That number is in the platform\'s main Twilio account, not this client\'s subaccount. Nothing was released.',
+  sid_number_mismatch: 'Twilio holds a different number under this setup\'s SID. Nothing was released.',
+  number_under_other_sid: 'The number is in the client\'s subaccount under another SID. Release it in the Twilio console, then Retry.',
+  subaccount_missing: 'This client has no Twilio subaccount on record. Nothing was released.',
+  sid_malformed: 'This setup\'s recorded SID is malformed. Nothing was released.',
+  number_malformed: 'This setup\'s recorded number is malformed. Nothing was released.'
+};
+
+function _phIsAdmin() { return _pidIsAdmin(); }
+function _phToken(t) { return (typeof t === 'string' && /^[a-z0-9_:.-]{1,64}$/.test(t)) ? t : ''; }
+function _phE164(v) { return (typeof v === 'string' && /^\+1[2-9][0-9]{9}$/.test(v)) ? v : ''; }
+// "+15165550100" -> "+1 (516) 555-0100"; anything else as it is (it is only ever set via textContent).
+function _phFmt(v) {
+  var m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(String(v == null ? '' : v));
+  return m ? '+1 (' + m[1] + ') ' + m[2] + '-' + m[3] : String(v == null ? '' : v);
+}
+// What the admin typed -> "+1XXXXXXXXXX", or '' when it is not a 10-digit North American number.
+function _phTyped(v) {
+  var d = String(v || '').replace(/\D/g, '');
+  if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+  return d.length === 10 ? _phE164('+1' + d) : '';
+}
+function _phMoney(c) { return (typeof c === 'number' && isFinite(c) && Math.floor(c) === c && c > 0) ? '$' + (c / 100).toFixed(2) : ''; }
+function _phAreaOk(a) { return typeof a === 'string' && /^[2-9][0-9]{2}$/.test(a) && a.slice(1) !== '11'; }
+function _phDate(iso) {
+  var t = typeof iso === 'string' ? Date.parse(iso) : NaN;
+  return isNaN(t) ? '' : new Date(t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function _phLine(text, css) { return _node('div', 'toggle-desc', 'margin-top:6px;' + (css || ''), text); }
+
+// One step's line: the code's sentence, or a safe generic one.
+function _phStepLine(status, token) {
+  if (!token) return '';
+  if (_modHas(_PH_STEP_LINES, token)) return _PH_STEP_LINES[token];
+  var m = /^twilio_(\d{3,6})$/.exec(token);
+  if (m) return 'Twilio refused the request (Twilio code ' + m[1] + '). Check the Twilio console, then Retry.';
+  if (token === 'twilio_5xx' || token === 'transport') {
+    return status === 'unknown' ? 'Twilio did not give a clear answer. Retry; a second number will never be bought.'
+                                : 'Twilio could not be reached or had a problem. Retry.';
+  }
+  return 'Stopped (code: ' + token + ').';
+}
+
+// Any refused answer -> one plain-English line. status 0 = no answer at all.
+function _phRefusal(status, data, ctx) {
+  var detail = _modIsPlainObject(data) ? data.detail : undefined;
+  if (status === 0) return 'No answer from the server. Reload to see where it stands.';
+  if (_modIsPlainObject(detail) && typeof detail.code === 'string') {
+    var code = detail.code;
+    if (code === 'mode_changed') {
+      return 'The purchase mode changed since this dialog opened: it is now ' +
+        (detail.dry_run_mode === true ? 'a rehearsal (nothing will be bought)' : 'LIVE (a real number will be bought)') + '. Nothing was claimed.';
+    }
+    if (code === 'price_changed') {
+      var p = _phMoney(detail.monthly_price_cents);
+      return 'Twilio\'s price changed since this dialog opened' + (p ? ' (now ' + p + '/month)' : '') + '. Nothing was claimed.';
+    }
+    if (code === 'shared_platform_number') return 'That is the platform\'s own number; it is never adopted or released. Nothing was changed.';
+    if (ctx === 'release' && _modHas(_PH_RELEASE_REFUSALS, code)) return _PH_RELEASE_REFUSALS[code];
+    if (_modHas(_PH_REFUSALS, code)) return _PH_REFUSALS[code];
+    return 'Refused (code: ' + (_phToken(code) || 'unknown') + '). Nothing was changed.';
+  }
+  if (status === 403) {
+    return (typeof detail === 'string' && detail.indexOf('can no longer') !== -1)
+      ? 'Your account can no longer buy or release numbers.' : 'Only an admin can buy, release or resolve numbers.';
+  }
+  if (status === 404) return ctx === 'release' ? 'Release is not available on the server yet. Nothing was changed.' : 'Client or setup not found. Reload the page.';
+  if (status === 422) return 'The server did not accept this request. Nothing was changed.';
+  if (status === 500) return 'Phone setup failed on the server. Reload to see where it stands.';
+  if (status === 503) return 'Phone setup could not be confirmed just now. Reload to see where it stands.';
+  return 'Could not complete this (HTTP ' + status + '). Reload to see where it stands.';
+}
+
+// One call. Never throws; logs a fixed tag and the status only.
+async function _phCall(method, path, body, tag) {
+  var status = 0, data = null;
+  try {
+    var opts = { method: method };
+    if (body !== undefined) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
+    var res = await authFetch(_PH_BASE + path, opts);
+    status = res.status;
+    try { data = await res.json(); } catch (e) { data = null; }
+  } catch (e) { status = 0; }
+  if (status !== 200 && status !== 401) _logFail(tag, status);
+  return { status: status, data: data };
+}
+
+// Logout, or a 401 anywhere: close any dialog (it sits outside #app-root) and drop the card.
+function _phReset() {
+  _phSeq++;
+  _phState = null;
+  _phBusy = false;
+  _phCloseDialog(true);
+  _paintPhone();
+}
+
+async function _loadPhone(id) {
+  var seq = ++_phSeq;
+  if (_phDlg && _phDlg.clientId !== id) _phCloseDialog(true);
+  _phState = { clientId: id, loading: true };
+  _paintPhone();
+  var r = await _phCall('GET', encodeURIComponent(id), undefined, 'phone status load failed');
+  if (seq !== _phSeq || _selectedClientId !== id) return;   // stale: the selection moved on
+  if (r.status === 401) { _phReset(); return; }
+  _phState = { clientId: id, status: r.status, data: (r.status === 200 && _modIsPlainObject(r.data)) ? r.data : null };
+  _paintPhone();
+}
+
+function _phButton(label, css, onClick) {
+  var b = _node('button', 'btn btn-ghost btn-sm', css || '', label);
+  b.type = 'button';
+  b.disabled = _phBusy;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function _phSteps(steps) {
+  var wrap = _node('div', null, 'margin-top:6px;');
+  (Array.isArray(steps) ? steps : []).forEach(function(step) {
+    if (!_modIsPlainObject(step) || !_modHas(_PH_STEP_LABELS, step.key)) return;
+    var status = _modHas(_PH_STATUS_WORDS, step.status) ? step.status : null;
+    var token = _phToken(step.error);
+    var rehearsed = status === 'skipped' && token === 'dry_run';
+    wrap.appendChild(_node('div', 'toggle-desc', 'margin-top:3px;' + (status && _PH_STATUS_CSS[status] ? _PH_STATUS_CSS[status] : ''),
+      _PH_STEP_LABELS[step.key] + ': ' + (rehearsed ? 'Skipped (rehearsal)' : status ? _PH_STATUS_WORDS[status] : 'Not started')));
+    var line = rehearsed ? '' : _phStepLine(status, token);
+    if (line && status !== 'done') wrap.appendChild(_node('div', 'toggle-desc', 'margin:1px 0 0 12px;', line));
+  });
+  return wrap;
+}
+
+function _paintPhone() {
+  var block = document.getElementById('phone-block');
+  var body = document.getElementById('phone-body');
+  if (!block || !body) return;
+  var st = _phState;
+  block.style.display = st ? '' : 'none';
+  body.textContent = '';
+  if (!st) return;
+  if (st.loading) { body.appendChild(_phLine('Loading the phone number...')); return; }
+  var d = st.data;
+  if (!d) {
+    body.appendChild(_phLine(st.status === 403 ? 'Your account cannot view phone numbers.'
+      : st.status === 404 ? 'Phone setup unavailable for this client.'
+      : 'Could not load the phone number.', 'color:var(--pink);'));
+    var again = _phButton('Try again', 'margin-top:8px;', function() { _loadPhone(st.clientId); });
+    body.appendChild(again);
+    return;
+  }
+  if (_phIsAdmin() && _modHas(d, 'number')) _phPaintAdmin(body, d);
+  else _phPaintSales(body, d);
+}
+
+// The sales projection: whatever the server sent, no digits (it sends none), no price, no buttons.
+function _phPaintSales(body, d) {
+  body.appendChild(_phLine(d.number_on_file === true ? 'A number is on file for this client.'
+    : d.needs_number === true ? 'Needs a phone number. An admin buys it.' : 'No number on file.',
+    d.needs_number === true ? 'color:var(--amber);' : ''));
+  var s = _modIsPlainObject(d.setup) ? d.setup : null;
+  if (!s) return;
+  if (s.state === 'rehearsed') body.appendChild(_phLine('Last setup was a rehearsal: nothing was bought.'));
+  else if (s.state === 'open') body.appendChild(_phLine(s.running === true ? 'A setup is running right now.' : 'A setup is open.'));
+  if (s.state === 'open' || s.state === 'releasing') body.appendChild(_phSteps(s.steps));
+  if (_modIsPlainObject(s.release)) body.appendChild(_phSteps(s.release.steps));
+}
+
+function _phPaintAdmin(body, d) {
+  var s = _modIsPlainObject(d.setup) ? d.setup : null;
+  var acts = (s && _modIsPlainObject(s.actions)) ? s.actions : {};
+  var number = typeof d.number === 'string' ? d.number : '';
+  var liveOpen = !!s && s.state === 'open' && s.dry_run !== true;
+
+  if (number) {
+    body.appendChild(_node('div', '', 'font-size:13px;font-weight:600;', _phFmt(number)));
+    if (d.number_managed !== true) {
+      body.appendChild(_phLine('Not managed by the app: this number was set up by hand in Twilio. The app never buys over it or releases it; change it in the Twilio console.'));
+    } else {
+      body.appendChild(_phLine('Bought and set up by the app. Calls to this number reach this client.'));
+    }
+    if (d.subscription_cancelled === true) {
+      body.appendChild(_phLine('Subscription cancelled: this number is still billing.' + (acts.release === true ? ' Release it?' : ''), 'color:var(--pink);'));
+    }
+  } else if (liveOpen) {
+    body.appendChild(_phLine(s.running === true ? 'A setup is running right now.' : 'A setup is open: it stopped at the step below.', 'color:var(--amber);'));
+  } else if (d.reset_status_allowed === true) {
+    body.appendChild(_phLine('Needs a human check: an earlier purchase may have started, but no number is recorded. Check the Twilio console, then Resolve.', 'color:var(--pink);'));
+  } else if (d.needs_number === true) {
+    body.appendChild(_phLine('Needs a phone number', 'color:var(--amber);font-weight:600;'));
+  } else {
+    body.appendChild(_phLine('No number needed: Voice AI and Texting & reviews are both off.'));
+  }
+
+  body.appendChild(_phLine('Twilio subaccount: ' + (d.subaccount_recorded === true ? 'created' : 'not yet')));
+
+  if (s) {
+    var when = _phDate(s.created_at);
+    if (s.state === 'rehearsed') {
+      var would = _phE164(s.candidate_number);
+      var price = _phMoney(s.monthly_price_cents);
+      body.appendChild(_phLine('Last rehearsal' + (when ? ' (' + when + ')' : '') + ': ' +
+        (would ? 'would have bought ' + _phFmt(would) : 'no number was picked') +
+        (_phAreaOk(s.area_code) ? ' in area code ' + s.area_code : '') + (price ? ' at ' + price + '/month' : '') +
+        '. Nothing was bought.'));
+    } else if (s.state === 'abandoned') {
+      body.appendChild(_phLine('Last setup' + (when ? ' (' + when + ')' : '') + ' was cancelled or resolved. Nothing is open.'));
+    } else if (s.state === 'released') {
+      body.appendChild(_phLine('Last number' + (when ? ' (set up ' + when + ')' : '') + ' was released.'));
+    }
+    if (s.state === 'open' || s.state === 'rehearsed' || s.state === 'releasing') body.appendChild(_phSteps(s.steps));
+    if (_modIsPlainObject(s.release)) body.appendChild(_phSteps(s.release.steps));
+    if (s.running === true) body.appendChild(_phLine('Running right now. Reload the card in a moment.'));
+  }
+
+  var row = _node('div', null, 'display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;');
+  if (!number && !liveOpen && d.needs_number === true && d.reset_status_allowed !== true) {
+    var buy = _phButton('Buy & set up', '', openPhoneBuy);
+    buy.className = 'btn btn-primary btn-sm';
+    row.appendChild(buy);
+  }
+  if (acts.finish === true) row.appendChild(_phButton('Finish setup', '', function() { _phAction('finish'); }));
+  else if (acts.retry === true) row.appendChild(_phButton('Retry', '', function() { _phAction('retry'); }));
+  if (acts.cancel === true) row.appendChild(_phButton('Cancel setup', '', function() { _phAction('cancel'); }));
+  if ((Array.isArray(acts.resolve) && acts.resolve.length) || d.reset_status_allowed === true) {
+    row.appendChild(_phButton('Resolve...', 'color:var(--amber);', openPhoneResolve));
+  }
+  if (acts.release === true && _phE164(number)) row.appendChild(_phButton('Release number...', 'color:var(--pink);', openPhoneRelease));
+  if (s && s.running === true) row.appendChild(_phButton('Reload', '', function() { _loadPhone(d.client_id || _phState.clientId); }));
+  if (row.firstChild) body.appendChild(row);
+}
+
+// Retry / Finish setup / Cancel from the card: confirm(), one POST, then re-read the card.
+async function _phAction(kind) {
+  var st = _phState;
+  var s = st && st.data && _modIsPlainObject(st.data.setup) ? st.data.setup : null;
+  if (_phBusy || !s || typeof s.id !== 'string' || !_phIsAdmin()) return;
+  var text = kind === 'cancel'
+    ? 'Cancel this phone setup? Nothing was bought, and you can buy again afterwards.'
+    : kind === 'finish'
+      ? 'Finish setup? This re-checks the steps that are waiting. It never buys a second number.'
+      : 'Retry this phone setup from the step that stopped? If the number is not bought yet, this can buy it now at the price confirmed when the setup started. A second number is never bought.';
+  if (!confirm(text)) return;
+  var clientId = st.clientId;
+  _phBusy = true;
+  _paintPhone();
+  var r = await _phCall('POST', encodeURIComponent(clientId) + (kind === 'cancel' ? '/setup/cancel' : '/setup/retry'),
+                        { setup_id: s.id }, kind === 'cancel' ? 'phone setup cancel failed' : 'phone setup retry failed');
+  _phBusy = false;
+  if (r.status === 401) { _phReset(); return; }
+  if (r.status === 200) {
+    var out = _modIsPlainObject(r.data) && _modIsPlainObject(r.data.setup) ? r.data.setup : null;
+    toast(kind === 'cancel' ? 'Setup cancelled. Nothing was bought.'
+      : out && out.state === 'done' ? 'Setup finished.'
+      : (r.data && r.data.ok === true) ? 'Setup ran.' : 'Setup stopped at a step: see the card.', (r.data && r.data.ok === false) ? 'error' : '');
+  } else {
+    toast(_phRefusal(r.status, r.data), 'error');
+  }
+  if (_phState && _phState.clientId === clientId) _loadPhone(clientId);
+}
+
+// ── Dialog plumbing ──
+function _phOpenDialog(dl, title, sub) {
+  _phDlg = dl;
+  var bodyEl = document.getElementById('phone-modal-body');
+  bodyEl.textContent = '';
+  bodyEl.appendChild(_node('div', 'embed-modal-title', '', title));
+  if (sub) bodyEl.appendChild(_node('div', 'embed-modal-sub', '', sub));
+  dl.el = { body: bodyEl, msg: _node('div', 'toggle-desc', 'margin-top:10px;min-height:16px;') };
+  dl.el.msg.setAttribute('role', 'alert');
+  document.getElementById('phone-modal-overlay').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function _phSetMsg(dl, text, isError) {
+  dl.el.msg.textContent = text || '';
+  dl.el.msg.style.color = isError ? 'var(--pink)' : '';
+}
+function _phSetBusy(dl, busy) {
+  dl.busy = busy;
+  var x = document.getElementById('phone-modal-close');
+  if (x) x.disabled = busy;
+}
+function _phCloseDialog(force) {
+  var dl = _phDlg;
+  if (!dl) return;
+  if (dl.busy && !force) return;   // a request is in flight: its answer must be seen
+  if (dl.timer) clearTimeout(dl.timer);
+  _phDlg = null;
+  var x = document.getElementById('phone-modal-close');
+  if (x) x.disabled = false;
+  var bodyEl = document.getElementById('phone-modal-body');
+  if (bodyEl) bodyEl.textContent = '';   // the dialog held number digits: drop them
+  var ov = document.getElementById('phone-modal-overlay');
+  if (ov) ov.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function closePhoneDialog() { _phCloseDialog(false); }
+
+function _phBusinessName(id) {
+  var c = window._apiClients && window._apiClients[id];
+  var n = c && (c.business_name || c.name);
+  return typeof n === 'string' ? n : '';
+}
+
+// ── Buy & set up ──
+function openPhoneBuy() {
+  var st = _phState;
+  if (!_phIsAdmin() || _phDlg || _phBusy || !st || !st.data || st.data.needs_number !== true) return;
+  var dl = { kind: 'buy', clientId: st.clientId, busy: false, quote: null, quoteSeq: 0, timer: null };
+  _phOpenDialog(dl, 'Buy & set up a phone number', _phBusinessName(st.clientId) || 'This client');
+  var el = dl.el;
+  el.banner = _node('div', '', 'display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;background:var(--amber-dim);color:var(--amber);font-size:12px;font-weight:600;',
+                    'Rehearsal: nothing will be bought.');
+  el.live = _node('div', '', 'display:none;margin-bottom:12px;padding:10px 12px;border-radius:8px;background:var(--pink-dim);color:var(--pink);font-size:12px;font-weight:600;',
+                  'LIVE: this buys a real number, billed every month until it is released.');
+  var areaLabel = _node('div', 'toggle-desc', 'margin-bottom:4px;', 'Area code');
+  el.area = _node('input', 'form-input', 'max-width:120px;');
+  el.area.setAttribute('inputmode', 'numeric');
+  el.area.setAttribute('maxlength', '3');
+  el.area.setAttribute('aria-label', 'Area code');
+  el.area.autocomplete = 'off';
+  el.area.addEventListener('input', function() { _phAreaInput(dl); });
+  el.source = _node('div', 'toggle-desc', 'margin-top:4px;');
+  el.avail = _node('div', 'toggle-desc', 'margin-top:10px;');
+  el.price = _node('div', 'toggle-desc', 'margin-top:6px;');
+  el.budget = _node('div', 'toggle-desc', 'margin-top:6px;');
+  var acts = _node('div', null, 'display:flex;gap:6px;margin-top:16px;flex-wrap:wrap;');
+  el.go = _node('button', 'btn btn-primary btn-sm', '', 'Buy & set up');
+  el.go.type = 'button';
+  el.go.addEventListener('click', function() { _phBuyConfirm(dl); });
+  var cancel = _node('button', 'btn btn-ghost btn-sm', '', 'Close');
+  cancel.type = 'button';
+  cancel.addEventListener('click', closePhoneDialog);
+  el.cancel = cancel;
+  acts.appendChild(el.go);
+  acts.appendChild(cancel);
+  [el.banner, el.live, areaLabel, el.area, el.source, el.avail, el.price, el.budget, el.msg, acts].forEach(function(n) { el.body.appendChild(n); });
+  _phPaintBuy(dl);
+  _phQuote(dl, null, '');
+}
+
+function _phQuoteOk(q) {
+  return _modIsPlainObject(q) && _phAreaOk(q.area_code) && typeof q.available === 'boolean' && typeof q.dry_run_mode === 'boolean' &&
+    !!_phMoney(q.monthly_price_cents) && q.monthly_price_cents <= 10000;
+}
+
+// GET the quote. keepMsg: a refusal line to keep on screen above the fresh numbers (mode or price changed).
+async function _phQuote(dl, area, keepMsg) {
+  if (_phDlg !== dl) return;
+  var seq = ++dl.quoteSeq;
+  dl.quote = null;
+  dl.quoting = true;
+  _phSetMsg(dl, keepMsg || '', !!keepMsg);
+  _phPaintBuy(dl);
+  var r = await _phCall('GET', encodeURIComponent(dl.clientId) + '/quote' + (area ? '?area_code=' + encodeURIComponent(area) : ''),
+                        undefined, 'phone quote failed');
+  if (_phDlg !== dl || seq !== dl.quoteSeq) return;
+  if (r.status === 401) { _phReset(); return; }
+  dl.quoting = false;
+  if (r.status === 200 && _phQuoteOk(r.data)) {
+    dl.quote = r.data;
+    if (!area) dl.el.area.value = r.data.area_code;   // derived by the server; a typed one is already in the box
+  } else {
+    var text = r.status === 200 ? 'The quote could not be read. Close and try again.' : _phRefusal(r.status, r.data);
+    var code = _modIsPlainObject(r.data) && _modIsPlainObject(r.data.detail) ? r.data.detail.code : '';
+    _phSetMsg(dl, (keepMsg ? keepMsg + ' ' : '') + text, code !== 'no_area_code');
+    if (code === 'has_number' || code === 'not_needed' || code === 'open_setup_exists' || code === 'needs_human') {
+      if (_phState && _phState.clientId === dl.clientId) _loadPhone(dl.clientId);   // the card behind shows the truth
+    }
+    if (code === 'no_area_code') dl.el.area.focus();
+  }
+  _phPaintBuy(dl);
+}
+
+function _phAreaInput(dl) {
+  if (_phDlg !== dl) return;
+  var v = dl.el.area.value.replace(/\D/g, '').slice(0, 3);
+  if (dl.el.area.value !== v) dl.el.area.value = v;
+  if (dl.timer) { clearTimeout(dl.timer); dl.timer = null; }
+  if (v.length === 3 && !_phAreaOk(v)) {
+    _phSetMsg(dl, _PH_REFUSALS.invalid_area_code, true);
+  } else if (v.length === 3 && !(dl.quote && dl.quote.area_code === v)) {
+    _phSetMsg(dl, '', false);
+    dl.timer = setTimeout(function() { dl.timer = null; _phQuote(dl, v, ''); }, 400);
+  } else if (v.length < 3) {
+    _phSetMsg(dl, '', false);
+  }
+  _phPaintBuy(dl);
+}
+
+function _phCanBuy(dl) {
+  var q = dl.quote;
+  return !!q && !dl.quoting && !dl.busy && !dl.timer && q.available === true && dl.el.area.value === q.area_code;
+}
+
+function _phPaintBuy(dl) {
+  var el = dl.el, q = dl.quote;
+  var shown = !!q && dl.el.area.value === q.area_code;
+  el.banner.style.display = shown && q.dry_run_mode === true ? '' : 'none';
+  el.live.style.display = shown && q.dry_run_mode === false ? '' : 'none';
+  var srcWords = { phone: 'from the client\'s phone', owner_phone: 'from the owner\'s phone', admin: 'entered by you' };
+  el.source.textContent = shown && _modHas(srcWords, q.area_code_source) ? 'Area code ' + q.area_code + ' (' + srcWords[q.area_code_source] + '). Change it to search another.' : '';
+  if (dl.quoting || dl.timer) el.avail.textContent = 'Checking Twilio...';
+  else if (!shown) el.avail.textContent = '';
+  else if (q.available !== true) el.avail.textContent = 'No numbers in that area code right now, try another.';
+  else {
+    var ex = _phE164(q.example_number);
+    el.avail.textContent = 'Numbers are available' + (ex ? ', for example ' + _phFmt(ex) : '') +
+      (typeof q.region === 'string' && q.region ? ' (' + q.region + ')' : '') + '. The exact number is picked when it is bought.';
+  }
+  el.avail.style.color = shown && q.available !== true && !dl.quoting ? 'var(--amber)' : '';
+  var price = shown ? _phMoney(q.monthly_price_cents) : '';
+  el.price.textContent = price ? 'Monthly cost ' + price + '/month, billed by Twilio to Harakel, from Twilio\'s price list just now. The client\'s price does not change.' : '';
+  var b = shown && _modIsPlainObject(q.budget) ? q.budget : null;
+  el.budget.textContent = b && typeof b.used === 'number' && typeof b.max === 'number' ? b.used + ' of ' + b.max + ' used today (purchases in the last 24 h).' : '';
+  el.go.textContent = dl.busy ? 'Working... (up to a minute)' : shown && q.dry_run_mode === true ? 'Run the rehearsal' : price ? 'Buy & set up for ' + price + '/month' : 'Buy & set up';
+  el.go.disabled = !_phCanBuy(dl);
+  el.area.disabled = dl.busy;
+  el.cancel.disabled = dl.busy;
+}
+
+async function _phBuyConfirm(dl) {
+  if (_phDlg !== dl || !_phCanBuy(dl)) return;
+  var q = dl.quote;
+  var price = _phMoney(q.monthly_price_cents);
+  if (q.dry_run_mode !== true &&
+      !confirm('Buy a real Twilio number in area code ' + q.area_code + ' for ' + price + '/month? Billing starts now and runs until it is released.')) return;
+  if (_phDlg !== dl || !_phCanBuy(dl)) return;
+  _phSetBusy(dl, true);   // set before the first await: a second click finds the button disabled
+  _phSetMsg(dl, '', false);
+  _phPaintBuy(dl);
+  var r = await _phCall('POST', encodeURIComponent(dl.clientId) + '/setup',
+    { area_code: q.area_code, confirmed_monthly_cents: q.monthly_price_cents, expect_dry_run: q.dry_run_mode === true },
+    'phone setup start failed');
+  if (r.status === 401) { _phReset(); return; }
+  if (_phDlg !== dl) return;
+  _phSetBusy(dl, false);
+  var code = _modIsPlainObject(r.data) && _modIsPlainObject(r.data.detail) ? r.data.detail.code : '';
+  if (r.status === 200) {
+    var out = _modIsPlainObject(r.data) && _modIsPlainObject(r.data.setup) ? r.data.setup : null;
+    _phCloseDialog(true);
+    toast(out && out.state === 'rehearsed' ? 'Rehearsal finished: nothing was bought.'
+      : out && out.state === 'done' ? 'Number bought and set up.'
+      : (r.data && r.data.ok === true) ? 'Number bought; some steps are waiting (see the card).' : 'Setup stopped at a step: see the card.',
+      out && out.state === 'rehearsed' || (r.data && r.data.ok === true) ? '' : 'error');
+  } else if (code === 'mode_changed' || code === 'price_changed') {
+    // Shown, then a FRESH quote for the same area code. Never re-sent: the admin confirms again.
+    _phQuote(dl, q.area_code_source === 'admin' ? q.area_code : null, _phRefusal(r.status, r.data) + ' Check the new quote below, then confirm again.');
+    return;
+  } else if (code === 'has_number' || code === 'open_setup_exists') {
+    _phCloseDialog(true);
+    toast(_phRefusal(r.status, r.data), 'error');
+  } else {
+    _phSetMsg(dl, _phRefusal(r.status, r.data), true);
+    _phPaintBuy(dl);
+  }
+  if (_phState && _phState.clientId === dl.clientId) _loadPhone(dl.clientId);   // the card shows what is stored now
+}
+
+// ── Typed-confirmation dialogs (Resolve, Release) ──
+function _phTypedInput(label, placeholder, onInput) {
+  var wrap = _node('div', null, 'margin-top:10px;');
+  wrap.appendChild(_node('div', 'toggle-desc', 'margin-bottom:4px;', label));
+  var input = _node('input', 'form-input', 'font-size:12px;');
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  input.setAttribute('aria-label', label);
+  if (placeholder) input.placeholder = placeholder;
+  input.addEventListener('input', onInput);
+  wrap.appendChild(input);
+  return { wrap: wrap, input: input };
+}
+
+function _phDialogButtons(dl, goLabel, goCss, onGo) {
+  var acts = _node('div', null, 'display:flex;gap:6px;margin-top:16px;flex-wrap:wrap;');
+  dl.el.go = _node('button', 'btn btn-primary btn-sm', goCss || '', goLabel);
+  dl.el.go.type = 'button';
+  dl.el.go.disabled = true;
+  dl.el.go.addEventListener('click', onGo);
+  dl.el.cancel = _node('button', 'btn btn-ghost btn-sm', '', 'Close');
+  dl.el.cancel.type = 'button';
+  dl.el.cancel.addEventListener('click', closePhoneDialog);
+  acts.appendChild(dl.el.go);
+  acts.appendChild(dl.el.cancel);
+  return acts;
+}
+
+// One POST from a typed dialog; on 200 the dialog closes and the card re-reads.
+async function _phDialogSend(dl, path, body, tag, ctx, okText) {
+  if (_phDlg !== dl || dl.busy) return;
+  _phSetBusy(dl, true);
+  dl.el.go.disabled = true;
+  dl.el.cancel.disabled = true;
+  _phSetMsg(dl, 'Working...', false);
+  var r = await _phCall('POST', encodeURIComponent(dl.clientId) + path, body, tag);
+  if (r.status === 401) { _phReset(); return; }
+  if (_phDlg !== dl) return;
+  _phSetBusy(dl, false);
+  dl.el.cancel.disabled = false;
+  if (r.status === 200) {
+    _phCloseDialog(true);
+    toast(okText(r.data));
+  } else {
+    _phSetMsg(dl, _phRefusal(r.status, r.data, ctx), true);
+    dl.check();
+  }
+  if (_phState && _phState.clientId === dl.clientId) _loadPhone(dl.clientId);
+}
+
+// ── Resolve (the one audited way out of a blocked state; never calls Twilio) ──
+function openPhoneResolve() {
+  var st = _phState;
+  var d = st && st.data;
+  if (!_phIsAdmin() || _phDlg || _phBusy || !d || !_modHas(d, 'number')) return;
+  var s = _modIsPlainObject(d.setup) ? d.setup : null;
+  var acts = s && _modIsPlainObject(s.actions) ? s.actions : {};
+  var choices = Array.isArray(acts.resolve) ? acts.resolve.filter(function(x) { return x === 'not_bought' || x === 'adopt'; }) : [];
+  var dl = { kind: 'resolve', clientId: st.clientId, busy: false };
+  if (choices.length && s && typeof s.id === 'string') {
+    var cand = _phE164(s.candidate_number);
+    _phOpenDialog(dl, 'Resolve this phone setup', 'A purchase was attempted and Twilio\'s answer was never confirmed.');
+    var el = dl.el;
+    el.body.appendChild(_node('div', 'toggle-desc', 'line-height:1.6;',
+      'In the Twilio console, open this client\'s subaccount, then Phone Numbers > Active numbers, and look for a number whose friendly name starts with "hk:".' +
+      (cand ? ' The number this setup tried to buy is ' + _phFmt(cand) + '.' : '')));
+    dl.mode = choices[0];
+    var group = _node('div', null, 'margin-top:12px;display:flex;flex-direction:column;gap:6px;');
+    group.setAttribute('role', 'radiogroup');
+    var radioName = 'ph-resolve-' + Date.now();
+    var labels = { not_bought: 'Not bought: nothing tagged "hk:" is there', adopt: 'It was bought: adopt it' };
+    choices.forEach(function(c) {
+      var lab = _node('label', 'toggle-desc', 'display:flex;gap:8px;align-items:center;cursor:pointer;');
+      var r = document.createElement('input');
+      r.type = 'radio';
+      r.name = radioName;
+      r.checked = c === dl.mode;
+      r.addEventListener('change', function() { if (r.checked) { dl.mode = c; dl.check(); } });
+      lab.appendChild(r);
+      lab.appendChild(document.createTextNode(labels[c]));
+      group.appendChild(lab);
+    });
+    el.body.appendChild(group);
+    var num = _phTypedInput('Type the number (10 digits)', '(555) 555-0100', function() { dl.check(); });
+    var sid = _phTypedInput('Paste its PN SID from the console (adopt only)', 'PN...', function() { dl.check(); });
+    el.body.appendChild(num.wrap);
+    el.body.appendChild(sid.wrap);
+    el.body.appendChild(el.msg);
+    el.body.appendChild(_phDialogButtons(dl, 'Resolve', 'background:var(--amber);color:#111;', function() {
+      var typed = _phTyped(num.input.value);
+      if (!dl.check()) return;
+      var body = dl.mode === 'adopt'
+        ? { resolution: 'adopt', setup_id: s.id, confirm_number: typed, phone_sid: sid.input.value.trim() }
+        : { resolution: 'not_bought', setup_id: s.id, confirm_number: typed };
+      var text = dl.mode === 'adopt' ? 'Adopt ' + _phFmt(typed) + ' for this client? Use Retry afterwards to finish setting it up.'
+                                     : 'Record that nothing was bought? The setup is closed and a new Buy is allowed.';
+      if (!confirm(text)) return;
+      _phDialogSend(dl, '/resolve', body, 'phone resolve failed', 'resolve', function() {
+        return dl.mode === 'adopt' ? 'Adopted. Use Retry on the card to finish setting it up.' : 'Resolved: nothing was bought. You can buy a number again.';
+      });
+    }));
+    dl.check = function() {
+      var typed = _phTyped(num.input.value);
+      sid.wrap.style.display = dl.mode === 'adopt' ? '' : 'none';
+      var ok = dl.mode === 'adopt' ? (!!typed && /^PN[0-9a-f]{32}$/.test(sid.input.value.trim()))
+                                   : (!!typed && !!cand && typed === cand);
+      dl.el.go.disabled = !ok || dl.busy;
+      return ok && !dl.busy;
+    };
+    dl.check();
+    return;
+  }
+  if (d.reset_status_allowed === true) {
+    var name = _phBusinessName(st.clientId);
+    _phOpenDialog(dl, 'Resolve: reset the number state', 'No number is recorded, but the state says a purchase may have started.');
+    var el2 = dl.el;
+    el2.body.appendChild(_node('div', 'toggle-desc', 'line-height:1.6;',
+      'Before resetting, check the Twilio console: any number named after this business, and any TWILIO_ORPHANED_NUMBER line in the Railway logs. Reset only if nothing in Twilio belongs to this client.'));
+    if (!name) {
+      el2.body.appendChild(_phLine('The business name is not loaded, so this cannot be confirmed here. Reload the page.', 'color:var(--pink);'));
+      el2.body.appendChild(_phDialogButtons(dl, 'Reset', '', function() {}));
+      dl.check = function() { dl.el.go.disabled = true; return false; };
+      return;
+    }
+    var typedName = _phTypedInput('Type the business name to confirm', '', function() { dl.check(); });
+    el2.body.appendChild(typedName.wrap);
+    el2.body.appendChild(el2.msg);
+    el2.body.appendChild(_phDialogButtons(dl, 'Nothing in Twilio belongs to this client', 'background:var(--amber);color:#111;', function() {
+      if (!dl.check()) return;
+      _phDialogSend(dl, '/resolve', { resolution: 'reset_status' }, 'phone resolve failed', 'resolve', function() {
+        return 'Reset. You can buy a number now.';
+      });
+    }));
+    dl.check = function() {
+      var ok = typedName.input.value.trim().toLowerCase() === name.trim().toLowerCase();
+      dl.el.go.disabled = !ok || dl.busy;
+      return ok && !dl.busy;
+    };
+    dl.check();
+  }
+}
+
+// ── Release (typed number; only when the server's setup.actions.release says so) ──
+function openPhoneRelease() {
+  var st = _phState;
+  var d = st && st.data;
+  if (!_phIsAdmin() || _phDlg || _phBusy || !d || !_modHas(d, 'number')) return;
+  var s = _modIsPlainObject(d.setup) ? d.setup : null;
+  var number = _phE164(d.number);
+  if (!s || typeof s.id !== 'string' || !_modIsPlainObject(s.actions) || s.actions.release !== true || !number) return;
+  var dl = { kind: 'release', clientId: st.clientId, busy: false };
+  _phOpenDialog(dl, 'Release ' + _phFmt(number) + '?', _phBusinessName(st.clientId) || 'This client');
+  var el = dl.el;
+  el.body.appendChild(_node('div', 'pwreset-warn', '',
+    'It stops working immediately and cannot be recovered: callers and texters reach nothing. Twilio does not refund the month.'));
+  var typed = _phTypedInput('Type the number to confirm', '(555) 555-0100', function() { dl.check(); });
+  el.body.appendChild(typed.wrap);
+  el.body.appendChild(el.msg);
+  el.body.appendChild(_phDialogButtons(dl, 'Release the number', 'background:var(--pink);', function() {
+    if (!dl.check()) return;
+    _phDialogSend(dl, '/release', { setup_id: s.id, confirm_number: number }, 'phone release failed', 'release', function(data) {
+      var out = _modIsPlainObject(data) && _modIsPlainObject(data.setup) ? data.setup : null;
+      return out && out.state === 'released' ? 'Number released.' : 'Release ran; see the card for any step still open.';
+    });
+  }));
+  dl.check = function() {
+    var ok = _phTyped(typed.input.value) === number;
+    dl.el.go.disabled = !ok || dl.busy;
+    return ok && !dl.busy;
+  };
+  dl.check();
+}
+
 // ═══════ AUTH ═══════
 var AUTH_API = API_URL + '/api/auth/login';
 
@@ -3498,6 +4234,7 @@ function submitLogin(e) {
 }
 
 function logout() {
+  _phReset();   // the phone dialog sits outside #app-root: close it and drop the card's number digits
   localStorage.removeItem('hk_token');
   localStorage.removeItem('hk_role');
   localStorage.removeItem('hk_user_name');
@@ -3571,6 +4308,16 @@ initAuth();
     </div>
 
     <button class="btn btn-primary" style="width:100%;" onclick="closeResetPwModal()">I've saved it</button>
+  </div>
+</div>
+
+<!-- ═══════ PHONE NUMBER DIALOG (E1g-4) ═══════ -->
+<!-- Buy & set up, Resolve and Release. The body is built by _phOpenDialog() from DOM nodes; it cannot
+     be closed while a request is in flight (closePhoneDialog checks). -->
+<div id="phone-modal-overlay" class="embed-overlay" style="display:none;" onclick="if(event.target===this)closePhoneDialog()">
+  <div class="embed-modal" style="max-width:480px;">
+    <button class="embed-close-btn" id="phone-modal-close" onclick="closePhoneDialog()" title="Close">✕</button>
+    <div id="phone-modal-body"></div>
   </div>
 </div>
 </body>
