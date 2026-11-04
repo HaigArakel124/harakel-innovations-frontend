@@ -1520,7 +1520,7 @@ async function _rtSet(st, mode) {
   if (parsed) {
     st.data = parsed;                      // the server's answer, never the option that was clicked
     st.err = null;
-    var said = st.noLine ? 'This applies once your salon line is set up.' : _rtOutcome(parsed);   // no line: no call reaches Nova or your phone yet
+    var said = st.noLine ? 'This applies once your business line is set up.' : _rtOutcome(parsed);   // no line: no call reaches Nova or your phone yet
     st.note = 'Saved. ' + said;
     _rtRender(st);
     showToast(said, 'success');
@@ -1579,10 +1579,10 @@ function _rtRender(st) {
     var d = st.data;
     var noNumber = d.mode === 'owner_first' && !d.phoneOnFile;   // the backend sends every call to Nova in this state
     if (st.line) {
-      var line = _node('div', 'rt-line', '', 'Your salon line: ');
+      var line = _node('div', 'rt-line', '', 'Your business line: ');
       line.appendChild(_node('strong', '', '', st.line));
       frag.appendChild(line);
-    } else if (st.noLine) frag.appendChild(_node('div', 'rt-note', '', 'Your salon line isn’t set up yet, so no calls reach Nova. What you choose below applies once your line is set up.'));
+    } else if (st.noLine) frag.appendChild(_node('div', 'rt-note', '', 'Your business line isn’t set up yet, so no calls reach Nova. What you choose below applies once your line is set up.'));
     var group = _node('div', 'rt-opts');
     group.setAttribute('role', 'radiogroup');
     group.setAttribute('aria-label', 'Who answers your calls');
@@ -5653,10 +5653,19 @@ async function refreshCompetitors() {
   var btn = document.getElementById('comp-refresh-btn');
   btn.disabled = true; btn.textContent = 'Refreshing...';
   try {
-    await authedFetch(API + '/api/competitors/refresh/' + COMP_CLIENT_ID, {method: 'POST'});
+    var res = await authedFetch(API + '/api/competitors/refresh/' + COMP_CLIENT_ID, {method: 'POST'});
+    if (!res.ok) {
+      var err = await res.json().catch(function(){return {};});
+      throw new Error(extractErrorMessage(err, 'Could not refresh competitor data. Please try again.'));
+    }
+    // A 200 can still carry per-competitor failures (competitors[].error): those keep their last figures.
+    var data = await res.json().catch(function(){return {};});
+    var rows = Array.isArray(data.competitors) ? data.competitors : [];
+    var failed = rows.filter(function(r){ return r && r.error; }).length;
     await loadCompetitors(COMP_CLIENT_ID);
+    if (failed) alert('Could not refresh ' + failed + ' of ' + rows.length + ' competitor' + (rows.length === 1 ? '' : 's') + '. ' + (failed === 1 ? 'It keeps its' : 'They keep their') + ' last figures. Please try again later.');
   } catch (e) {
-    alert('Refresh failed: ' + e.message);
+    alert('Refresh failed: ' + (e.message || 'please try again.'));
   } finally {
     btn.disabled = false; btn.textContent = 'Refresh data';
   }
