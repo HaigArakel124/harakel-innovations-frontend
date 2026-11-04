@@ -1261,7 +1261,8 @@ function buildBars(id, data, color) {
     const w = document.createElement('div');
     w.className = 'bar-wrap';
     const pct = Math.max(8, Math.round((d.v / max) * 100));
-    w.innerHTML = `<div style="font-size:9px;color:var(--text3);margin-bottom:2px;">${d.v}</div><div class="bar" style="height:${pct}%;background:${color};"></div><div class="bar-label">${d.l}</div>`;
+    // d.v can be the server's MRR and d.l a date label: escaped. pct is a number; color is a literal.
+    w.innerHTML = `<div style="font-size:9px;color:var(--text3);margin-bottom:2px;">${_escHtml(d.v)}</div><div class="bar" style="height:${pct}%;background:${color};"></div><div class="bar-label">${_escHtml(d.l)}</div>`;
     wrap.appendChild(w);
   });
 }
@@ -1436,7 +1437,7 @@ function openContact(idx) {
       var d = new Date(lead.created_at);
       dateStr = d.toLocaleDateString('en-US',{month:'short',day:'numeric'}) + ' · ' + d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
     }
-    timelineEl.innerHTML = '<div class="timeline-item" style="padding-bottom:0;"><div class="timeline-dot" style="background:var(--accent);"></div><div><div style="font-size:12px;font-weight:500;">Lead captured via ' + _escHtml(lead.source || 'unknown') + '</div><div style="font-size:10px;color:var(--text3);">' + (dateStr || 'Unknown date') + '</div></div></div>';
+    timelineEl.innerHTML = '<div class="timeline-item" style="padding-bottom:0;"><div class="timeline-dot" style="background:var(--accent);"></div><div><div style="font-size:12px;font-weight:500;">Lead captured via ' + _escHtml(lead.source || 'unknown') + '</div><div style="font-size:10px;color:var(--text3);">' + _escHtml(dateStr || 'Unknown date') + '</div></div></div>';
   }
   var notesEl = document.getElementById('crm-notes');
   if (notesEl) notesEl.value = lead.notes || '';
@@ -1644,11 +1645,12 @@ async function _handleResetPwError(res) {
     toast('No portal user exists for this client.', 'error');
   } else if (res.status === 409) {
     // Duplicate portal users — needs manual resolution, so show the server's words verbatim.
-    toast(detail || 'Duplicate portal users for this client. Manual resolution required.', 'error');
+    toast((typeof detail === 'string' && detail) || 'Duplicate portal users for this client. Manual resolution required.', 'error');
   } else if (res.status === 429) {
     toast('Too many reset attempts. Please wait and try again.', 'error');
   } else {
-    toast(detail || ('Could not reset the password (HTTP ' + res.status + ').'), 'error');
+    // A non-string detail (an object or a validation list) would read "[object Object]".
+    toast((typeof detail === 'string' && detail) || ('Could not reset the password (HTTP ' + res.status + ').'), 'error');
   }
 }
 
@@ -2157,10 +2159,10 @@ async function sendChat(text) {
   if (!msg) return;
   const msgs = document.getElementById('chat-msgs');
 
-  // Show user message
+  // Show user message. Escaped like the reply below: typed text is shown as text, never parsed.
   const u = document.createElement('div');
   u.className = 'chat-msg user';
-  u.innerHTML = `<div><div class="msg-bubble">${msg}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;text-align:right;">Just now</div></div><div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">👤</div>`;
+  u.innerHTML = `<div><div class="msg-bubble">${_escHtml(msg)}</div><div style="font-size:10px;color:var(--text3);margin-top:3px;text-align:right;">Just now</div></div><div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;">👤</div>`;
   msgs.appendChild(u);
   inp.value = '';
   msgs.scrollTop = msgs.scrollHeight;
@@ -2278,7 +2280,7 @@ function _updateAppointments(appts) {
 
   if (displayAppts.length === 0) {
     listEl.innerHTML = '<div style="padding:12px 0;font-size:12px;color:var(--text3);text-align:center;">No appointments today.<br><span style="font-size:11px;">Next: ' +
-      (upcomingAppts.length > 0
+      _escHtml(upcomingAppts.length > 0
         ? new Date(upcomingAppts[0].scheduled_time || upcomingAppts[0].date).toLocaleDateString('en-US',{month:'short',day:'numeric'})
         : 'None scheduled') + '</span></div>';
     return;
@@ -2301,7 +2303,7 @@ function _updateAppointments(appts) {
     return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px;' + mb + 'cursor:pointer;">' +
       '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">' +
       '<div style="font-size:13px;font-weight:500;">' + _escHtml(name) + '</div>' +
-      '<span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">' + timeStr + '</span>' +
+      '<span style="font-size:11px;padding:2px 7px;background:var(--blue-dim);color:var(--blue);border-radius:20px;">' + _escHtml(timeStr) + '</span>' +
       '</div>' +
       '<div style="font-size:11px;color:var(--text3);">' + _escHtml(detail) + '</div>' +
       '</div>';
