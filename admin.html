@@ -576,8 +576,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div><div style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;" id="d-name">No client selected</div><div style="font-size:11px;color:var(--text3);" id="d-url"></div></div>
       </div>
       <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="toast('Opening client dashboard!')">Dashboard</button>
-        <button class="btn btn-ghost btn-sm" onclick="toast('Login link sent!')">Send link</button>
+        <button class="btn btn-primary btn-sm" onclick="toast('The client dashboard view is not available yet.')">Dashboard</button>
+        <button class="btn btn-ghost btn-sm" onclick="toast('Login links are not available yet. Use Reset password.')">Send link</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--accent2);" onclick="showEmbedModalForSelected()">⟨/⟩ Embed</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--pink);" onclick="confirmResetClientPassword()">Reset password</button>
       </div>
@@ -613,7 +613,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">White-label branding</div>
         <div class="form-group"><label class="form-label">Brand name shown to customers</label><input class="form-input" style="font-size:12px;" id="d-bot-name" value=""></div>
-        <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="toast('Branding saved!')">Save branding</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="toast('Saving branding is not available yet.')">Save branding</button>
       </div>
     </div>
   </div>
@@ -665,11 +665,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div class="grid-2">
           <div class="module-btn selected" data-module="website_builder" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⬡</div><div><div style="font-size:13px;font-weight:500;">Website Builder</div><div style="font-size:11px;color:var(--text3);">Professional website</div></div></div>
           <div class="module-btn selected" data-module="chatbot" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◎</div><div><div style="font-size:13px;font-weight:500;">AI Chatbot</div><div style="font-size:11px;color:var(--text3);">24/7 on their website</div></div></div>
-          <div class="module-btn selected" data-module="appointments" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◷</div><div><div style="font-size:13px;font-weight:500;">Appointments</div><div style="font-size:11px;color:var(--text3);">AI booking system</div></div></div>
-          <div class="module-btn selected" data-module="leads" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◉</div><div><div style="font-size:13px;font-weight:500;">Lead Capture</div><div style="font-size:11px;color:var(--text3);">Auto-capture & qualify</div></div></div>
+          <div class="module-btn selected" data-module="appointments" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◷</div><div><div style="font-size:13px;font-weight:500;">Appointments</div><div style="font-size:11px;color:var(--text3);">Appointment calendar</div></div></div>
+          <div class="module-btn selected" data-module="leads" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◉</div><div><div style="font-size:13px;font-weight:500;">Lead Capture</div><div style="font-size:11px;color:var(--text3);">Auto-capture from chat</div></div></div>
           <div class="module-btn" data-module="voice_ai" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">☏</div><div><div style="font-size:13px;font-weight:500;">Voice AI</div><div style="font-size:11px;color:var(--text3);">AI phone receptionist</div></div></div>
-          <div class="module-btn" data-module="email_ai" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◫</div><div><div style="font-size:13px;font-weight:500;">Email AI</div><div style="font-size:11px;color:var(--text3);">Auto-replies & sequences</div></div></div>
-          <div class="module-btn" data-module="crm" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◧</div><div><div style="font-size:13px;font-weight:500;">CRM</div><div style="font-size:11px;color:var(--text3);">Pipeline management</div></div></div>
+          <div class="module-btn" data-module="email_ai" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◫</div><div><div style="font-size:13px;font-weight:500;">Email AI</div><div style="font-size:11px;color:var(--text3);">Coming soon</div></div></div>
+          <div class="module-btn" data-module="crm" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">◧</div><div><div style="font-size:13px;font-weight:500;">CRM</div><div style="font-size:11px;color:var(--text3);">Coming soon</div></div></div>
           <div class="module-btn" data-module="sms_reviews" onclick="this.classList.toggle('selected')"><div style="font-size:18px;">⭐</div><div><div style="font-size:13px;font-weight:500;">SMS & Reviews</div><div style="font-size:11px;color:var(--text3);">Texts + review generation</div></div></div>
         </div>
       </div>
@@ -700,8 +700,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
             <div class="wiz-plan-name">Starter</div>
             <ul class="wiz-plan-features">
               <li>AI Chatbot (24/7 on their site)</li>
-              <li>Lead capture &amp; CRM</li>
-              <li>Appointment booking</li>
+              <li>Lead capture &amp; competitor research</li>
+              <li>Appointment calendar</li>
               <li>Up to 500 leads/mo · 1 location</li>
             </ul>
           </div>
@@ -712,9 +712,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
             <div class="wiz-plan-name">Pro</div>
             <ul class="wiz-plan-features">
               <li>Everything in Starter</li>
-              <li>Email AI + Voice AI</li>
+              <li>Voice AI + AI business coach</li>
               <li>SMS &amp; Review automation</li>
-              <li>Up to 2,000 leads/mo · 3 locations</li>
+              <li>Up to 2,000 leads/mo · 1 location</li>
             </ul>
           </div>
           <!-- Enterprise -->
@@ -723,9 +723,9 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
             <div class="wiz-plan-name">Enterprise</div>
             <ul class="wiz-plan-features">
               <li>Everything in Pro</li>
-              <li>Unlimited leads &amp; locations</li>
-              <li>Dedicated support &amp; SLA</li>
-              <li>Custom integrations</li>
+              <li>Unlimited leads</li>
+              <li>Dedicated account manager</li>
+              <li>Custom AI setup</li>
             </ul>
           </div>
           <!-- Build Your Own -->
@@ -751,11 +751,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <!-- Step 6 complete -->
       <div class="wiz-step" id="ws6" style="text-align:center;padding:20px 0;">
         <div style="font-size:52px;margin-bottom:14px;">🎉</div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:8px;">Client is live!</div>
-        <div style="color:var(--text2);font-size:13px;margin-bottom:22px;">All tools have been configured. Your client is ready to start capturing leads.</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:8px;">Client created!</div>
+        <div style="color:var(--text2);font-size:13px;margin-bottom:22px;">Their account is set up. The chatbot starts capturing leads once its embed code is on their website.</div>
         <div style="display:flex;gap:10px;justify-content:center;">
           <button class="btn btn-primary" onclick="window.nav('clients',null)">View in client portal</button>
-          <button class="btn btn-ghost" onclick="toast('Login link sent to client!')">Send login link</button>
+          <button class="btn btn-ghost" onclick="toast('Login links are not available yet. Use Reset password in the Client Portal.')">Send login link</button>
           <button class="btn btn-ghost" onclick="resetWizard()">Onboard another</button>
         </div>
       </div>
@@ -780,11 +780,11 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="addBlock('testimonial')">❝ Testimonials</button>
       <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="addBlock('cta')">⚡ Call to action</button>
       <div style="margin-top:18px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;">Templates</div>
-      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">💅 Beauty & Spa</button>
-      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">🏥 Medical</button>
-      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">🏠 Real Estate</button>
-      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">🍕 Restaurant</button>
-      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Template applied!')">⚖️ Law Firm</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Templates are not available yet.')">💅 Beauty & Spa</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Templates are not available yet.')">🏥 Medical</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Templates are not available yet.')">🏠 Real Estate</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Templates are not available yet.')">🍕 Restaurant</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;text-align:left;margin-bottom:5px;" onclick="toast('Templates are not available yet.')">⚖️ Law Firm</button>
     </div>
     <div style="background:#f5f5f7;overflow-y:auto;display:flex;flex-direction:column;">
       <div style="background:var(--surface2);border-bottom:1px solid var(--border);padding:8px 14px;display:flex;align-items:center;gap:8px;">
@@ -792,21 +792,21 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <button class="btn btn-ghost btn-xs">Tablet</button>
         <button class="btn btn-ghost btn-xs">Mobile</button>
         <div style="margin-left:auto;display:flex;gap:6px;">
-          <button class="btn btn-ghost btn-xs" onclick="toast('Preview opened!')">Preview</button>
+          <button class="btn btn-ghost btn-xs" onclick="toast('Preview is not available yet.')">Preview</button>
           <button class="btn btn-primary btn-xs" onclick="publishSite()">Publish</button>
         </div>
       </div>
       <div style="padding:16px;" id="canvas">
         <div class="web-block selected" data-block-type="hero" onclick="selBlock(this)">
-          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
+          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
           <div class="hero-block"><h2 id="hero-h">Your Business, Elevated</h2><p id="hero-p">We help local businesses grow with professional services you can trust.</p><span class="hero-cta" id="hero-cta">Get Started Today</span></div>
         </div>
         <div class="web-block" data-block-type="services" onclick="selBlock(this)">
-          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
+          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
           <div class="services-block"><h3>Our Services</h3><div class="services-grid"><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">🔧</div><h4>Consulting</h4><p>Expert advice tailored to your needs</p></div><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">📊</div><h4>Analytics</h4><p>Data-driven insights for growth</p></div><div class="service-card"><div style="font-size:20px;margin-bottom:6px;">🤝</div><h4>Support</h4><p>24/7 dedicated client support</p></div></div></div>
         </div>
         <div class="web-block" data-block-type="contact" onclick="selBlock(this)">
-          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
+          <div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↓</button><button class="block-action-btn" style="background:#e53e3e;" onclick="event.stopPropagation();this.closest('.web-block').remove();">✕</button></div>
           <div class="contact-block"><h3>Get In Touch</h3><div class="contact-form"><input placeholder="Your name"><input placeholder="Email address"><input placeholder="Phone number"><textarea placeholder="How can we help you?"></textarea><button>Send Message</button></div></div>
         </div>
       </div>
@@ -825,7 +825,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
       </div></div>
       <div class="form-group"><label class="form-label">Business name</label><input class="form-input" id="builder-business-name" style="font-size:12px;" placeholder="My Business"></div>
       <div class="form-group"><label class="form-label">Font style</label><select class="form-input" id="builder-font" style="font-size:12px;"><option>Modern (Syne)</option><option>Classic (Serif)</option><option>Clean (Sans)</option></select></div>
-      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px;" onclick="toast('💾 Changes saved!')">Save changes</button>
+      <button class="btn btn-primary btn-sm" style="width:100%;margin-top:6px;" onclick="toast('Nothing is saved here. Use Publish to put the site live.')">Save changes</button>
     </div>
   </div>
 </div>
@@ -838,18 +838,18 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div class="config-section-title">🤖 Bot identity</div>
         <div class="form-group"><label class="form-label">Bot name</label><input class="form-input" value="Aria" oninput="document.getElementById('bot-name-disp').textContent=this.value"></div>
         <div class="form-group"><label class="form-label">Greeting message</label><textarea class="form-input" style="min-height:70px;" oninput="document.getElementById('greeting-disp').textContent=this.value">👋 Hi there! I'm Aria, your virtual assistant. How can I help you today?</textarea></div>
-        <div class="form-group"><label class="form-label">Business type</label><select class="form-input" onchange="toast('Bot trained for this industry!')"><option>General business</option><option>Medical / Healthcare</option><option>Restaurant / Food</option><option>Real Estate</option><option>Beauty & Wellness</option><option>Legal Services</option></select></div>
+        <div class="form-group"><label class="form-label">Business type</label><select class="form-input" onchange="toast('Preview only. This page does not change any client chatbot.')"><option>General business</option><option>Medical / Healthcare</option><option>Restaurant / Food</option><option>Real Estate</option><option>Beauty & Wellness</option><option>Legal Services</option></select></div>
       </div>
       <div class="config-section">
         <div class="config-section-title">🎛️ Behavior</div>
         <div class="toggle-row"><div><div class="toggle-label">Capture lead info</div><div class="toggle-desc">Ask name, email & phone</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="toggle-row"><div><div class="toggle-label">Auto-book appointments</div><div class="toggle-desc">Let bot schedule bookings</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="toggle-row"><div><div class="toggle-label">Human handoff</div><div class="toggle-desc">Escalate complex queries</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
-        <div class="toggle-row"><div><div class="toggle-label">After-hours mode</div><div class="toggle-desc">Custom message when closed</div></div><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">Auto-book appointments</div><div class="toggle-desc">Coming soon</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">Human handoff</div><div class="toggle-desc">Coming soon</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+        <div class="toggle-row"><div><div class="toggle-label">After-hours mode</div><div class="toggle-desc">Coming soon</div></div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
       </div>
       <div style="display:flex;gap:10px;">
-        <button class="btn btn-primary" style="flex:1;" onclick="toast('✅ Chatbot deployed!')">Deploy chatbot</button>
-        <button class="btn btn-ghost" onclick="toast('Embed code copied!')">Get embed code</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="toast('The chatbot goes live once its embed code is on the site. Get it from Client Portal, Embed.')">Deploy chatbot</button>
+        <button class="btn btn-ghost" onclick="toast('Get the embed code from Client Portal, Embed.')">Get embed code</button>
       </div>
     </div>
     <div>
@@ -909,8 +909,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
   </div>
   <div style="display:flex;gap:8px;margin-bottom:16px;">
     <input class="form-input" placeholder="Search leads..." style="flex:1;">
-    <select class="form-input" style="width:130px;" onchange="toast('Filter applied!')"><option>All statuses</option><option>Hot</option><option>Warm</option><option>New</option><option>Booked</option></select>
-    <select class="form-input" style="width:130px;" onchange="toast('Filter applied!')"><option>All sources</option><option>Chatbot</option><option>Form</option><option>Email</option></select>
+    <select class="form-input" style="width:130px;" onchange="toast('Filters are not available yet.')"><option>All statuses</option><option>Hot</option><option>Warm</option><option>New</option><option>Booked</option></select>
+    <select class="form-input" style="width:130px;" onchange="toast('Filters are not available yet.')"><option>All sources</option><option>Chatbot</option><option>Form</option><option>Email</option></select>
   </div>
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
     <div style="display:grid;grid-template-columns:2fr 1.5fr 1fr 1fr 1fr 110px;padding:10px 16px;background:var(--surface2);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);">
@@ -1234,9 +1234,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function handleCTA() {
   const active = document.querySelector('.panel.active').id.replace('panel-','');
-  if (active === 'onboarding') { toast('Progress saved as draft!'); return; }
+  if (active === 'onboarding') { toast('Drafts are not saved yet.'); return; }
   if (active === 'builder') { publishSite(); return; }
-  if (active === 'chatbot') { toast('✅ Chatbot deployed!'); return; }
+  if (active === 'chatbot') { toast('The chatbot goes live once its embed code is on the site. Get it from Client Portal, Embed.'); return; }
   if (active === 'clients') { nav('onboarding',null); return; }
   nav('onboarding', null);
 }
@@ -1835,7 +1835,7 @@ async function submitOnboarding() {
     document.querySelectorAll('[id^="ws"]').forEach(s => s.classList.remove('active'));
     document.getElementById('ws6').classList.add('active');
     document.getElementById('wiz-footer').style.display = 'none';
-    toast(payload.business_name + ' is now live!');
+    toast(payload.business_name + ' was created.');
   } catch (e) {
     _logFail('submitOnboarding failed', e && e.status);
     // A 401: authFetch already logged us out, so no second message over the login screen.
@@ -1971,7 +1971,7 @@ function addBlock(type) {
   b.className = 'web-block';
   b.setAttribute('data-block-type', type);
   b.onclick = function(){selBlock(this);};
-  const acts = `<div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moved!')">↓</button><button class="block-action-btn" style="background:#e53e3e" onclick="event.stopPropagation();this.closest('.web-block').remove()">✕</button></div>`;
+  const acts = `<div class="block-actions"><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↑</button><button class="block-action-btn" onclick="event.stopPropagation();toast('Moving blocks is not available yet.')">↓</button><button class="block-action-btn" style="background:#e53e3e" onclick="event.stopPropagation();this.closest('.web-block').remove()">✕</button></div>`;
   const t = {
     hero:`${acts}<div class="hero-block"><h2>New Hero Section</h2><p>Your tagline here</p><span class="hero-cta">Call to Action</span></div>`,
     services:`${acts}<div class="services-block"><h3>Our Services</h3><div class="services-grid"><div class="service-card"><div style="font-size:18px;margin-bottom:4px;">⭐</div><h4>Service 1</h4><p>Description here</p></div><div class="service-card"><div style="font-size:18px;margin-bottom:4px;">🚀</div><h4>Service 2</h4><p>Description here</p></div><div class="service-card"><div style="font-size:18px;margin-bottom:4px;">💡</div><h4>Service 3</h4><p>Description here</p></div></div></div>`,
@@ -2598,9 +2598,9 @@ function _updateLeadsTable(leads) {
 
     var actions = _node('div', '', 'display:flex;gap:4px;');
     var bookBtn = _node('button', 'btn btn-primary btn-xs', '', 'Book');
-    bookBtn.addEventListener('click', function() { toast('Booking opened!'); });
+    bookBtn.addEventListener('click', function() { toast('Booking from a lead is not available yet.'); });
     var notesBtn = _node('button', 'btn btn-ghost btn-xs', '', 'Notes');
-    notesBtn.addEventListener('click', function() { toast('Notes!'); });
+    notesBtn.addEventListener('click', function() { toast('Lead notes are not available yet.'); });
     actions.appendChild(bookBtn);
     actions.appendChild(notesBtn);
     row.appendChild(actions);
