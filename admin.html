@@ -1637,7 +1637,7 @@ async function _doResetClientPassword(clientId) {
 async function _handleResetPwError(res) {
   if (res.status === 401) return;   // authFetch already logged us out; no second message
   var detail = '';
-  try { detail = (await res.json()).detail || ''; } catch (e) {}   // same shape publishSite() reads
+  try { detail = (await res.json()).detail || ''; } catch (e) {}
   if (res.status === 403) {
     toast('Your account does not have permission to reset client passwords.', 'error');
   } else if (res.status === 404) {
@@ -2105,11 +2105,11 @@ function _apiErrorText(payload, fallback) {
   if (typeof d === 'string' && d.trim()) return d;
   if (Array.isArray(d) && d.length) {
     var f = d[0];
-    if (f && typeof f.msg === 'string') {
+    if (f && typeof f.msg === 'string' && f.msg.trim()) {
       var loc = Array.isArray(f.loc) ? f.loc.filter(function(x) { return x !== 'body'; }) : [];
       return loc.length ? loc[loc.length - 1] + ': ' + f.msg : f.msg;
     }
-    if (typeof f === 'string') return f;
+    if (typeof f === 'string' && f.trim()) return f;
   }
   if (d && typeof d === 'object' && typeof d.message === 'string' && d.message.trim()) return d.message;
   if (payload && typeof payload.message === 'string' && payload.message.trim()) return payload.message;
