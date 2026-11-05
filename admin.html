@@ -57,6 +57,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .btn-primary:hover{background:var(--accent2);transform:translateY(-1px);}
 .btn-success{background:var(--green);color:#000;}
 .btn-sm{padding:6px 12px;font-size:12px;} .btn-xs{padding:4px 9px;font-size:11px;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+.btn-primary:disabled:hover{background:var(--accent);transform:none;} .btn-ghost:disabled:hover{background:transparent;color:var(--text2);}
 
 /* CARDS */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:22px;}
@@ -98,8 +100,8 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 .toggle.mod-nostate::after{display:none;}
 .mod-mark{font-size:10px;color:var(--amber);margin-left:6px;}
 .mod-mark-flag{color:var(--pink);}
-#mod-save:disabled,#mod-undo:disabled{opacity:0.45;cursor:default;transform:none;}
-#pid-save:disabled,#pid-remove:disabled{opacity:0.45;cursor:default;transform:none;}
+#mod-save:disabled,#mod-undo:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
+#pid-save:disabled,#pid-remove:disabled{opacity:0.45;cursor:not-allowed;transform:none;}
 #pid-open{text-decoration:none;display:inline-block;} #pid-open:not([href]){opacity:0.45;cursor:default;pointer-events:none;}
 
 /* STATUS */
@@ -349,6 +351,7 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
 .embed-copy-btn:hover{background:#8b84ff;}
 .embed-close-btn{position:absolute;top:16px;right:16px;width:28px;height:28px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .embed-close-btn:hover{background:var(--surface3);color:var(--text);}
+.embed-close-btn:disabled{opacity:0.45;cursor:not-allowed;pointer-events:none;}
 /* Password-reset result modal. The value is read aloud over the phone, so the type has to
    disambiguate O/0 and l/1/I — monospace, large, and widely letter-spaced. */
 .pwreset-block{background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:20px 16px;margin-bottom:14px;text-align:center;}
@@ -3555,6 +3558,14 @@ function _phRefusal(status, data, ctx) {
     if (code === 'price_changed') {
       var p = _phMoney(detail.monthly_price_cents);
       return 'Twilio\'s price changed since this dialog opened' + (p ? ' (now ' + p + '/month)' : '') + '. Nothing was claimed.';
+    }
+    if (code === 'twilio_refused') {
+      // E1g-3b: 503 {code, message, twilio_code}. Only a plain number or a twilio_<digits> token is shown; never other server text.
+      var tc = detail.twilio_code, n = '';
+      if (typeof tc === 'number' && isFinite(tc) && Math.floor(tc) === tc && tc >= 0 && tc < 10000000) n = String(tc);
+      else if (typeof tc === 'string') { var tm = /^(?:twilio_)?([0-9]{1,7})$/.exec(tc); if (tm) n = tm[1]; }
+      return 'Twilio refused the request' + (n ? ' (Twilio code ' + n + ')' : '') + '. ' +
+        (ctx === 'release' ? 'Nothing was released.' : 'Nothing was changed.') + ' Check the Twilio console.';
     }
     if (code === 'shared_platform_number') return 'That is the platform\'s own number; it is never adopted or released. Nothing was changed.';
     if (ctx === 'release' && _modHas(_PH_RELEASE_REFUSALS, code)) return _PH_RELEASE_REFUSALS[code];
