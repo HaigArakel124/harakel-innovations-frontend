@@ -3509,6 +3509,20 @@ var _PH_RELEASE_REFUSALS = {
   sid_malformed: 'This setup\'s recorded SID is malformed. Nothing was released.',
   number_malformed: 'This setup\'s recorded number is malformed. Nothing was released.'
 };
+// Resolve-release refusals (migration 034's POST release/resolve). Every code that route sends is here, so
+// none falls through to another route's line (twilio_unavailable there means "could not be searched").
+var _PH_RELEASE_RESOLVE_REFUSALS = {
+  release_can_finish: 'Twilio shows this number is already gone. Nothing was changed. Close this and press Release number... again to finish (it checks first and deletes nothing twice).',
+  client_number_differs: 'The client now holds a different number than this setup\'s. Nothing was changed; the client\'s number record must be corrected first.',
+  release_unconfirmed: 'Twilio\'s answer was not confirmed yet. Nothing was changed; try again.',
+  setup_not_found: 'That setup does not belong to this client. Nothing was changed; the card has been reloaded.',
+  not_releasing: 'This setup is not in a stopped release. Nothing was changed; the card has been reloaded.',
+  confirm_mismatch: 'The typed number is not this setup\'s number. Nothing was changed.',
+  setup_in_progress: 'This setup is running right now. Nothing was changed; reload the card in a moment.',
+  invalid_confirm_number: 'Type the number as 10 digits. Nothing was changed.',
+  invalid_setup_id: 'The setup id was not accepted. Nothing was changed; the card has been reloaded.',
+  twilio_unavailable: 'Twilio could not be asked about this number just now. Nothing was changed; try again.'
+};
 
 function _phIsAdmin() { return _pidIsAdmin(); }
 function _phToken(t) { return (typeof t === 'string' && /^[a-z0-9_:.-]{1,64}$/.test(t)) ? t : ''; }
@@ -3570,14 +3584,23 @@ function _phRefusal(status, data, ctx) {
     if (code === 'shared_platform_number') return 'That is the platform\'s own number; it is never adopted or released. Nothing was changed.';
     if (ctx === 'release' && _modHas(_PH_RELEASE_REFUSALS, code)) return _PH_RELEASE_REFUSALS[code];
     if (ctx === 'resolve' && _modHas(_PH_RESOLVE_REFUSALS, code)) return _PH_RESOLVE_REFUSALS[code];
+    if (ctx === 'release_resolve' && _modHas(_PH_RELEASE_RESOLVE_REFUSALS, code)) return _PH_RELEASE_RESOLVE_REFUSALS[code];
     if (_modHas(_PH_REFUSALS, code)) return _PH_REFUSALS[code];
     return 'Refused (code: ' + (_phToken(code) || 'unknown') + '). Nothing was changed.';
   }
   if (status === 403) {
-    return (typeof detail === 'string' && detail.indexOf('can no longer') !== -1)
-      ? 'Your account can no longer buy or release numbers.' : 'Only an admin can buy, release or resolve numbers.';
+    // The two actor refusals (the 032/034 re-check, and a token whose admin id cannot be read), then the role gate.
+    // Matched on fixed server sentences; the server's text itself is never shown.
+    if (typeof detail === 'string' && detail.indexOf('can no longer') !== -1) return 'Your account can no longer buy or release numbers.';
+    if (typeof detail === 'string' && detail.indexOf('cannot be attributed') !== -1) return 'This session cannot be tied to an admin account. Sign in again. Nothing was changed.';
+    return 'Only an admin can buy, release or resolve numbers.';
   }
-  if (status === 404) return (ctx === 'release' && detail === 'Not Found') ? 'Release is not available on the server yet. Nothing was changed.' : 'Client or setup not found. Reload the page.';
+  if (status === 404) {
+    // FastAPI's own "Not Found" means the route itself is missing (the backend is older than this page).
+    if (detail === 'Not Found' && ctx === 'release') return 'Release is not available on the server yet. Nothing was changed.';
+    if (detail === 'Not Found' && ctx === 'release_resolve') return 'Resolving a stopped release is not available on the server yet. Nothing was changed.';
+    return 'Client or setup not found. Reload the page.';
+  }
   if (status === 422) return 'The server did not accept this request. Nothing was changed.';
   if (status === 500) return 'Phone setup failed on the server. Reload to see where it stands.';
   if (status === 503) return 'Phone setup could not be confirmed just now. Reload to see where it stands.';
@@ -3737,6 +3760,8 @@ function _phPaintAdmin(body, d) {
     row.appendChild(_phButton('Resolve...', 'color:var(--amber);', openPhoneResolve));
   }
   if (acts.release === true && _phE164(s.phone_number)) row.appendChild(_phButton('Release number...', 'color:var(--pink);', openPhoneRelease));
+  // 034: only the server's flag shows it (a stopped release: 'releasing', live, a SID, nothing running).
+  if (acts.resolve_release === true && _phE164(s.phone_number)) row.appendChild(_phButton('Resolve release...', 'color:var(--amber);', openPhoneReleaseResolve));
   if (s && s.running === true) row.appendChild(_phButton('Reload', '', function() { _loadPhone(d.client_id || _phState.clientId); }));
   if (row.firstChild) body.appendChild(row);
 }
@@ -3776,7 +3801,7 @@ function _phOpenDialog(dl, title, sub) {
   _phDlg = dl;
   var bodyEl = document.getElementById('phone-modal-body');
   bodyEl.textContent = '';
-  bodyEl.appendChild(_node('div', 'embed-modal-title', '', title));
+  bodyEl.appendChild(_node('div', 'embed-modal-title', 'padding-right:32px;', title));   // clear of the ✕ (28px, absolute)
   if (sub) bodyEl.appendChild(_node('div', 'embed-modal-sub', '', sub));
   dl.el = { body: bodyEl, msg: _node('div', 'toggle-desc', 'margin-top:10px;min-height:16px;') };
   dl.el.msg.setAttribute('role', 'alert');
@@ -4016,8 +4041,15 @@ async function _phDialogSend(dl, path, body, tag, ctx, okText) {
     _phCloseDialog(true);
     toast(okText(r.data), (_modIsPlainObject(r.data) && r.data.ok === false) ? 'error' : '');
   } else {
-    _phSetMsg(dl, _phRefusal(r.status, r.data, ctx), true);
-    dl.check();
+    var code = _modIsPlainObject(r.data) && _modIsPlainObject(r.data.detail) ? r.data.detail.code : '';
+    if (Array.isArray(dl.closeOn) && typeof code === 'string' && dl.closeOn.indexOf(code) !== -1) {
+      // The setup this dialog was opened for is not there to act on any more: close it so the re-read card shows.
+      _phCloseDialog(true);
+      toast(_phRefusal(r.status, r.data, ctx), 'error');
+    } else {
+      _phSetMsg(dl, _phRefusal(r.status, r.data, ctx), true);
+      dl.check();
+    }
   }
   if (_phState && _phState.clientId === dl.clientId) _loadPhone(dl.clientId);
 }
@@ -4135,6 +4167,44 @@ function openPhoneRelease() {
     _phDialogSend(dl, '/release', { setup_id: s.id, confirm_number: number }, 'phone release failed', 'release', function(data) {
       var out = _modIsPlainObject(data) && _modIsPlainObject(data.setup) ? data.setup : null;
       return out && out.state === 'released' ? 'Number released.' : 'Release ran; see the card for any step still open.';
+    });
+  }));
+  dl.check = function() {
+    var ok = _phTyped(typed.input.value) === number;
+    dl.el.go.disabled = !ok || dl.busy;
+    return ok && !dl.busy;
+  };
+  dl.check();
+}
+
+// ── Resolve release (034: the way out of a release that stopped; deletes nothing; only on setup.actions.resolve_release) ──
+function openPhoneReleaseResolve() {
+  var st = _phState;
+  var d = st && st.data;
+  if (!_phIsAdmin() || _phDlg || _phBusy || !d || !_modHas(d, 'number')) return;
+  var s = _modIsPlainObject(d.setup) ? d.setup : null;
+  var number = s ? _phE164(s.phone_number) : '';   // the SETUP's number: the one the route checks
+  if (!s || typeof s.id !== 'string' || !_modIsPlainObject(s.actions) || s.actions.resolve_release !== true || !number) return;
+  var dl = { kind: 'release_resolve', clientId: st.clientId, busy: false,
+             closeOn: ['not_releasing', 'setup_not_found', 'invalid_setup_id'] };   // nothing left to resolve here
+  _phOpenDialog(dl, 'Resolve the stopped release of ' + _phFmt(number) + '?', _phBusinessName(st.clientId) || 'This client');
+  var el = dl.el;
+  el.body.appendChild(_node('div', 'toggle-desc', 'line-height:1.6;',
+    'The release of this number stopped part-way. If Twilio already confirmed the number is gone, this closes the release ' +
+    '(the client\'s other number, if any, is not touched). If not, this cancels the release and the number stays on the client; ' +
+    'when the release stopped in the middle of the delete, Harakel first checks with Twilio (read-only) that the number is really still there. ' +
+    'If that check finds the number already gone, nothing is changed and you are asked to press Release number... again to finish.'));
+  el.body.appendChild(_node('div', 'toggle-desc', 'margin-top:8px;font-weight:600;', 'Nothing is deleted at Twilio either way.'));
+  var typed = _phTypedInput('Type the number to confirm', '(555) 555-0100', function() { dl.check(); });
+  el.body.appendChild(typed.wrap);
+  el.body.appendChild(el.msg);
+  el.body.appendChild(_phDialogButtons(dl, 'Resolve the release', 'background:var(--amber);color:#111;', function() {
+    if (!dl.check()) return;
+    _phDialogSend(dl, '/release/resolve', { setup_id: s.id, confirm_number: number }, 'phone release resolve failed', 'release_resolve', function(data) {
+      var outcome = _modIsPlainObject(data) ? data.outcome : '';
+      return outcome === 'release_closed' ? 'Release closed: the number is gone from Twilio.'
+        : outcome === 'release_aborted' ? 'Release cancelled: the number is kept. Check the Twilio console before releasing again.'
+        : 'The server answered without saying how the release ended: see the card.';
     });
   }));
   dl.check = function() {
