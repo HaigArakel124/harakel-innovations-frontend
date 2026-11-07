@@ -5877,7 +5877,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // ── Missed Calls ─────────────────────────────────────────────
 var MC_CLIENT_ID = null;
-var MC_CURRENT_TEMPLATE = null;          // server value (null = use default)
 var MC_EXPANDED_ID = null;                // single missed_call_id currently expanded
 var MC_CONVO_CACHE = {};                  // conversation_id -> {conversation, messages}
 
@@ -6116,7 +6115,9 @@ function _renderMcThread(data) {
 // The server is the only judge of the auto-text. Every preview, counter, placeholder and refusal in
 // this editor is its answer: POST /api/missed-calls/template/{id}/preview is the save without the
 // write, and Save sends the same draft to PATCH, which judges it again. No message rules live here
-// (no character set, no length maths, no opt-out wording); server text goes in with textContent only.
+// (no character set, no length maths); the one fixed wording is the #mc-optout-note line, shown only
+// when the server says opt_out_added: keep it in step with OPT_OUT_LINE in the backend's
+// routes/_sms_text.py. Server text goes in with textContent only.
 var MC_PV_DEBOUNCE_MS = 400;
 var MC_EDIT_GEN = 0;        // bumps on every open and close: an answer from an earlier opening is dropped
 var MC_PV_SEQ = 0;          // bumps on every edit: only the answer for the newest draft is shown
@@ -6228,6 +6229,7 @@ function _mcShowAnswer(answer, seq) {
 // The debounced check of the newest draft: at most one request in flight; an answer for an older
 // draft (or an earlier opening) is never shown over a newer one.
 async function _mcCheckDraft() {
+  clearTimeout(MC_PV_TIMER);                    // a Try again click must not leave a pending check behind
   MC_PV_TIMER = null;
   if (MC_PV_BUSY) { MC_PV_AGAIN = true; return; }
   MC_PV_BUSY = true;
@@ -6286,16 +6288,19 @@ async function _mcLoadSaved(gen) {
     var res = await authedFetch(API + '/api/clients/' + encodeURIComponent(MC_CLIENT_ID));
     if (!res.ok) throw new Error('client read failed');
     var c = await res.json();
-    saved = (c && typeof c.missed_call_sms_template === 'string' && c.missed_call_sms_template !== '')
-      ? c.missed_call_sms_template : null;
+    // The field must be there and be null or text: anything else is a failed read, never "the default".
+    if (!c || !_mcHas(c, 'missed_call_sms_template')) throw new Error('template field missing');
+    var t = c.missed_call_sms_template;
+    if (t !== null && typeof t !== 'string') throw new Error('template field unreadable');
+    saved = t ? t : null;
   } catch (e) {
     if (gen === MC_EDIT_GEN) _mcSetCheck('neutral', "Couldn't load your message right now.", retry);
     return;
   }
   if (gen !== MC_EDIT_GEN) return;
-  MC_CURRENT_TEMPLATE = saved;
   input.value = saved || '';
-  var first = await _mcAskPreview(saved);
+  // Check the box's own value (a textarea turns \r\n into \n): exactly what Save would send.
+  var first = await _mcAskPreview(_mcDraft());
   if (gen !== MC_EDIT_GEN) return;
   if (first.kind === 'refused' && saved !== null) {
     // The saved message is refused today: missed callers get the default. Show that text, from the server.
@@ -6349,8 +6354,9 @@ async function _mcSave(template, doneToast) {
   btn.textContent = 'Save';
   var here = gen === MC_EDIT_GEN;               // still the same opening of the editor
   if (answer.kind === 'ok') {
-    MC_CURRENT_TEMPLATE = answer.data.missed_call_sms_template || null;
     if (here) closeMcSettings();
+    // Closed and reopened while this save ran: that opening may have read the old message. Reload it.
+    else if (document.getElementById('mc-modal').classList.contains('open')) openMcSettings();
     showToast(doneToast, 'success');
   } else if (answer.kind === 'refused' && here) {
     _mcShowAnswer(answer, MC_PV_SEQ);           // its message under the editor; Save off until the next edit
