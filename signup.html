@@ -299,8 +299,8 @@ function isEmail(v){ return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 function phoneSane(v){ return (v.match(/\d/g)||[]).length >= 7; }
 
 // Business phone: a light typo check, not a format rule. Strip everything that isn't a digit and
-// accept 10 digits, or 11 starting with 1 — so "(347) 309-8420", "347-309-8420", "347.309.8420"
-// and "+1 347 309 8420" all pass. The area code is what sets up the client's AI phone number, so
+// accept 10 digits, or 11 starting with 1 — so "(555) 555-0100", "555-555-0100", "555.555.0100"
+// and "+1 555 555 0100" all pass. The area code is what sets up the client's AI phone number, so
 // a missing digit here costs them a manual fix later.
 function phoneDigits(v){ return (String(v).match(/\d/g)||[]).join(''); }
 function bizPhoneOk(v){ var d=phoneDigits(v); return d.length===10 || (d.length===11 && d.charAt(0)==='1'); }
