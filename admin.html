@@ -598,6 +598,12 @@ textarea.form-input{resize:vertical;} select.form-input{cursor:pointer;}
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Phone number</div>
         <div id="phone-body"></div>
       </div>
+      <!-- Billing & service (cancel_churn commit 5): admin only, built by _paintBilling() from
+           GET /api/billing/clients/{id}/subscriptions. DOM nodes only; the server decides every button. -->
+      <div id="bill-block" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:8px;">Billing &amp; service</div>
+        <div id="bill-body"></div>
+      </div>
       <!-- Google Place ID (E1e-2b): admin only, painted by _paintPlaceId(). No maxlength on purpose:
            a silently truncated paste could still pass the pattern and save the wrong business. -->
       <div id="pid-block" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
@@ -1556,6 +1562,8 @@ function selectClient(el, id) {
   if (!_pidState || _pidState.clientId !== id) _resetPlaceId(id);
   // The phone card follows the selection from the server; a dialog open for another client is closed.
   if (!_phState || _phState.clientId !== id) _loadPhone(id);
+  // The billing & service card (admin only) follows the selection from the server too.
+  if (!_billState || _billState.clientId !== id) _loadBilling(id);
   const c = clients[id] || (window._apiClients && window._apiClients[id]);
   if (!c) return;
   const logo = c.logo || (c.business_name || 'CL').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2);
@@ -3219,6 +3227,7 @@ function _updateClientPortal(clientsList) {
   _loadModules(first.id);
   _resetPlaceId(first.id);
   _loadPhone(first.id);
+  _loadBilling(first.id);
 }
 
 // Every dashboard data card/list starts resolved in a zero-state so nothing can hang on
@@ -3794,6 +3803,7 @@ async function _phAction(kind) {
     toast(_phRefusal(r.status, r.data), 'error');
   }
   if (_phState && _phState.clientId === clientId) _loadPhone(clientId);
+  _billAfterPhone(clientId);
 }
 
 // ── Dialog plumbing ──
@@ -3995,6 +4005,7 @@ async function _phBuyConfirm(dl) {
     _phPaintBuy(dl);
   }
   if (_phState && _phState.clientId === dl.clientId) _loadPhone(dl.clientId);   // the card shows what is stored now
+  _billAfterPhone(dl.clientId);
 }
 
 // ── Typed-confirmation dialogs (Resolve, Release) ──
@@ -4052,6 +4063,7 @@ async function _phDialogSend(dl, path, body, tag, ctx, okText) {
     }
   }
   if (_phState && _phState.clientId === dl.clientId) _loadPhone(dl.clientId);
+  _billAfterPhone(dl.clientId);
 }
 
 // ── Resolve (the one audited way out of a blocked state; never calls Twilio) ──
@@ -4215,6 +4227,328 @@ function openPhoneReleaseResolve() {
   dl.check();
 }
 
+// ═══════ BILLING & SERVICE CARD (cancel_churn commit 5) ═══════
+// The client's service switch and its subscriptions, painted from GET /api/billing/clients/{id}/subscriptions.
+//   * Admin only: a sales session never sees the block and never calls these routes.
+//   * The server decides every subscription button (row.actions). Nothing is worked out here.
+//   * After every answer the card is read again from the server; it is never patched by hand.
+//   * A refusal shows the server's own fixed sentence (detail.message, or a plain-string detail), via textContent.
+//   * One request in flight for the whole block: every button is disabled while it runs.
+//   * Console: _logFail with a fixed tag and the HTTP status only.
+var _BILL_API = API_URL + '/api/billing/';
+var _BILL_CLIENTS_API = API_URL + '/api/clients/';
+var _billState = null;   // {clientId, loading, data, loadErr, msg, msgCss, msgReload, hot}
+var _billSeq = 0;        // bumps per GET; an older answer (or another client's) is dropped
+var _billGen = 0;        // bumps on logout; an action answer from before it is dropped
+var _billBusy = false;   // a POST from the block is in flight
+var _BILL_NO_ANSWER = 'Couldn\'t reach the server, so we can\'t tell whether it went through. Press Refresh to check.';
+var _BILL_PLANS = { starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
+var _BILL_RED = 'color:var(--pink);', _BILL_AMBER = 'color:var(--amber);';
+
+function _billIsAdmin() { return _pidIsAdmin(); }
+// An ISO timestamp as the browser's local date and time ("Dec 7, 2026, 2:23 PM EST"); '' when unreadable.
+function _billWhen(iso) {
+  var t = typeof iso === 'string' ? Date.parse(iso) : NaN;
+  return isNaN(t) ? '' : new Date(t).toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit', timeZoneName: 'short' });
+}
+// subscriptions.amount is dollars (a JSON number; a numeric string is read too) -> "$997.00".
+function _billMoney(a) {
+  var n = typeof a === 'number' ? a : (typeof a === 'string' && /^[0-9]{1,9}(\.[0-9]{1,2})?$/.test(a)) ? Number(a) : NaN;
+  return (isFinite(n) && n >= 0) ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '';
+}
+function _billCode(data) {
+  var d = _modIsPlainObject(data) ? data.detail : null;
+  return _modIsPlainObject(d) && typeof d.code === 'string' ? d.code : '';
+}
+// Any refused answer -> the server's own sentence. These routes send fixed messages per code
+// (SUBSCRIPTION_ADMIN_MESSAGES, CLIENT_SERVICE_MESSAGES) or a fixed plain string (the 401/403 gates).
+// again: the label of the button shown next to the line.
+function _billRefusal(status, data, again) {
+  var detail = _modIsPlainObject(data) ? data.detail : undefined;
+  if (_modIsPlainObject(detail) && typeof detail.message === 'string' && detail.message.trim()) return detail.message.slice(0, 500);
+  if (typeof detail === 'string' && detail.trim()) return detail.slice(0, 500);
+  return 'The server answered HTTP ' + status + ' without a reason. Press ' + again + ' to see where it stands.';
+}
+// A phone action (buy, retry, resolve, release) can change holds_number: re-read this card for the same client.
+function _billAfterPhone(clientId) {
+  if (_billState && _billState.clientId === clientId && !_billBusy && _billIsAdmin()) _loadBilling(clientId, true);
+}
+
+// One call, no body. Never throws; logs a fixed tag and the status only.
+async function _billCall(method, url, tag) {
+  var status = 0, data = null;
+  try {
+    var res = await authFetch(url, { method: method });
+    status = res.status;
+    try { data = await res.json(); } catch (e) { data = null; }
+  } catch (e) { status = 0; }
+  if (status !== 200 && status !== 401) _logFail(tag, status);
+  return { status: status, data: data };
+}
+
+// Logout, or a 401 anywhere: drop the card and any answer still on its way.
+function _billReset() {
+  _billSeq++;
+  _billGen++;
+  _billState = null;
+  _billBusy = false;
+  _paintBilling();
+}
+
+function _billCardOk(d) {
+  return _modIsPlainObject(d) && typeof d.is_active === 'boolean' && Array.isArray(d.subscriptions);
+}
+
+// keep: an action just answered, so its message stays and the last card stays on screen (buttons disabled) while it re-reads.
+async function _loadBilling(id, keep) {
+  if (!_billIsAdmin()) { _billState = null; _paintBilling(); return; }
+  var seq = ++_billSeq;
+  var prev = (keep && _billState && _billState.clientId === id) ? _billState : null;
+  _billState = { clientId: id, loading: true, data: prev ? prev.data : null, loadErr: '',
+                 msg: prev ? prev.msg : '', msgCss: prev ? prev.msgCss : '', msgReload: prev ? prev.msgReload : false, hot: prev ? prev.hot : '' };
+  _paintBilling();
+  var r = await _billCall('GET', _BILL_API + 'clients/' + encodeURIComponent(id) + '/subscriptions', 'billing card load failed');
+  if (seq !== _billSeq || _selectedClientId !== id || !_billState || _billState.clientId !== id) return;   // stale
+  if (r.status === 401) { _billReset(); return; }
+  var st = _billState;
+  st.loading = false;
+  if (r.status === 200 && _billCardOk(r.data)) {
+    st.data = r.data;
+  } else {
+    st.data = null;
+    st.loadErr = r.status === 0 ? 'Couldn\'t reach the server to load billing and service.'
+      : r.status === 200 ? 'The billing answer could not be read.'
+      : _billRefusal(r.status, r.data, 'Try again');
+  }
+  _paintBilling();
+}
+
+function _billButton(label, css, onClick, lock) {
+  var b = _node('button', 'btn btn-ghost btn-sm', css || '', label);
+  b.type = 'button';
+  b.disabled = !!lock;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+// One row's status line: Ended (red) > Ends on (amber) > Payment overdue (amber) > Active.
+function _billStatus(row) {
+  var s = row.status;
+  if (s === 'cancelled') {
+    var ended = _billWhen(row.ended_at);
+    return { text: ended ? 'Ended on ' + ended : 'Ended', css: _BILL_RED + 'font-weight:600;' };
+  }
+  if ((typeof row.cancel_at === 'string' && row.cancel_at) || row.cancel_at_period_end === true) {
+    var ends = _billWhen(row.cancel_at);
+    return { text: ends ? 'Ends on ' + ends : 'Ends at the end of the paid period', css: _BILL_AMBER + 'font-weight:600;' };
+  }
+  if (s === 'past_due' || s === 'unpaid') return { text: 'Payment overdue', css: _BILL_AMBER + 'font-weight:600;' };
+  if (s === 'active') return { text: 'Active', css: 'color:var(--green);font-weight:600;' };
+  if (s === 'paused') return { text: 'Paused', css: _BILL_AMBER };
+  if (s === 'incomplete') return { text: 'Incomplete: the first payment never went through', css: _BILL_AMBER };
+  return { text: 'Status: ' + (_phToken(s) || 'unknown'), css: _BILL_AMBER };
+}
+
+function _billRowEl(row, st, lock) {
+  var box = _node('div', null, 'margin-top:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;');
+  var plan = _modHas(_BILL_PLANS, row.plan) ? _BILL_PLANS[row.plan]
+    : (typeof row.plan === 'string' && row.plan.trim()) ? row.plan.slice(0, 40) : 'Subscription';
+  var money = _billMoney(row.amount);
+  box.appendChild(_node('div', '', 'font-size:13px;font-weight:600;', plan + (money ? ' · ' + money + '/month' : '')));
+  var s = _billStatus(row);
+  box.appendChild(_phLine(s.text, s.css));
+  var ended = row.status === 'cancelled';
+  var dated = typeof row.cancel_at === 'string' && row.cancel_at;
+  if (!ended && (dated || row.cancel_at_period_end === true) && (row.status === 'past_due' || row.status === 'unpaid')) {
+    box.appendChild(_phLine('Payment overdue', _BILL_AMBER));
+  }
+  if (!ended && dated && row.cancel_at_period_end !== true) {
+    box.appendChild(_phLine('This end date was set in the Stripe Dashboard: change it there.'));
+  }
+  if (!ended && row.cancel_at_period_end === true && _billWhen(row.cancel_requested_at)) {
+    box.appendChild(_phLine('Cancellation requested ' + _billWhen(row.cancel_requested_at) + '.'));
+  }
+  if (!(typeof row.stripe_subscription_id === 'string' && row.stripe_subscription_id)) {
+    box.appendChild(_phLine('No Stripe subscription on this record.'));
+  } else if (_billWhen(row.stripe_synced_at)) {
+    box.appendChild(_phLine('Last read from Stripe ' + _billWhen(row.stripe_synced_at) + '.'));
+  }
+  var a = _modIsPlainObject(row.actions) ? row.actions : {};
+  var id = typeof row.id === 'string' && row.id ? row.id : '';
+  var btns = _node('div', null, 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;');
+  if (id && a.cancel === true) btns.appendChild(_billButton('Cancel at period end', _BILL_RED, function() { _billAct('cancel', id); }, lock));
+  if (id && a.undo === true) btns.appendChild(_billButton('Undo cancellation', '', function() { _billAct('undo', id); }, lock));
+  if (id && a.refresh === true) {
+    var hot = st.hot === id;
+    var ref = _billButton('Refresh from Stripe', hot ? 'background:var(--amber);color:#111;font-weight:600;' : '', function() { _billAct('refresh', id); }, lock);
+    btns.appendChild(ref);
+  }
+  if (btns.firstChild) box.appendChild(btns);
+  return box;
+}
+
+function _paintBilling() {
+  var block = document.getElementById('bill-block');
+  var body = document.getElementById('bill-body');
+  if (!block || !body) return;
+  var st = _billIsAdmin() ? _billState : null;
+  block.style.display = st ? '' : 'none';
+  body.textContent = '';
+  if (!st) return;
+  var d = st.data;
+  var lock = _billBusy || st.loading;
+  if (st.loading && !d) { body.appendChild(_phLine('Loading billing and service...')); return; }
+  if (d) {
+    if (d.is_active === true) {
+      body.appendChild(_node('div', '', 'font-size:13px;font-weight:600;color:var(--green);', 'Service on'));
+    } else {
+      var off = _billWhen(d.service_ended_at);
+      body.appendChild(_node('div', '', 'font-size:13px;font-weight:600;' + _BILL_RED, off ? 'Service ended on ' + off : 'Service is off'));
+      if (d.holds_number === true) body.appendChild(_phLine('A phone number is still held: it keeps billing until it is released on the phone card (or in the Twilio console, for a number set up by hand).', _BILL_RED));
+    }
+    var svc = _node('div', null, 'display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;');
+    svc.appendChild(d.is_active === true
+      ? _billButton('Deactivate service', _BILL_RED, function() { _billAct('deactivate'); }, lock)
+      : _billButton('Reactivate service', '', function() { _billAct('reactivate'); }, lock));
+    body.appendChild(svc);
+    body.appendChild(_node('div', '', 'font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-top:12px;', 'Subscriptions'));
+    var rows = d.subscriptions.filter(_modIsPlainObject);
+    if (!rows.length) body.appendChild(_phLine('No Stripe subscription'));
+    rows.forEach(function(row) { body.appendChild(_billRowEl(row, st, lock)); });
+    if (st.loading) body.appendChild(_phLine('Updating...'));
+  }
+  if (st.msg) {
+    var m = _phLine(st.msg, st.msgCss);
+    m.setAttribute('role', 'status');
+    body.appendChild(m);
+    if (st.msgReload && d) body.appendChild(_billButton('Refresh', 'margin-top:6px;', _billReloadNow, lock));   // no card: Try again below
+  }
+  if (!d) {
+    body.appendChild(_phLine(st.loadErr || 'Could not load billing and service.', _BILL_RED));
+    body.appendChild(_billButton('Try again', 'margin-top:8px;', function() { _billReloadNow(); }, lock));
+  }
+}
+
+// The block's own Refresh / Try again: re-read the card (our record only; no Stripe call).
+function _billReloadNow() {
+  var st = _billState;
+  if (_billBusy || !st || st.loading || !_billIsAdmin()) return;
+  st.msg = ''; st.msgCss = ''; st.msgReload = false; st.hot = '';
+  _loadBilling(st.clientId, true);
+}
+
+function _billRow(d, id) {
+  var rows = d && Array.isArray(d.subscriptions) ? d.subscriptions : [];
+  for (var i = 0; i < rows.length; i++) if (_modIsPlainObject(rows[i]) && rows[i].id === id) return rows[i];
+  return null;
+}
+
+// A 200's plain-English line, from the server's outcome word. overdue: the row was past_due / unpaid.
+function _billDone(kind, data, overdue) {
+  var o = _modIsPlainObject(data) ? data.outcome : '';
+  if (kind === 'cancel') {
+    var when = _billWhen(data && data.cancel_at);
+    if (o === 'scheduled') {
+      return overdue
+        ? 'Cancellation scheduled. Service continues until ' + (when || 'the end of the current period') + '. No new period is charged, but Stripe may still collect the overdue invoice. Nothing is refunded.'
+        : 'Cancellation scheduled. Service continues until ' + (when || 'the end of the paid period') + '. They will not be charged again. Nothing is refunded.';
+    }
+    if (o === 'already_scheduled') return 'This subscription was already scheduled to end' + (when ? ' on ' + when : '') + '. Nothing was changed.';
+  } else if (kind === 'undo') {
+    if (o === 'unscheduled') return 'Cancellation undone. The subscription continues and renews as usual.';
+    if (o === 'not_scheduled') return 'Nothing was scheduled to end. Nothing was changed.';
+  } else if (kind === 'refresh') {
+    if (o === 'refreshed') return 'Read from Stripe and recorded. The card shows what Stripe says now.';
+  } else if (kind === 'deactivate') {
+    if (o === 'deactivated') return 'Service deactivated.';
+    if (o === 'unchanged') return 'Service was already off. Nothing was changed.';
+  } else if (kind === 'reactivate') {
+    if (o === 'reactivated') return 'Service reactivated.';
+    if (o === 'unchanged') return 'Service was already on. Nothing was changed.';
+  }
+  return 'Done. The card below is read again from the server.';
+}
+
+// Every button of the block: confirm() where it changes something, one POST, then re-read the card.
+async function _billAct(kind, subId) {
+  var st = _billState;
+  if (_billBusy || !st || st.loading || !st.data || !_billIsAdmin()) return;
+  var clientId = st.clientId, d = st.data, row = null, path = '';
+  if (kind === 'cancel' || kind === 'undo' || kind === 'refresh') {
+    row = _billRow(d, subId);
+    if (!row || !_modIsPlainObject(row.actions) || row.actions[kind] !== true) return;   // only the server's own buttons
+    path = _BILL_API + 'subscriptions/' + encodeURIComponent(subId) + (kind === 'undo' ? '/undo-cancel' : '/' + kind);
+  } else if ((kind === 'deactivate' && d.is_active === true) || (kind === 'reactivate' && d.is_active === false)) {
+    path = _BILL_CLIENTS_API + encodeURIComponent(clientId) + '/' + kind;
+  } else {
+    return;
+  }
+  var name = _phBusinessName(clientId) || 'this client';
+  // Stripe keeps retrying an overdue invoice after cancel_at_period_end is set: "not charged again" would be untrue there.
+  var overdue = !!row && (row.status === 'past_due' || row.status === 'unpaid');
+  var text = '';
+  if (kind === 'cancel' && overdue) {
+    text = 'Cancel the subscription for ' + name + ' at the end of the current period?\n\nPayment is overdue. Service continues until ' +
+      (_billWhen(row.cancel_at) || 'the end of the current period') + '. No new period is charged, but Stripe may still collect the overdue invoice it is retrying. Nothing is refunded.';
+  } else if (kind === 'cancel') {
+    text = 'Cancel the subscription for ' + name + ' at the end of the paid period?\n\nService continues until ' +
+      (_billWhen(row.cancel_at) || 'the end of the paid period') + '. They will not be charged again. Nothing is refunded.';
+  } else if (kind === 'undo') {
+    text = 'Undo the scheduled cancellation for ' + name + '?\n\nThe subscription continues, and Stripe charges them again at the next renewal.';
+  } else if (kind === 'deactivate') {
+    text = 'Deactivate service for ' + name + ' now?\n\n' +
+      '- Calls to their number get a short "unavailable" message, and nobody is rung.\n' +
+      '- Texts, chat and emails to their customers stop.\n' +
+      '- Their records are kept.\n' +
+      '- The phone number is NOT released: it keeps billing until it is released on the phone card (or in the Twilio console, for a number set up by hand).';
+  } else if (kind === 'reactivate') {
+    text = 'Reactivate service for ' + name + '?\n\nService turns back on: calls, texts, chat and emails to their customers start again.';
+  }
+  if (text && !confirm(text)) return;
+  if (_billBusy || _billState !== st) return;   // the card changed while the dialog was open
+  var gen = _billGen;
+  _billBusy = true;
+  st.msg = ''; st.msgCss = ''; st.msgReload = false; st.hot = '';
+  _paintBilling();
+  var r = await _billCall('POST', path, 'billing ' + kind + ' failed');
+  if (gen !== _billGen) return;   // logged out meanwhile: the answer is dropped
+  _billBusy = false;
+  if (r.status === 401) { _billReset(); return; }
+  var msg, css = '', reload = false, hot = '';
+  if (r.status === 200) {
+    msg = _billDone(kind, r.data, overdue);
+    if (kind === 'reactivate' && _modIsPlainObject(r.data) && r.data.live_subscription === false) {
+      msg += ' ' + (typeof r.data.notice === 'string' && r.data.notice.trim() ? r.data.notice.slice(0, 500)
+                    : 'This client has no live subscription.');
+      css = _BILL_AMBER;
+    }
+  } else if (r.status === 0) {
+    msg = _BILL_NO_ANSWER; css = _BILL_AMBER; reload = true;
+    if (row) hot = subId;   // the outcome is unknown: Refresh from Stripe is the check that reads Stripe
+  } else {
+    msg = _billRefusal(r.status, r.data, 'Refresh'); css = _BILL_RED;
+    var code = _billCode(r.data);
+    var reasoned = !!code || (_modIsPlainObject(r.data) && typeof r.data.detail === 'string');
+    // The server's two "may have changed" codes, and an answer with no reason at all (a proxy timeout), point at Stripe.
+    if (row && (code === 'stripe_outcome_unknown' || code === 'recorded_later' || !reasoned)) hot = subId;
+    if (!reasoned) reload = true;
+  }
+  if (!_billState || _billState.clientId !== clientId) {   // the admin moved to another client meanwhile
+    toast('Billing for the previous client: ' + msg, r.status === 200 ? '' : 'error');
+    _paintBilling();
+    return;
+  }
+  var cur = _billState;
+  cur.msg = msg; cur.msgCss = css; cur.msgReload = reload; cur.hot = hot;
+  if (r.status === 0) { _paintBilling(); return; }   // no answer: nothing to re-read with confidence; Refresh checks
+  // Any answer: the card is read again (a refusal can follow a heal of our record from Stripe).
+  _loadBilling(clientId, true);
+  // The phone card's "still billing" line depends on the subscription and the service (a refusal can follow a heal
+  // that ended the subscription): re-read it too.
+  if (_phState && _phState.clientId === clientId && !_phBusy && !_phDlg) _loadPhone(clientId);
+}
+
 // ═══════ AUTH ═══════
 var AUTH_API = API_URL + '/api/auth/login';
 
@@ -4338,6 +4672,7 @@ function submitLogin(e) {
 
 function logout() {
   _phReset();   // the phone dialog sits outside #app-root: close it and drop the card's number digits
+  _billReset(); // drop the billing card and any answer still on its way
   localStorage.removeItem('hk_token');
   localStorage.removeItem('hk_role');
   localStorage.removeItem('hk_user_name');
